@@ -1101,6 +1101,7 @@
         <div class="modes small" id="dev-tabs" role="group" aria-label="Cronômetro de dev">
           <button data-track="build" aria-pressed="true">Build<span class="tab-dot" id="tab-dot-build" hidden></span></button>
           <button data-track="review" aria-pressed="false">Code review<span class="tab-dot" id="tab-dot-review" hidden></span></button>
+          <button data-track="meeting" aria-pressed="false">Reunião<span class="tab-dot" id="tab-dot-meeting" hidden></span></button>
         </div>
 
         <div class="dev-dial">
@@ -1533,6 +1534,8 @@
     builds: [],
     review: { running:false, startedAt:null, label:"" },
     reviews: [],
+    meeting: { running:false, startedAt:null, label:"" },
+    meetings: [],
     devTab: "build",
     duckNotes: [],
     activeTaskId: null,
@@ -1590,6 +1593,8 @@
     if(Array.isArray(d.builds)) s.builds = d.builds;
     if(d.review) Object.assign(s.review, d.review);
     if(Array.isArray(d.reviews)) s.reviews = d.reviews;
+    if(d.meeting) Object.assign(s.meeting, d.meeting);
+    if(Array.isArray(d.meetings)) s.meetings = d.meetings;
     if(d.devTab) s.devTab = d.devTab;
     if(Array.isArray(d.duckNotes)) s.duckNotes = d.duckNotes;
     if(d.timer) Object.assign(s.timer, d.timer);
@@ -1618,7 +1623,7 @@
   }
 
   var SYNCED_ARRAYS = ["tasks","sessions","habits","books","readLog","capsules",
-    "media","watchLog","seasons","milestones","builds","duckNotes","goals","pdi","reviews"];
+    "media","watchLog","seasons","milestones","builds","duckNotes","goals","pdi","reviews","meetings"];
 
   // funde um estado recebido (de outra aba ou do servidor) com o que só existe aqui,
   // sem perder nada dos dois lados — a mesma regra vale local ou remotamente
@@ -2523,6 +2528,11 @@
       if(rR.length){
         var rMin = rR.reduce(function(a,x){ return a + x.ms; }, 0);
         devBits.push("code review: " + rR.length + " (" + fmtShort(rMin) + ")");
+      }
+      var mR = S.meetings.filter(function(x){ return x.end >= lim.from && x.end < lim.to; });
+      if(mR.length){
+        var mMin = mR.reduce(function(a,x){ return a + x.ms; }, 0);
+        devBits.push("reuniões: " + mR.length + " (" + fmtShort(mMin) + ")");
       }
       if(devBits.length){
         $("stats-note").textContent += " Também " + devBits.join(", ") + ".";
@@ -3485,13 +3495,16 @@
     var duckSolved = duckSemana.filter(function(x){ return x.solved; }).length;
     var reviewsSemana = S.reviews.filter(function(x){ return x.end >= from && x.end < to; });
     var reviewMin = reviewsSemana.reduce(function(a, x){ return a + x.ms; }, 0);
+    var meetingsSemana = S.meetings.filter(function(x){ return x.end >= from && x.end < to; });
+    var meetingMin = meetingsSemana.reduce(function(a, x){ return a + x.ms; }, 0);
 
     return {
       days:days, ini:ini, fim:days[6], porDia:porDia, pomos:pomos, min:min, ints:ints,
       tarefas:tarefas, paginas:paginas, eps:eps, habitos:{feitos:feitos, devidos:devidos},
       topo:topo, topoN:topoN, livros:livros,
       dev: { buildMin:buildMin, buildCount:buildsSemana.length, duckCount:duckSemana.length, duckSolved:duckSolved,
-             reviewMin:reviewMin, reviewCount:reviewsSemana.length }
+             reviewMin:reviewMin, reviewCount:reviewsSemana.length,
+             meetingMin:meetingMin, meetingCount:meetingsSemana.length }
     };
   }
 
@@ -3593,9 +3606,12 @@
     if(S.dev && d.dev.reviewCount){
       linhas.push(fmtShort(d.dev.reviewMin) + " revisando código (" + d.dev.reviewCount + "x)");
     }
+    if(S.dev && d.dev.meetingCount){
+      linhas.push(fmtShort(d.dev.meetingMin) + " em reunião (" + d.dev.meetingCount + "x)");
+    }
     if(!linhas.length) linhas.push("uma semana em branco também conta");
 
-    var maxLinhas = S.dev ? 6 : 4;
+    var maxLinhas = S.dev ? 7 : 4;
     var yy = fy + 58;
     linhas.slice(0, maxLinhas).forEach(function(l){
       txt("·  " + l, M, yy, 30, CARD.ink2, "sans");
@@ -5410,21 +5426,31 @@
     return Math.floor(m / 60) + "h " + (m % 60) + "min";
   }
 
-  // define os dois cronômetros como dados, em vez de duplicar a lógica
+  // define os cronômetros como dados, em vez de duplicar a lógica por aba
   var TRACKS = {
     build: {
       state: function(){ return S.build; }, log: function(){ return S.builds; },
       verb: "esperando", action: "Cronometrar build", stopAction: "Terminou",
-      noun: ["build", "builds"],
+      noun: ["build", "builds"], prefix: "b", pastWord: "registrado",
+      emptyPrefix: "Nenhum build", emptyWord: "cronometrado", longestPrefix: "O mais longo foi",
       empty: "Comece o cronômetro quando disparar o CI e pare quando ele voltar.",
       doneMsg: "Build de ", waitWord: "de espera", countLabel: "Builds no período"
     },
     review: {
       state: function(){ return S.review; }, log: function(){ return S.reviews; },
       verb: "revisando", action: "Cronometrar revisão", stopAction: "Terminei",
-      noun: ["revisão", "revisões"],
+      noun: ["revisão", "revisões"], prefix: "r", pastWord: "registrada",
+      emptyPrefix: "Nenhuma revisão", emptyWord: "cronometrada", longestPrefix: "A mais longa foi",
       empty: "Comece o cronômetro quando abrir o PR e pare quando terminar de comentar.",
       doneMsg: "Revisão de ", waitWord: "revisando", countLabel: "Revisões no período"
+    },
+    meeting: {
+      state: function(){ return S.meeting; }, log: function(){ return S.meetings; },
+      verb: "em reunião", action: "Cronometrar reunião", stopAction: "Terminou",
+      noun: ["reunião", "reuniões"], prefix: "m", pastWord: "registrada",
+      emptyPrefix: "Nenhuma reunião", emptyWord: "cronometrada", longestPrefix: "A mais longa foi",
+      empty: "Comece o cronômetro quando a reunião começar e pare quando ela terminar.",
+      doneMsg: "Reunião de ", waitWord: "em reunião", countLabel: "Reuniões no período"
     }
   };
 
@@ -5436,11 +5462,14 @@
     return Math.max(0, Date.now() - st.startedAt);
   }
 
+  function anyTrackRunning(){
+    return Object.keys(TRACKS).some(function(k){ return TRACKS[k].state().running; });
+  }
+
   function devTick(){
     if(devTimer) clearTimeout(devTimer);
     renderDevWatch();
-    var algumRodando = S.build.running || S.review.running;
-    if(algumRodando) devTimer = setTimeout(devTick, 250);
+    if(anyTrackRunning()) devTimer = setTimeout(devTick, 250);
   }
 
   function startTrack(key){
@@ -5460,9 +5489,8 @@
     st.startedAt = null;
     // registros instantâneos são engano de clique, não dado
     if(ms >= 3000){
-      var prefixo = key === "build" ? "b" : "r";
-      t.log().push({ id: prefixo + inicio, start: inicio, end: inicio + ms, ms: ms, label: st.label || "" });
-      toast(t.doneMsg + fmtShort(ms) + (key === "review" ? " registrada" : " registrado"));
+      t.log().push({ id: t.prefix + inicio, start: inicio, end: inicio + ms, ms: ms, label: st.label || "" });
+      toast(t.doneMsg + fmtShort(ms) + " " + t.pastWord);
     }
     save(); renderDevWatch(); renderStats();
   }
@@ -5496,9 +5524,9 @@
     $("dev-track-state").textContent = running ? t.verb + (st.label ? " · " + st.label : "") : "";
 
     // aba inativa ganha um ponto se estiver rodando por baixo dos panos
-    var outro = key === "build" ? "review" : "build";
-    $("tab-dot-" + key).hidden = true;
-    $("tab-dot-" + outro).hidden = !TRACKS[outro].state().running;
+    Object.keys(TRACKS).forEach(function(k){
+      $("tab-dot-" + k).hidden = (k === key) || !TRACKS[k].state().running;
+    });
 
     var r = periodRange();
     var lim = rangeMs(r);
@@ -5513,7 +5541,7 @@
     $("dev-max").textContent = maior ? fmtShort(maior.ms) : "—";
 
     if(!noPeriodo.length){
-      $("dev-note").textContent = "Nenhuma " + (key === "review" ? "revisão" : "build") + " cronometrada " +
+      $("dev-note").textContent = t.emptyPrefix + " " + t.emptyWord + " " +
         periodLabel(r) + ". " + t.empty;
     }else{
       var hojeK = dayKey(Date.now());
@@ -5525,7 +5553,7 @@
       }
       txt += ".";
       if(maior && maior.label){
-        txt += " " + (key === "review" ? "A mais longa foi" : "O mais longo foi") + " “" + maior.label + "”, com " + fmtShort(maior.ms) + ".";
+        txt += " " + t.longestPrefix + " “" + maior.label + "”, com " + fmtShort(maior.ms) + ".";
       }
       $("dev-note").textContent = txt;
     }
@@ -6170,7 +6198,7 @@
         var atual = { tasks:S.tasks, sessions:S.sessions, habits:S.habits,
                       books:S.books, readLog:S.readLog, capsules:S.capsules,
                       media:S.media, watchLog:S.watchLog,
-                      seasons:S.seasons, milestones:S.milestones, builds:S.builds, duckNotes:S.duckNotes, goals:S.goals, pdi:S.pdi, reviews:S.reviews };
+                      seasons:S.seasons, milestones:S.milestones, builds:S.builds, duckNotes:S.duckNotes, goals:S.goals, pdi:S.pdi, reviews:S.reviews, meetings:S.meetings };
         var rev = S.rev || 0;
         S = adopt(clone(DEFAULTS), d);
         if(mesclar){
@@ -6189,6 +6217,7 @@
           S.goals      = mergeById(atual.goals, S.goals);
           S.pdi        = mergeById(atual.pdi, S.pdi);
           S.reviews    = mergeById(atual.reviews, S.reviews);
+          S.meetings   = mergeById(atual.meetings, S.meetings);
         }
         S.rev = rev;
         S.timer.running = false; S.timer.endsAt = null;
@@ -6234,7 +6263,7 @@
 
   applyTheme();
   checkAuth();
-  if(S.build.running || S.review.running) devTick();
+  if(anyTrackRunning()) devTick();
   checkMilestones(false);   // histórico antigo ganha suas marcas em silêncio
   renderHabitForm();
   resume();
