@@ -563,7 +563,20 @@
   #auth .dlg-body input, #changepw .dlg-body input, #deleteaccount .dlg-body input{
     width:100%;margin-bottom:12px;
   }
-  #btn-account.logged-in{border-color:var(--rest);color:var(--rest)}
+  /* agrupa conta+ajustes visualmente à parte dos botões de navegação */
+  .account-group{display:flex;gap:var(--sp);padding-left:var(--sp);border-left:1px solid var(--line)}
+  /* "Entrar" precisa se destacar dos outros botões ghost — é a única chamada para ação da barra */
+  #btn-account{background:var(--signal);border-color:var(--signal);color:var(--on-ink)}
+  #btn-account:hover{background:var(--signal);border-color:var(--signal);opacity:.88}
+  #btn-account.logged-in{background:transparent;border-color:var(--rest);color:var(--rest);opacity:1}
+  #btn-account.logged-in:hover{border-color:var(--rest);color:var(--rest);opacity:.85}
+  #auth-title{font-size:19px;color:var(--ink);font-weight:600}
+  #auth-error:not(:empty){
+    background:var(--signal-soft);border-radius:2px;padding:8px 10px;margin:0;
+  }
+  #auth-toggle{border-color:transparent;color:var(--ink-3);padding-left:0;padding-right:0}
+  #auth-toggle:hover{border-color:transparent;color:var(--signal)}
+  #auth .dlg-foot{justify-content:space-between}
 
   /* ---------- notas da tarefa ---------- */
   .note-btn{
@@ -811,9 +824,10 @@
       <button class="btn-ghost" id="btn-season">Temporada</button>
       <button class="btn-ghost" id="btn-card">Cartão da semana</button>
       <button class="btn-ghost" id="btn-capsule">Cápsula<span class="tab-dot" id="capsule-dot" hidden></span></button>
-      <button class="btn-ghost" id="btn-theme" title="Alternar entre automático, claro e escuro">Tema</button>
-      <button class="btn-ghost" id="btn-account">Entrar</button>
-      <button class="btn-ghost" id="btn-settings">Ajustes</button>
+      <div class="account-group">
+        <button class="btn-ghost" id="btn-account">Entrar</button>
+        <button class="btn-ghost" id="btn-settings">Ajustes</button>
+      </div>
     </div>
   </header>
 
@@ -1138,7 +1152,7 @@
     </section>
 
     <!-- SOM -->
-    <section class="panel sound">
+    <section class="panel sound" id="panel-sound">
       <div class="panel-head">
         <h2 class="panel-title">Som</h2>
         <span class="panel-title" id="sound-state"></span>
@@ -1236,12 +1250,18 @@
     <div class="field"><label for="s-sound">Tocar aviso sonoro no fim</label><span class="switch"><input type="checkbox" id="s-sound"></span></div>
     <div class="field"><label for="s-notify">Mostrar notificação do sistema</label><span class="switch"><input type="checkbox" id="s-notify"></span></div>
 
+    <p class="cap-meta" style="margin-top:10px">Aparência</p>
+    <div class="field"><label for="s-theme">Tema</label><select id="s-theme"><option value="auto">Automático</option><option value="claro">Claro</option><option value="escuro">Escuro</option></select></div>
+
     <p class="cap-meta" style="margin-top:10px">Painéis visíveis</p>
     <div class="field"><label for="p-habits">Hábitos</label><span class="switch"><input type="checkbox" id="p-habits"></span></div>
     <div class="field"><label for="p-reading">Leitura</label><span class="switch"><input type="checkbox" id="p-reading"></span></div>
     <div class="field"><label for="p-screen">Filmes e séries</label><span class="switch"><input type="checkbox" id="p-screen"></span></div>
     <div class="field"><label for="p-goals">Objetivos do ano</label><span class="switch"><input type="checkbox" id="p-goals"></span></div>
     <div class="field"><label for="p-pdi">PDI</label><span class="switch"><input type="checkbox" id="p-pdi"></span></div>
+    <div class="field"><label for="p-season">Temporada</label><span class="switch"><input type="checkbox" id="p-season"></span></div>
+    <div class="field"><label for="p-capsule">Cápsula do tempo</label><span class="switch"><input type="checkbox" id="p-capsule"></span></div>
+    <div class="field"><label for="p-music">Música ambiente</label><span class="switch"><input type="checkbox" id="p-music"></span></div>
     <div class="field"><label for="p-dev">Ferramentas de dev</label><span class="switch"><input type="checkbox" id="p-dev"></span></div>
     <p class="hint">Ocultar um painel não apaga nada: os registros continuam guardados e voltam quando você reativar.</p>
   </div>
@@ -1512,10 +1532,10 @@
     watchLog: [],
     seasons: [],
     milestones: [],
-    panels: { habitos:true, leitura:true, tela:true, objetivos:true, pdi:true },
+    panels: { habitos:false, leitura:false, tela:false, objetivos:false, pdi:false, temporada:false, capsula:false, musica:false },
     goals: [],
     pdi: [],
-    dev: false,
+    dev: true,
     build: { running:false, startedAt:null, label:"" },
     builds: [],
     review: { running:false, startedAt:null, label:"" },
@@ -5645,6 +5665,9 @@
     $("panel-goals").hidden = !S.panels.objetivos;
     $("panel-pdi").hidden = !S.panels.pdi;
     $("panel-dev").hidden = !S.dev;
+    $("btn-season").hidden = !S.panels.temporada;
+    $("btn-capsule").hidden = !S.panels.capsula;
+    $("panel-sound").hidden = !S.panels.musica;
   }
 
   /* ---------- tema ---------- */
@@ -5652,8 +5675,7 @@
     var t = S.theme || "auto";
     if(t === "auto") document.documentElement.removeAttribute("data-theme");
     else document.documentElement.setAttribute("data-theme", t);
-    var names = { auto:"Tema: automático", claro:"Tema: claro", escuro:"Tema: escuro" };
-    $("btn-theme").textContent = names[t] || names.auto;
+    if($("s-theme")) $("s-theme").value = t;
   }
 
   /* ---------- player externo ---------- */
@@ -5972,13 +5994,6 @@
     renderSound();
   };
 
-  // automático → claro → escuro
-  $("btn-theme").onclick = function(){
-    var seq = ["auto", "claro", "escuro"];
-    S.theme = seq[(seq.indexOf(S.theme || "auto") + 1) % seq.length];
-    save(); applyTheme();
-  };
-
   // conta
   $("btn-account").onclick = function(){
     if(AUTH.email) $("btn-settings").click();
@@ -6114,7 +6129,11 @@
     $("p-screen").checked = !!S.panels.tela;
     $("p-goals").checked = !!S.panels.objetivos;
     $("p-pdi").checked = !!S.panels.pdi;
+    $("p-season").checked = !!S.panels.temporada;
+    $("p-capsule").checked = !!S.panels.capsula;
+    $("p-music").checked = !!S.panels.musica;
     $("p-dev").checked = !!S.dev;
+    $("s-theme").value = S.theme || "auto";
     $("branch-prefix").value = S.branchPrefix || "feat";
     dlg.showModal();
   };
@@ -6157,7 +6176,12 @@
     save(); applyPanels(); renderTasks();   // o botão de branch aparece nas tarefas
   };
 
-  [["p-habits","habitos"], ["p-reading","leitura"], ["p-screen","tela"], ["p-goals","objetivos"], ["p-pdi","pdi"]].forEach(function(par){
+  $("s-theme").onchange = function(){
+    S.theme = this.value;
+    save(); applyTheme();
+  };
+
+  [["p-habits","habitos"], ["p-reading","leitura"], ["p-screen","tela"], ["p-goals","objetivos"], ["p-pdi","pdi"], ["p-season","temporada"], ["p-capsule","capsula"], ["p-music","musica"]].forEach(function(par){
     $(par[0]).onchange = function(){
       S.panels[par[1]] = this.checked;
       save(); applyPanels();
