@@ -88,6 +88,8 @@ serve só para testar o fluxo, não para uso de verdade.
 | `JWT_SECRET` | sim | Você define manualmente (`openssl rand -hex 32`) |
 | `UPSTASH_REDIS_REST_URL` | sim | Preenchida automaticamente ao conectar a integração Upstash |
 | `UPSTASH_REDIS_REST_TOKEN` | sim | Idem |
+| `RESEND_API_KEY` | sim, para "esqueci minha senha" | Conta grátis em [resend.com](https://resend.com) → API Keys |
+| `RESEND_FROM` | não | Remetente dos e-mails de redefinição. Sem domínio verificado na Resend, só chega ao e-mail da própria conta Resend — para atender qualquer pessoa, verifique um domínio em resend.com/domains |
 
 ## Limites do plano gratuito que valem saber
 

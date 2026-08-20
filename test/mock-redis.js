@@ -26,6 +26,8 @@ function createMockRedis(){
         return null; // já existe: NX recusa a escrita
       }
       store[key] = value;
+      if(opts.ex) expirations[key] = Date.now() + opts.ex * 1000;
+      else delete expirations[key];
       return "OK";
     },
     del: async function(key){

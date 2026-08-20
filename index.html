@@ -574,8 +574,9 @@
   #auth-error:not(:empty){
     background:var(--signal-soft);border-radius:2px;padding:8px 10px;margin:0;
   }
-  #auth-toggle{border-color:transparent;color:var(--ink-3);padding-left:0;padding-right:0}
-  #auth-toggle:hover{border-color:transparent;color:var(--signal)}
+  #auth .quiet{border-color:transparent;color:var(--ink-3);padding-left:0;padding-right:0}
+  #auth .quiet:hover{border-color:transparent;color:var(--signal)}
+  #auth-forgot{font-size:12.5px;margin-top:-8px}
   #auth .dlg-foot{justify-content:space-between}
 
   /* ---------- notas da tarefa ---------- */
@@ -825,7 +826,7 @@
       <button class="btn-ghost" id="btn-card">Cartão da semana</button>
       <button class="btn-ghost" id="btn-capsule">Cápsula<span class="tab-dot" id="capsule-dot" hidden></span></button>
       <div class="account-group">
-        <button class="btn-ghost" id="btn-account" hidden>Entrar</button>
+        <button class="btn-ghost" id="btn-account">Entrar</button>
         <button class="btn-ghost" id="btn-settings">Ajustes</button>
       </div>
     </div>
@@ -1221,7 +1222,7 @@
     <button class="btn-ghost" id="dlg-close">Fechar</button>
   </div>
   <div class="dlg-body">
-    <div class="account-box" id="account-box" hidden>
+    <div class="account-box" id="account-box">
       <p class="cap-meta" style="margin:0 0 8px">Conta</p>
       <div id="account-logged-out">
         <p class="hint" style="margin:0 0 10px">Sem conta, os dados ficam só neste navegador. Com conta, sincronizam entre celular, computador pessoal e do trabalho.</p>
@@ -1264,6 +1265,7 @@
     <button class="btn-ghost" id="btn-csv">CSV sessões</button>
     <button class="btn-ghost" id="btn-csv-habits">CSV hábitos</button>
     <button class="btn-ghost" id="btn-csv-media">CSV leitura e mídia</button>
+    <button class="btn-ghost" id="btn-md-duck">Markdown patoterapia</button>
     <button class="btn-ghost" id="btn-import">Restaurar backup</button>
     <button class="btn-ghost danger" id="btn-wipe">Apagar tudo</button>
     <input type="file" id="file-import" accept="application/json" hidden>
@@ -1459,15 +1461,20 @@
   </div>
   <div class="dlg-body">
     <p class="hint" id="auth-hint">Entre com o e-mail e a senha da sua conta.</p>
-    <label class="k" for="auth-email">E-mail</label>
-    <input type="email" id="auth-email" autocomplete="email" placeholder="voce@exemplo.com" aria-label="E-mail">
-    <label class="k" for="auth-password">Senha</label>
-    <input type="password" id="auth-password" autocomplete="current-password" placeholder="pelo menos 8 caracteres" aria-label="Senha">
+    <div id="auth-email-row">
+      <label class="k" for="auth-email">E-mail</label>
+      <input type="email" id="auth-email" autocomplete="email" placeholder="voce@exemplo.com" aria-label="E-mail">
+    </div>
+    <div id="auth-password-row">
+      <label class="k" for="auth-password" id="auth-password-label">Senha</label>
+      <input type="password" id="auth-password" autocomplete="current-password" placeholder="pelo menos 8 caracteres" aria-label="Senha">
+    </div>
+    <button class="btn-ghost quiet" id="auth-forgot" style="align-self:flex-start;padding-left:0">Esqueci minha senha</button>
     <p class="hint" id="auth-error" style="color:var(--signal);min-height:18px"></p>
   </div>
   <div class="dlg-foot">
     <button class="btn-main" id="auth-submit">Entrar</button>
-    <button class="btn-ghost" id="auth-toggle">Não tenho conta — criar uma</button>
+    <button class="btn-ghost quiet" id="auth-toggle">Não tenho conta — criar uma</button>
   </div>
 </dialog>
 
@@ -1782,27 +1789,89 @@
     });
   }
 
+  // link de redefinição de senha vindo do e-mail: /?reset=TOKEN
+  function checkResetLink(){
+    if(!SERVER_OK) return;
+    var m = location.search.match(/[?&]reset=([^&]+)/);
+    if(!m) return;
+    resetToken = decodeURIComponent(m[1]);
+    var url = new URL(location.href);
+    url.searchParams.delete("reset");
+    history.replaceState(null, "", url.pathname + url.search + url.hash);
+    openAuth("reset");
+  }
+
   var authMode = "login";
+  var resetToken = null;
+
+  var AUTH_COPY = {
+    login: { title:"Entrar", hint:"Entre com o e-mail e a senha da sua conta.",
+      submit:"Entrar", showEmail:true, showPassword:true, passwordLabel:"Senha", showForgot:true,
+      toggleLabel:"Não tenho conta — criar uma", toggleTarget:"signup" },
+    signup: { title:"Criar conta", hint:"Sua conta guarda os dados no servidor, para acessar de outros aparelhos.",
+      submit:"Criar conta", showEmail:true, showPassword:true, passwordLabel:"Senha", showForgot:false,
+      toggleLabel:"Já tenho conta — entrar", toggleTarget:"login" },
+    forgot: { title:"Redefinir senha", hint:"Informe seu e-mail e mandamos um link para escolher uma nova senha.",
+      submit:"Enviar link", showEmail:true, showPassword:false, showForgot:false,
+      toggleLabel:"Lembrei a senha — entrar", toggleTarget:"login" },
+    reset: { title:"Nova senha", hint:"Escolha uma nova senha para sua conta.",
+      submit:"Salvar nova senha", showEmail:false, showPassword:true, passwordLabel:"Nova senha", showForgot:false,
+      toggleTarget:null }
+  };
+
   function openAuth(mode){
     authMode = mode || "login";
+    var c = AUTH_COPY[authMode];
     $("auth-error").textContent = "";
     $("auth-password").value = "";
-    $("auth-title").textContent = authMode === "signup" ? "Criar conta" : "Entrar";
-    $("auth-hint").textContent = authMode === "signup"
-      ? "Sua conta guarda os dados no servidor, para acessar de outros aparelhos."
-      : "Entre com o e-mail e a senha da sua conta.";
-    $("auth-submit").textContent = authMode === "signup" ? "Criar conta" : "Entrar";
-    $("auth-toggle").textContent = authMode === "signup" ? "Já tenho conta — entrar" : "Não tenho conta — criar uma";
+    $("auth-title").textContent = c.title;
+    $("auth-hint").textContent = c.hint;
+    $("auth-submit").textContent = c.submit;
+    $("auth-email-row").hidden = !c.showEmail;
+    $("auth-password-row").hidden = !c.showPassword;
+    if(c.showPassword) $("auth-password-label").textContent = c.passwordLabel;
+    $("auth-forgot").hidden = !c.showForgot;
+    $("auth-toggle").hidden = !c.toggleTarget;
+    if(c.toggleTarget) $("auth-toggle").textContent = c.toggleLabel;
     $("auth").showModal();
-    $("auth-email").focus();
+    (c.showEmail ? $("auth-email") : $("auth-password")).focus();
   }
 
   function submitAuth(){
+    $("auth-error").textContent = "";
+    $("auth-submit").disabled = true;
+
+    if(authMode === "forgot"){
+      var email = $("auth-email").value.trim();
+      api("/api/auth/forgot-password", { method:"POST", body:{ email:email } }).then(function(res){
+        $("auth-submit").disabled = false;
+        $("auth").close();
+        toast(res.message || "Se existir uma conta com esse e-mail, enviamos um link.");
+      }).catch(function(err){
+        $("auth-submit").disabled = false;
+        $("auth-error").textContent = err.message || "Não foi possível continuar.";
+      });
+      return;
+    }
+
+    if(authMode === "reset"){
+      var novaSenha = $("auth-password").value;
+      api("/api/auth/reset-password", { method:"POST", body:{ token:resetToken, newPassword:novaSenha } }).then(function(res){
+        $("auth-submit").disabled = false;
+        $("auth").close();
+        resetToken = null;
+        onAuthSuccess(res.email);
+        toast("Senha redefinida — você já está conectada");
+      }).catch(function(err){
+        $("auth-submit").disabled = false;
+        $("auth-error").textContent = err.message || "Não foi possível continuar.";
+      });
+      return;
+    }
+
     var email = $("auth-email").value.trim();
     var password = $("auth-password").value;
-    $("auth-error").textContent = "";
     var rota = authMode === "signup" ? "/api/auth/signup" : "/api/auth/login";
-    $("auth-submit").disabled = true;
     api(rota, { method:"POST", body:{ email:email, password:password } }).then(function(res){
       $("auth-submit").disabled = false;
       $("auth").close();
@@ -2736,6 +2805,36 @@
     a.click();
     setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
     toast(S.sessions.length + " sessões exportadas");
+  }
+
+  function mdEscape(t){ return String(t || "").replace(/\r\n/g, "\n"); }
+
+  function exportDuckMarkdown(){
+    if(!S.duckNotes.length){ toast("Ainda não há sessões de patoterapia para exportar"); return; }
+    var linhas = ["# Patoterapia", ""];
+    S.duckNotes.forEach(function(n){
+      var d = new Date(n.at);
+      var titulo = (n.tag ? n.tag : "Sem tópico") + " — " + dayKey(n.at) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+      linhas.push("## " + titulo + (n.solved ? " ✓" : ""));
+      linhas.push("");
+      linhas.push("**Problema:** " + mdEscape(n.problem));
+      if(n.expected) linhas.push("");
+      if(n.expected) linhas.push("**Esperado:** " + mdEscape(n.expected));
+      if(n.tried) linhas.push("");
+      if(n.tried) linhas.push("**Já tentei:** " + mdEscape(n.tried));
+      linhas.push("");
+      linhas.push("**Solução:** " + (n.solution ? mdEscape(n.solution) : "_ainda sem solução_"));
+      linhas.push("");
+      linhas.push("---");
+      linhas.push("");
+    });
+    var blob = new Blob([linhas.join("\n")], { type:"text/markdown;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "quack-patoterapia-" + dayKey(Date.now()) + ".md";
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+    toast(S.duckNotes.length + " sessões exportadas");
   }
 
   /* ---------- hábitos ---------- */
@@ -5983,7 +6082,8 @@
   $("account-open-login").onclick = function(){ openAuth("login"); };
   $("auth-close").onclick = function(){ $("auth").close(); };
   $("auth-submit").onclick = submitAuth;
-  $("auth-toggle").onclick = function(){ openAuth(authMode === "signup" ? "login" : "signup"); };
+  $("auth-toggle").onclick = function(){ openAuth(AUTH_COPY[authMode].toggleTarget); };
+  $("auth-forgot").onclick = function(){ openAuth("forgot"); };
   ["auth-email","auth-password"].forEach(function(id){
     $(id).addEventListener("keydown", function(e){ if(e.key === "Enter") submitAuth(); });
   });
@@ -6074,6 +6174,7 @@
   $("btn-csv").onclick = exportCsv;
   $("btn-csv-habits").onclick = exportHabitsCsv;
   $("btn-csv-media").onclick = exportMediaCsv;
+  $("btn-md-duck").onclick = exportDuckMarkdown;
 
   $("clear-done").onclick = function(){
     var n = S.tasks.filter(function(t){ return t.completed; }).length;
@@ -6263,6 +6364,7 @@
 
   applyTheme();
   checkAuth();
+  checkResetLink();
   if(anyTrackRunning()) devTick();
   checkMilestones(false);   // histórico antigo ganha suas marcas em silêncio
   renderHabitForm();
