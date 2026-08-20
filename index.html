@@ -125,6 +125,12 @@
   }
   .top-actions{display:flex;gap:var(--sp)}
 
+  .app-footer{
+    font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
+    color:var(--ink-3);text-align:center;
+    border-top:1px solid var(--line);margin-top:calc(var(--sp)*6);padding-top:calc(var(--sp)*2.5);
+  }
+
   /* ---------- botões ---------- */
   button{font-family:var(--mono);cursor:pointer;border-radius:2px;transition:background-color .12s ease,color .12s ease,border-color .12s ease}
   button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
@@ -543,12 +549,6 @@
   .dev{grid-column:1 / -1}
 
   .dlg-body .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);display:block;margin-bottom:-4px}
-  .branch-btn{
-    font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
-    background:none;border:1px solid transparent;border-radius:2px;padding:3px 6px;
-    color:var(--ink-3);opacity:.6;cursor:pointer;flex:none;
-  }
-  .branch-btn:hover{opacity:1;border-color:var(--line);color:var(--ink-2)}
   .duck-item{display:flex;align-items:baseline;gap:var(--sp);padding:9px 0;border-bottom:1px solid var(--grid-a);font-size:13.5px}
   .duck-item:last-child{border-bottom:0}
   .duck-item .solved{color:var(--rest);font-family:var(--mono);font-size:9px;letter-spacing:.14em;text-transform:uppercase}
@@ -1138,15 +1138,6 @@
           <button class="btn-ghost" id="duck-open">Começar sessão</button>
           <button class="btn-ghost" id="duck-library-open">Biblioteca <span id="duck-count"></span></button>
           <button class="btn-ghost" id="glossary-open">Glossário</button>
-          <select id="branch-prefix" aria-label="Prefixo de branch" title="Prefixo usado ao copiar nome de branch">
-            <option value="feat">feat/</option>
-            <option value="fix">fix/</option>
-            <option value="chore">chore/</option>
-            <option value="refactor">refactor/</option>
-            <option value="test">test/</option>
-            <option value="docs">docs/</option>
-          </select>
-          <span class="hint" style="flex:1;min-width:180px">Com o modo dev ligado, cada tarefa ganha um botão que copia o nome de branch.</span>
         </div>
       </div>
     </section>
@@ -1219,6 +1210,8 @@
     </section>
 
   </main>
+
+  <footer class="app-footer">Desenvolvido por VanSoares</footer>
 </div>
 
 <dialog id="settings">
@@ -1542,7 +1535,6 @@
     reviews: [],
     devTab: "build",
     duckNotes: [],
-    branchPrefix: "feat",
     activeTaskId: null,
     timer: { mode:"foco", running:false, endsAt:null, remaining:25*MIN, streak:0, interruptions:0 },
     range: "semana",
@@ -1600,7 +1592,6 @@
     if(Array.isArray(d.reviews)) s.reviews = d.reviews;
     if(d.devTab) s.devTab = d.devTab;
     if(Array.isArray(d.duckNotes)) s.duckNotes = d.duckNotes;
-    if(d.branchPrefix) s.branchPrefix = d.branchPrefix;
     if(d.timer) Object.assign(s.timer, d.timer);
     if(typeof d.activeTaskId !== "undefined") s.activeTaskId = d.activeTaskId;
     if(d.range) s.range = d.range;
@@ -2206,14 +2197,6 @@
     li.appendChild(chk); li.appendChild(title);
     if(chip) li.appendChild(chip);
     li.appendChild(dueEl);
-    if(S.dev && !t.completed){
-      var br = document.createElement("button");
-      br.className = "branch-btn";
-      br.textContent = "branch";
-      br.title = "Copiar " + (S.branchPrefix || "feat") + "/" + slugify(t.title);
-      br.onclick = function(){ copyBranch(t); };
-      li.appendChild(br);
-    }
     li.appendChild(nota);
     li.appendChild(count); li.appendChild(del);
 
@@ -5409,35 +5392,6 @@
     });
   }
 
-  /* ---------- nome de branch ---------- */
-  function slugify(t){
-    return String(t)
-      .normalize("NFD").replace(/[\u0300-\u036f]/g, "")   // tira acentos
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-+|-+$/g, "")
-      .slice(0, 48)
-      .replace(/-+$/, "");
-  }
-
-  function copyBranch(t){
-    var nome = (S.branchPrefix || "feat") + "/" + slugify(t.title);
-    function ok(){ toast("Copiado: " + nome); }
-    if(navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(nome).then(ok, function(){ fallback(); });
-    }else{
-      fallback();
-    }
-    function fallback(){
-      var ta = document.createElement("textarea");
-      ta.value = nome;
-      ta.style.position = "fixed"; ta.style.opacity = "0";
-      document.body.appendChild(ta); ta.select();
-      try{ document.execCommand("copy"); ok(); }
-      catch(e){ toast(nome); }
-      document.body.removeChild(ta);
-    }
-  }
 
   /* ---------- cronômetros de dev: mostrador único, dois trackers ---------- */
   function fmtClock(ms){
@@ -5930,7 +5884,6 @@
   $("lib-close").onclick = function(){ $("duck-library").close(); };
   $("lib-search").addEventListener("input", function(){ libSearch = this.value.trim(); renderLibrary(); });
   $("lib-detail-close").onclick = function(){ $("lib-detail").close(); };
-  $("branch-prefix").onchange = function(){ S.branchPrefix = this.value; save(); };
 
   // temporadas
   $("btn-season").onclick = function(){ renderSeasonDialog(); $("season").showModal(); };
@@ -6134,7 +6087,6 @@
     $("p-music").checked = !!S.panels.musica;
     $("p-dev").checked = !!S.dev;
     $("s-theme").value = S.theme || "auto";
-    $("branch-prefix").value = S.branchPrefix || "feat";
     dlg.showModal();
   };
   $("dlg-close").onclick = function(){ dlg.close(); };
@@ -6173,7 +6125,7 @@
 
   $("p-dev").onchange = function(){
     S.dev = this.checked;
-    save(); applyPanels(); renderTasks();   // o botão de branch aparece nas tarefas
+    save(); applyPanels(); renderTasks();
   };
 
   $("s-theme").onchange = function(){
