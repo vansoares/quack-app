@@ -365,11 +365,12 @@
 
   /* ---------- tarefas ---------- */
   .new-task{display:flex;gap:var(--sp);margin-bottom:calc(var(--sp)*2)}
-  input[type=text],input[type=number],select{
+  input[type=text],input[type=number],input[type=email],input[type=password],select{
     font-family:var(--sans);font-size:14px;color:var(--ink);
     background:var(--field);border:1px solid var(--line);border-radius:var(--r-md);padding:9px 10px;
   }
-  input[type=text]{flex:1;min-width:0}
+  input[type=text],input[type=email],input[type=password]{flex:1;min-width:0}
+  input[type=email]:focus,input[type=password]:focus{border-color:var(--signal);outline:none}
   input[type=number]{width:62px;font-family:var(--mono);text-align:center}
   input::placeholder{color:var(--ink-3)}
 
@@ -1655,7 +1656,7 @@
 
 <dialog id="auth">
   <div class="dlg-head">
-    <h2 class="panel-title" id="auth-title">Entrar</h2>
+    <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg></span><span id="auth-title">Entrar</span></h2>
     <button class="btn-ghost" id="auth-close">Fechar</button>
   </div>
   <div class="dlg-body">
