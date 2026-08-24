@@ -41,12 +41,28 @@
     --topic-bg-s:58%;
     --topic-bg-l:90%;
     --sp:8px;
-    --r-lg:26px;
-    --r-md:18px;
-    --r-sm:12px;
+    --r-lg:28px;
+    --r-md:20px;
+    --r-sm:14px;
     --r-pill:999px;
     --mono:"Inter", system-ui, -apple-system, sans-serif;
     --sans:"Inter", system-ui, -apple-system, sans-serif;
+    --ease:cubic-bezier(.22,.8,.28,1);
+    --focus:3px solid var(--ink);
+    /* ---- acento de leitura (eyebrow / links), distinto de --signal/--rest ---- */
+    --accent-text:#1E4A54;
+    /* ---- cores categóricas de ferramentas (decorativas, não semânticas) ---- */
+    --amber:#F2B84B;
+    --amber-ink:#4A3208;
+    --teal:#3E7C8C;
+    --teal-ink:#1E4A54;
+    --clover:#6E8F5A;
+    --clover-ink:#223318;
+    --clay:#C97B5E;
+    --clay-ink:#4a1f0f;
+    /* ---- nav flutuante inferior: sempre vidro escuro, independe do tema ---- */
+    --nav-fill:rgba(30,28,24,0.62);
+    --nav-border:rgba(255,255,255,0.14);
   }
 
   /* fundo escuro: mesma lógica de vidro, luz invertida */
@@ -76,6 +92,12 @@
       --topic-l:70%;
       --topic-bg-s:30%;
       --topic-bg-l:20%;
+      --accent-text:#7FD2DE;
+      --amber-ink:#FFEFC7;
+      --teal-ink:#CFEFF3;
+      --clover-ink:#DCEACB;
+      --clay-ink:#F3D2C2;
+      --focus:3px solid #fff;
     }
   }
 
@@ -104,6 +126,12 @@
     --topic-l:70%;
     --topic-bg-s:30%;
     --topic-bg-l:20%;
+    --accent-text:#7FD2DE;
+    --amber-ink:#FFEFC7;
+    --teal-ink:#CFEFF3;
+    --clover-ink:#DCEACB;
+    --clay-ink:#F3D2C2;
+    --focus:3px solid #fff;
   }
 
   /* alto contraste: sem vidro, sem blur, cor sólida — pensado pra baixa visão */
@@ -134,6 +162,13 @@
     --topic-l:28%;
     --topic-bg-s:0%;
     --topic-bg-l:100%;
+    /* alto contraste não precisa de acento próprio — reaproveita a tinta pura */
+    --accent-text:var(--ink);
+    --amber-ink:var(--ink);
+    --teal-ink:var(--ink);
+    --clover-ink:var(--ink);
+    --clay-ink:var(--ink);
+    --focus:3px solid #000000;
   }
   :root[data-theme="alto-contraste"] .glow{display:none}
   :root[data-theme="alto-contraste"] *{backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
@@ -146,13 +181,13 @@
 
   /* respeita preferências do sistema além do toggle manual */
   @media (prefers-contrast: more), (forced-colors: active){
-    .panel,dialog,.toast,.figures,.empty-state,.glossary-row,.lib-row{
+    .panel,dialog,.toast,.figures,.empty-state,.glossary-row,.lib-row,.theme-toggle,.float-nav{
       backdrop-filter:none !important;-webkit-backdrop-filter:none !important;border-width:2px;
     }
     .glow{opacity:.12}
   }
   @media (prefers-reduced-transparency: reduce){
-    .panel,dialog,.toast,.figures,.empty-state,.glossary-row,.lib-row,.modes,.range,.seg,.wd{
+    .panel,dialog,.toast,.figures,.empty-state,.glossary-row,.lib-row,.modes,.range,.seg,.wd,.theme-toggle,.float-nav{
       backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
     }
     .glow{display:none}
@@ -233,8 +268,7 @@
 
   /* ---------- botões ---------- */
   button{font-family:var(--sans);cursor:pointer;border-radius:var(--r-md);transition:background-color .12s ease,color .12s ease,border-color .12s ease,transform .12s ease;min-height:36px}
-  button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--ink);outline-offset:3px;border-radius:8px}
-  :root[data-theme="escuro"] button:focus-visible,:root[data-theme="escuro"] input:focus-visible,:root[data-theme="escuro"] select:focus-visible,:root[data-theme="escuro"] [tabindex]:focus-visible{outline-color:#fff}
+  button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:var(--focus);outline-offset:3px;border-radius:8px}
 
   .btn-ghost{
     background:var(--panel);border:1px solid var(--glass-border);color:var(--ink-2);
@@ -258,6 +292,50 @@
   .btn-main.running:hover{filter:brightness(1.08)}
   :root[data-theme="alto-contraste"] .btn-main{background:#000;color:#fff;box-shadow:none}
   :root[data-theme="alto-contraste"] .btn-ghost{background:#fff;border-width:2px}
+
+  /* ---------- alternador de tema: pílula com 3 estados selecionáveis ---------- */
+  .theme-toggle{
+    display:flex;align-items:center;gap:2px;padding:4px;
+    border-radius:var(--r-pill);
+    background:var(--panel);border:1px solid var(--glass-border);
+    backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);
+  }
+  /* reset pontual em vez de all:unset — all:unset zeraria o outline no :focus-visible
+     (mesma especificidade da regra global de foco, e essa regra viria depois no cascade) */
+  .theme-toggle button{
+    background:transparent;border:0;padding:0;margin:0;font:inherit;
+    box-sizing:border-box;cursor:pointer;
+    width:32px;height:32px;min-height:0;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:var(--ink-3);
+    transition:background-color .25s cubic-bezier(.22,.8,.28,1),color .25s cubic-bezier(.22,.8,.28,1);
+  }
+  .theme-toggle button svg{width:15px;height:15px;flex:none;pointer-events:none}
+  .theme-toggle button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink)}
+  :root[data-theme="alto-contraste"] .theme-toggle{background:#fff;border-width:2px}
+  :root[data-theme="alto-contraste"] .theme-toggle button[aria-pressed="true"]{background:#000;color:#fff}
+
+  /* ---------- navegação flutuante inferior ---------- */
+  .float-nav{
+    position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:5;
+    display:flex;gap:4px;padding:8px;border-radius:var(--r-pill);
+    background:var(--nav-fill);border:1px solid var(--nav-border);
+    backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);
+    box-shadow:0 10px 30px rgba(0,0,0,0.25);
+  }
+  .float-nav .nav-item{
+    background:transparent;border:0;padding:0;margin:0;font:inherit;
+    box-sizing:border-box;cursor:pointer;
+    width:44px;height:44px;min-height:0;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:rgba(255,255,255,0.62);
+    transition:background-color .2s cubic-bezier(.22,.8,.28,1),color .2s cubic-bezier(.22,.8,.28,1);
+  }
+  .float-nav .nav-item svg{width:19px;height:19px;flex:none;pointer-events:none}
+  .float-nav .nav-item[aria-current="page"]{background:rgba(255,255,255,0.16);color:#fff}
+  .float-nav *:focus-visible{outline-color:#fff}
+  :root[data-theme="alto-contraste"] .float-nav{background:#000;border-width:2px}
+  @media (max-width:520px){ .float-nav{bottom:12px} }
 
   /* ---------- painéis ---------- */
   .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:calc(var(--sp)*3)}
@@ -297,6 +375,12 @@
      ícone e fundo na MESMA família de cor tendem a se confundir entre si */
   .panel-icon svg{width:17px;height:17px}
   .panel-icon.rest{background:color-mix(in srgb, var(--rest) 26%, transparent)}
+  /* cores categóricas por ferramenta — decorativas, não semânticas; a tinta do ícone
+     (--*-ink) já troca sozinha por tema via variável, sem precisar de regra extra por tema */
+  .panel-icon.amber{background:color-mix(in srgb, var(--amber) 26%, transparent);color:var(--amber-ink)}
+  .panel-icon.teal{background:color-mix(in srgb, var(--teal) 26%, transparent);color:var(--teal-ink)}
+  .panel-icon.clover{background:color-mix(in srgb, var(--clover) 26%, transparent);color:var(--clover-ink)}
+  .panel-icon.clay{background:color-mix(in srgb, var(--clay) 26%, transparent);color:var(--clay-ink)}
   :root[data-theme="alto-contraste"] .panel-icon{background:#fff;color:#000;box-shadow:inset 0 0 0 2px #000}
   h3 .panel-icon{width:26px;height:26px}
   h3 .panel-icon svg{width:14px;height:14px}
@@ -993,10 +1077,17 @@
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="5"/><path d="M7 12h10"/></svg>
         <span class="btn-label">Cápsula</span><span class="tab-dot" id="capsule-dot" hidden></span>
       </button>
-      <button class="btn-ghost" id="btn-theme" title="Alternar entre automático, claro, escuro e alto contraste">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19v2.4M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2.5 12h2.4M19 12h2.4M4.9 19l1.7-1.7M17.4 6.6l1.7-1.7"/></svg>
-        <span class="btn-label">Tema</span>
-      </button>
+      <div class="theme-toggle" id="theme-toggle" role="group" aria-label="Tema visual">
+        <button type="button" data-theme-choice="claro" aria-label="Tema claro" aria-pressed="false" title="Claro">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19v2.4M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2.5 12h2.4M19 12h2.4M4.9 19l1.7-1.7M17.4 6.6l1.7-1.7"/></svg>
+        </button>
+        <button type="button" data-theme-choice="escuro" aria-label="Tema escuro" aria-pressed="false" title="Escuro">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 14.5A8 8 0 1 1 9.5 4a6.5 6.5 0 0 0 10.5 10.5Z"/></svg>
+        </button>
+        <button type="button" data-theme-choice="alto-contraste" aria-label="Alto contraste" aria-pressed="false" title="Alto contraste">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 0 1 0 18Z" fill="currentColor" stroke="none"/></svg>
+        </button>
+      </div>
       <div class="account-group">
         <button class="btn-ghost" id="btn-account" aria-label="Entrar">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
@@ -1013,7 +1104,7 @@
   <main class="grid" id="main">
 
     <!-- TIMER -->
-    <section class="panel">
+    <section class="panel" id="section-timer">
       <div class="modes" role="group" aria-label="Modo do timer">
         <button data-mode="foco" aria-pressed="true">Foco</button>
         <button data-mode="curta" aria-pressed="false">Pausa curta</button>
@@ -1086,9 +1177,9 @@
     </section>
 
     <!-- TAREFAS -->
-    <section class="panel">
+    <section class="panel" id="section-tarefas">
       <div class="panel-head">
-        <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 12l2.5 2.5L16 9"/></svg></span>Tarefas</h2>
+        <h2 class="panel-title"><span class="panel-icon teal" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 12l2.5 2.5L16 9"/></svg></span>Tarefas</h2>
         <div class="head-right">
           <span class="panel-title" id="tasks-open"></span>
           <div class="seg small" id="task-view" role="group" aria-label="Organização da lista">
@@ -1122,7 +1213,7 @@
     <!-- OBJETIVOS DO ANO -->
     <section class="panel goals" id="panel-goals">
       <div class="panel-head">
-        <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="1.5" fill="currentColor" stroke="none"/></svg></span>Objetivos do ano</h2>
+        <h2 class="panel-title"><span class="panel-icon amber" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="1.5" fill="currentColor" stroke="none"/></svg></span>Objetivos do ano</h2>
         <span class="panel-title" id="goals-state"></span>
       </div>
 
@@ -1141,7 +1232,7 @@
     <!-- PDI -->
     <section class="panel pdi" id="panel-pdi">
       <div class="panel-head">
-        <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M14.8 9.2l-2 5.6-5.6 2 2-5.6z"/></svg></span>PDI</h2>
+        <h2 class="panel-title"><span class="panel-icon amber" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M14.8 9.2l-2 5.6-5.6 2 2-5.6z"/></svg></span>PDI</h2>
         <span class="panel-title" id="pdi-state"></span>
       </div>
       <p class="hint" style="margin:0 0 14px">Plano de desenvolvimento individual: as competências que você quer desenvolver, o que significa chegar lá, e os passos concretos no caminho.</p>
@@ -1161,7 +1252,7 @@
     <!-- HÁBITOS -->
     <section class="panel habits" id="panel-habits">
       <div class="panel-head">
-        <h2 class="panel-title"><span class="panel-icon rest" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c-4-2.5-7-6-7-10a7 7 0 0 1 14 0c0 4-3 7.5-7 10Z"/><path d="M12 8v5"/></svg></span>Hábitos</h2>
+        <h2 class="panel-title"><span class="panel-icon clover" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c-4-2.5-7-6-7-10a7 7 0 0 1 14 0c0 4-3 7.5-7 10Z"/><path d="M12 8v5"/></svg></span>Hábitos</h2>
         <span class="panel-title" id="habits-today"></span>
       </div>
 
@@ -1194,7 +1285,7 @@
     <!-- LEITURA -->
     <section class="panel reading" id="panel-reading">
       <div class="panel-head">
-        <h2 class="panel-title"><span class="panel-icon rest" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v18H6.5A2.5 2.5 0 0 1 4 18.5v-13Z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v18h5.5a2.5 2.5 0 0 0 2.5-2.5v-13Z"/></svg></span>Leitura</h2>
+        <h2 class="panel-title"><span class="panel-icon teal" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v18H6.5A2.5 2.5 0 0 1 4 18.5v-13Z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v18h5.5a2.5 2.5 0 0 0 2.5-2.5v-13Z"/></svg></span>Leitura</h2>
         <span class="panel-title" id="reading-state"></span>
       </div>
 
@@ -1221,7 +1312,7 @@
 
       <div class="sub-panel">
         <div class="panel-head">
-          <h3 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M11 20V4M18 20v-7"/></svg></span>Balanço da leitura</h3>
+          <h3 class="panel-title"><span class="panel-icon teal" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M11 20V4M18 20v-7"/></svg></span>Balanço da leitura</h3>
           <div class="range" role="group" aria-label="Período">
             <button data-range="semana" aria-pressed="true">Semana</button>
             <button data-range="mes" aria-pressed="false">Mês</button>
@@ -1248,7 +1339,7 @@
     <!-- FILMES E SÉRIES -->
     <section class="panel screen" id="panel-screen">
       <div class="panel-head">
-        <h2 class="panel-title"><span class="panel-icon rest" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M8 5v14M16 5v14M3 10h5M16 10h5M3 15h5M16 15h5"/></svg></span>Filmes e séries</h2>
+        <h2 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M8 5v14M16 5v14M3 10h5M16 10h5M3 15h5M16 15h5"/></svg></span>Filmes e séries</h2>
         <span class="panel-title" id="screen-state"></span>
       </div>
 
@@ -1278,7 +1369,7 @@
 
       <div class="sub-panel">
         <div class="panel-head">
-          <h3 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M11 20V4M18 20v-7"/></svg></span>Balanço da tela</h3>
+          <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M11 20V4M18 20v-7"/></svg></span>Balanço da tela</h3>
           <div class="range" role="group" aria-label="Período">
             <button data-range="semana" aria-pressed="true">Semana</button>
             <button data-range="mes" aria-pressed="false">Mês</button>
@@ -1299,7 +1390,7 @@
     <!-- FERRAMENTAS DE DEV -->
     <section class="panel dev" id="panel-dev" hidden>
       <div class="panel-head">
-        <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 9l3 3-3 3M13 15h4"/></svg></span>Ferramentas de dev</h2>
+        <h2 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 9l3 3-3 3M13 15h4"/></svg></span>Ferramentas de dev</h2>
       </div>
 
       <div class="devwatch">
@@ -1336,7 +1427,7 @@
 
       <div class="sub-panel">
         <div class="panel-head">
-          <h3 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14.5" r="6"/><circle cx="15.6" cy="8.6" r="3.4"/><path d="M18.7 8.1c1.2-.2 2.2.3 2.2 1s-1 1.2-2.2 1c-.5-.1-.9-.5-.9-1s.4-.9.9-1z"/><circle cx="16.5" cy="7.7" r=".5" fill="currentColor" stroke="none"/></svg></span>Patoterapia</h3>
+          <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14.5" r="6"/><circle cx="15.6" cy="8.6" r="3.4"/><path d="M18.7 8.1c1.2-.2 2.2.3 2.2 1s-1 1.2-2.2 1c-.5-.1-.9-.5-.9-1s.4-.9.9-1z"/><circle cx="16.5" cy="7.7" r=".5" fill="currentColor" stroke="none"/></svg></span>Patoterapia</h3>
           <span class="panel-title" id="duck-state"></span>
         </div>
         <p class="hint">Descrever o problema em voz escrita resolve boa parte deles antes de você pedir ajuda a alguém. O patinho não responde — essa é a ideia.</p>
@@ -1351,7 +1442,7 @@
     <!-- SOM -->
     <section class="panel sound" id="panel-sound">
       <div class="panel-head">
-        <h2 class="panel-title"><span class="panel-icon rest" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9Z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></span>Som</h2>
+        <h2 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9Z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></span>Som</h2>
         <span class="panel-title" id="sound-state"></span>
       </div>
 
@@ -1383,7 +1474,7 @@
     <!-- BALANÇO -->
     <section class="panel stats">
       <div class="panel-head">
-        <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M11 20V4M18 20v-7"/></svg></span>Balanço</h2>
+        <h2 class="panel-title"><span class="panel-icon teal" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M11 20V4M18 20v-7"/></svg></span>Balanço</h2>
         <div class="range" role="group" aria-label="Período do balanço">
           <button data-range="semana" aria-pressed="true">Semana</button>
           <button data-range="mes" aria-pressed="false">Mês</button>
@@ -1419,6 +1510,29 @@
 
   <footer class="app-footer">Desenvolvido por VanSoares</footer>
 </div>
+
+<nav class="float-nav" aria-label="Navegação principal">
+  <button type="button" class="nav-item" data-nav-target="section-timer" aria-label="Início" title="Início">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9h12v-9"/></svg>
+  </button>
+  <button type="button" class="nav-item" data-nav-target="section-tarefas" aria-label="Tarefas" title="Tarefas">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 12l2.5 2.5L16 9"/></svg>
+  </button>
+  <button type="button" class="nav-item" data-nav-target="panel-habits" id="nav-habitos" aria-label="Hábitos" title="Hábitos">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21c-4-2.5-7-6-7-10a7 7 0 0 1 14 0c0 4-3 7.5-7 10Z"/></svg>
+  </button>
+  <button type="button" class="nav-item" data-nav-target="panel-reading" id="nav-leitura" aria-label="Leitura" title="Leitura">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v18H6.5A2.5 2.5 0 0 1 4 18.5v-13Z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v18h5.5a2.5 2.5 0 0 0 2.5-2.5v-13Z"/></svg>
+  </button>
+  <button type="button" class="nav-item" data-nav-target="panel-dev" id="nav-dev" aria-label="Ferramentas de dev" title="Ferramentas de dev">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <circle cx="10" cy="14.5" r="6"/>
+      <circle cx="15.6" cy="8.6" r="3.4"/>
+      <path d="M18.7 8.1c1.2-.2 2.2.3 2.2 1s-1 1.2-2.2 1c-.5-.1-.9-.5-.9-1s.4-.9.9-1z"/>
+      <circle cx="16.5" cy="7.7" r=".5" fill="currentColor" stroke="none"/>
+    </svg>
+  </button>
+</nav>
 
 <dialog id="settings">
   <div class="dlg-head">
@@ -1475,7 +1589,7 @@
 
 <dialog id="manual">
   <div class="dlg-head">
-    <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg></span>Registrar pomodoro</h2>
+    <h2 class="panel-title"><span class="panel-icon amber" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg></span>Registrar pomodoro</h2>
     <button class="btn-ghost" id="man-close">Fechar</button>
   </div>
   <div class="dlg-body">
@@ -1496,7 +1610,7 @@
 
 <dialog id="paste">
   <div class="dlg-head">
-    <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h6"/></svg></span>Colar lista de tarefas</h2>
+    <h2 class="panel-title"><span class="panel-icon teal" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h6"/></svg></span>Colar lista de tarefas</h2>
     <button class="btn-ghost" id="paste-close">Fechar</button>
   </div>
   <div class="dlg-body">
@@ -1517,7 +1631,7 @@
 
 <dialog id="capsule">
   <div class="dlg-head">
-    <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="5"/><path d="M7 12h10"/></svg></span>Cápsula do tempo</h2>
+    <h2 class="panel-title"><span class="panel-icon amber" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="5"/><path d="M7 12h10"/></svg></span>Cápsula do tempo</h2>
     <button class="btn-ghost" id="cap-close">Fechar</button>
   </div>
   <div class="dlg-body">
@@ -1540,7 +1654,7 @@
 
 <dialog id="capsule-read">
   <div class="dlg-head">
-    <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="5"/><path d="M7 9h10M9 13.5h1.4M13.6 13.5H15"/></svg></span>Cápsula aberta</h2>
+    <h2 class="panel-title"><span class="panel-icon amber" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="5"/><path d="M7 9h10M9 13.5h1.4M13.6 13.5H15"/></svg></span>Cápsula aberta</h2>
     <button class="btn-ghost" id="capr-close">Fechar</button>
   </div>
   <div class="dlg-body">
@@ -1551,7 +1665,7 @@
 
 <dialog id="season">
   <div class="dlg-head">
-    <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 8-8M20 12a8 8 0 0 1-8 8"/><path d="M4 12l3-3M4 12l3 3M20 12l-3-3M20 12l-3 3"/></svg></span>Temporadas</h2>
+    <h2 class="panel-title"><span class="panel-icon amber" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 8-8M20 12a8 8 0 0 1-8 8"/><path d="M4 12l3-3M4 12l3 3M20 12l-3-3M20 12l-3 3"/></svg></span>Temporadas</h2>
     <button class="btn-ghost" id="season-close">Fechar</button>
   </div>
   <div class="dlg-body">
@@ -1578,7 +1692,7 @@
 
 <dialog id="card">
   <div class="dlg-head">
-    <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18"/></svg></span>Cartão da semana</h2>
+    <h2 class="panel-title"><span class="panel-icon amber" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18"/></svg></span>Cartão da semana</h2>
     <button class="btn-ghost" id="card-close">Fechar</button>
   </div>
   <div class="dlg-body">
@@ -1593,7 +1707,7 @@
 
 <dialog id="duckpad">
   <div class="dlg-head">
-    <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14.5" r="6"/><circle cx="15.6" cy="8.6" r="3.4"/><path d="M18.7 8.1c1.2-.2 2.2.3 2.2 1s-1 1.2-2.2 1c-.5-.1-.9-.5-.9-1s.4-.9.9-1z"/><circle cx="16.5" cy="7.7" r=".5" fill="currentColor" stroke="none"/></svg></span>Patoterapia</h2>
+    <h2 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14.5" r="6"/><circle cx="15.6" cy="8.6" r="3.4"/><path d="M18.7 8.1c1.2-.2 2.2.3 2.2 1s-1 1.2-2.2 1c-.5-.1-.9-.5-.9-1s.4-.9.9-1z"/><circle cx="16.5" cy="7.7" r=".5" fill="currentColor" stroke="none"/></svg></span>Patoterapia</h2>
     <button class="btn-ghost" id="duck-close">Fechar</button>
   </div>
   <div class="dlg-body">
@@ -1617,7 +1731,7 @@
 
 <dialog id="lib-detail">
   <div class="dlg-head">
-    <h2 class="panel-title" id="lib-detail-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v9A2.5 2.5 0 0 1 17.5 17H9l-5 4Z"/></svg></span>Sessão</h2>
+    <h2 class="panel-title" id="lib-detail-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v9A2.5 2.5 0 0 1 17.5 17H9l-5 4Z"/></svg></span>Sessão</h2>
     <button class="btn-ghost" id="lib-detail-close">Fechar</button>
   </div>
   <div class="dlg-body">
@@ -1632,7 +1746,7 @@
 
 <dialog id="glossary">
   <div class="dlg-head">
-    <h2 class="panel-title"><span class="panel-icon rest" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v18H6.5A2.5 2.5 0 0 1 4 18.5v-13Z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v18h5.5a2.5 2.5 0 0 0 2.5-2.5v-13Z"/></svg></span>Glossário pessoal</h2>
+    <h2 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v18H6.5A2.5 2.5 0 0 1 4 18.5v-13Z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v18h5.5a2.5 2.5 0 0 0 2.5-2.5v-13Z"/></svg></span>Glossário pessoal</h2>
     <button class="btn-ghost" id="glossary-close">Fechar</button>
   </div>
   <div class="dlg-body lib-body">
@@ -1644,7 +1758,7 @@
 
 <dialog id="duck-library">
   <div class="dlg-head">
-    <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14.5" r="6"/><circle cx="15.6" cy="8.6" r="3.4"/><path d="M18.7 8.1c1.2-.2 2.2.3 2.2 1s-1 1.2-2.2 1c-.5-.1-.9-.5-.9-1s.4-.9.9-1z"/><circle cx="16.5" cy="7.7" r=".5" fill="currentColor" stroke="none"/></svg></span>Biblioteca da Patoterapia</h2>
+    <h2 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14.5" r="6"/><circle cx="15.6" cy="8.6" r="3.4"/><path d="M18.7 8.1c1.2-.2 2.2.3 2.2 1s-1 1.2-2.2 1c-.5-.1-.9-.5-.9-1s.4-.9.9-1z"/><circle cx="16.5" cy="7.7" r=".5" fill="currentColor" stroke="none"/></svg></span>Biblioteca da Patoterapia</h2>
     <button class="btn-ghost" id="lib-close">Fechar</button>
   </div>
   <div class="dlg-body lib-body">
@@ -5944,6 +6058,10 @@
     $("btn-capsule").hidden = !S.panels.capsula;
     $("panel-sound").hidden = !S.panels.musica;
     $("panel-dev").hidden = !S.dev;
+    // a nav flutuante só mostra atalhos pra seções que existem na tela agora
+    if($("nav-habitos")) $("nav-habitos").hidden = !S.panels.habitos;
+    if($("nav-leitura")) $("nav-leitura").hidden = !S.panels.leitura;
+    if($("nav-dev")) $("nav-dev").hidden = !S.dev;
   }
 
   /* ---------- tema ---------- */
@@ -5951,17 +6069,12 @@
     var t = S.theme || "auto";
     if(t === "auto") document.documentElement.removeAttribute("data-theme");
     else document.documentElement.setAttribute("data-theme", t);
-    var names = { auto:"Tema: automático", claro:"Tema: claro", escuro:"Tema: escuro", "alto-contraste":"Tema: alto contraste" };
-    var label = names[t] || names.auto;
-    var btn = $("btn-theme");
-    var icon = btn.querySelector("svg");
-    btn.textContent = "";
-    if(icon) btn.appendChild(icon);
-    var span = document.createElement("span");
-    span.className = "btn-label";
-    span.textContent = label.replace(/^Tema: /, "");
-    btn.appendChild(span);
-    btn.setAttribute("aria-label", label);
+    var toggle = $("theme-toggle");
+    if(toggle){
+      toggle.querySelectorAll("button[data-theme-choice]").forEach(function(b){
+        b.setAttribute("aria-pressed", b.getAttribute("data-theme-choice") === t ? "true" : "false");
+      });
+    }
   }
 
   /* ---------- player externo ---------- */
@@ -6353,12 +6466,14 @@
     });
   };
 
-  // automático → claro → escuro → alto contraste
-  $("btn-theme").onclick = function(){
-    var seq = ["auto", "claro", "escuro", "alto-contraste"];
-    S.theme = seq[(seq.indexOf(S.theme || "auto") + 1) % seq.length];
+  // pílula de 3 estados: claro / escuro / alto contraste (o "automático" é o estado
+  // implícito de nenhum dos três selecionado — segue prefers-color-scheme sozinho)
+  $("theme-toggle").addEventListener("click", function(e){
+    var btn = e.target.closest("button[data-theme-choice]");
+    if(!btn) return;
+    S.theme = btn.getAttribute("data-theme-choice");
     save(); applyTheme();
-  };
+  });
 
   // player externo
   $("embed-set").onclick = function(){
@@ -6584,6 +6699,47 @@
     render();
   }
 
+  /* ---------- nav flutuante: rola até a seção e marca o item ativo ---------- */
+  function initFloatNav(){
+    var items = Array.prototype.slice.call(document.querySelectorAll(".float-nav .nav-item"));
+    if(!items.length) return;
+    var reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function setCurrent(item){
+      items.forEach(function(i){ i.removeAttribute("aria-current"); });
+      if(item) item.setAttribute("aria-current", "page");
+    }
+
+    items.forEach(function(item){
+      item.addEventListener("click", function(){
+        var target = $(item.getAttribute("data-nav-target"));
+        if(!target) return;
+        target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+        setCurrent(item);
+      });
+    });
+
+    // além do clique, o item ativo também acompanha a rolagem sozinho
+    var byTarget = {};
+    var targets = [];
+    items.forEach(function(item){
+      var id = item.getAttribute("data-nav-target");
+      var el = $(id);
+      if(!el) return;
+      byTarget[id] = item;
+      targets.push(el);
+    });
+    if(!targets.length || !("IntersectionObserver" in window)) return;
+    var io = new IntersectionObserver(function(entries){
+      var best = null;
+      entries.forEach(function(entry){
+        if(entry.isIntersecting && (!best || entry.intersectionRatio > best.intersectionRatio)) best = entry;
+      });
+      if(best) setCurrent(byTarget[best.target.id]);
+    }, { threshold: 0.5 });
+    targets.forEach(function(el){ io.observe(el); });
+  }
+
   applyTheme();
   checkAuth();
   checkResetLink();
@@ -6592,6 +6748,7 @@
   renderHabitForm();
   resume();
   renderEmbed();
+  initFloatNav();
 })();
 </script>
 </body>
