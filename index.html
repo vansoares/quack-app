@@ -7,61 +7,71 @@
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='14' cy='21' rx='9.4' ry='5.8' fill='%23E08A3C'/%3E%3Ccircle cx='20.5' cy='12.5' r='7' fill='%23E08A3C'/%3E%3Cpath d='M26.6 12.2 L31 13.6 L26.6 15.2 Z' fill='%23DBE3EF'/%3E%3Ccircle cx='22.4' cy='10.8' r='1.7' fill='%230F1621'/%3E%3Ccircle cx='23' cy='10.2' r='.6' fill='%23ffffff'/%3E%3Cg stroke='%2367788F' stroke-width='1.7' stroke-linecap='round'%3E%3Cline x1='2' y1='28' x2='10' y2='28'/%3E%3Cline x1='13' y1='28' x2='22' y2='28'/%3E%3Cline x1='25' y1='28' x2='30' y2='28'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
   :root{
     color-scheme:light;
-    --paper:#E8ECF2;
-    --grid-a:#D6DEE9;
-    --grid-b:#DFE5EE;
-    --card:#F7F9FC;
-    --panel:rgba(247,249,252,.82);
-    --field:#FCFDFE;
-    --ink:#131E33;
-    --ink-hover:#22304C;
-    --on-ink:#F7F9FC;
-    --ink-2:#4B5C78;
-    --ink-3:#8695AD;
-    --line:#C2CDDC;
-    --signal:#B4601A;
-    --signal-soft:#F0DFCB;
-    --rest:#2C7466;
-    --rest-soft:#D6E7E2;
-    --scrim:rgba(19,30,51,.36);
+    /* ---- base e vidro ---- */
+    --paper:#F2EFE8;
+    --grid-a:#E4E0D6;
+    --grid-b:#EAE6DC;
+    --card:rgba(255,255,255,0.62);
+    --panel:rgba(255,255,255,0.55);
+    --field:rgba(255,255,255,0.75);
+    --glass-border:rgba(255,255,255,0.7);
+    --glass-blur:blur(20px) saturate(140%);
+    --glass-blur-strong:blur(26px) saturate(150%);
+    --glass-shadow:0 8px 32px rgba(43,42,40,0.10), 0 1px 2px rgba(43,42,40,0.06);
+    /* ---- tinta ---- */
+    --ink:#2B2A28;
+    --ink-hover:#171613;
+    --on-ink:#F7F5F0;
+    --ink-2:#5B5850;
+    --ink-3:#66625A;
+    --line:rgba(43,42,40,0.16);
+    /* ---- acentos funcionais (foco / pausa) ---- */
+    /* escurecidos o suficiente pra passar 4.5:1 como texto sobre --paper (AA) */
+    --signal:#9C4A2B;
+    --signal-soft:#F1DCCE;
+    --rest:#2B5A69;
+    --rest-soft:#D9E7EA;
+    --scrim:rgba(30,26,20,.40);
     --topic-s:52%;
     --topic-l:34%;
     --topic-bg-s:58%;
     --topic-bg-l:90%;
     --sp:8px;
-    --mono:"IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-    --sans:"IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    --r-lg:26px;
+    --r-md:18px;
+    --r-sm:12px;
+    --r-pill:999px;
+    --mono:"Inter", system-ui, -apple-system, sans-serif;
+    --sans:"Inter", system-ui, -apple-system, sans-serif;
   }
 
-  /* papel milimetrado vira blueprint: mesma lógica, luz invertida */
+  /* fundo escuro: mesma lógica de vidro, luz invertida */
   @media (prefers-color-scheme: dark){
-    :root:not([data-theme="claro"]){
+    :root:not([data-theme="claro"]):not([data-theme="alto-contraste"]){
       color-scheme:dark;
-      --paper:#0F1621;
-      --grid-a:#1A2433;
-      --grid-b:#16202C;
-      --card:#141D28;
-      --panel:rgba(20,29,40,.86);
-      --field:#0C131C;
-      --ink:#DBE3EF;
-      --ink-hover:#C4CFDF;
-      --on-ink:#0F1621;
-      --ink-2:#9AA9C0;
-      --ink-3:#67788F;
-      --line:#2B3849;
-      --signal:#E08A3C;
-      --signal-soft:#3A2A17;
-      --rest:#4FB3A0;
-      --rest-soft:#17302B;
-      --scrim:rgba(4,8,14,.6);
-    --topic-s:58%;
-    --topic-l:70%;
-    --topic-bg-s:30%;
-    --topic-bg-l:20%;
+      --paper:#171512;
+      --grid-a:#232019;
+      --grid-b:#1D1B16;
+      --card:rgba(40,37,32,0.62);
+      --panel:rgba(40,37,32,0.55);
+      --field:rgba(255,255,255,0.06);
+      --glass-border:rgba(255,255,255,0.10);
+      --glass-shadow:0 8px 32px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.25);
+      --ink:#F3F0E9;
+      --ink-hover:#FFFFFF;
+      --on-ink:#171512;
+      --ink-2:#C8C3B8;
+      --ink-3:#A39D8F;
+      --line:rgba(255,255,255,0.14);
+      --signal:#E0966F;
+      --signal-soft:#3A2A1E;
+      --rest:#6FB4C4;
+      --rest-soft:#173036;
+      --scrim:rgba(4,4,3,.6);
       --topic-s:58%;
       --topic-l:70%;
       --topic-bg-s:30%;
@@ -71,91 +81,194 @@
 
   :root[data-theme="escuro"]{
     color-scheme:dark;
-    --paper:#0F1621;
-    --grid-a:#1A2433;
-    --grid-b:#16202C;
-    --card:#141D28;
-    --panel:rgba(20,29,40,.86);
-    --field:#0C131C;
-    --ink:#DBE3EF;
-    --ink-hover:#C4CFDF;
-    --on-ink:#0F1621;
-    --ink-2:#9AA9C0;
-    --ink-3:#67788F;
-    --line:#2B3849;
-    --signal:#E08A3C;
-    --signal-soft:#3A2A17;
-    --rest:#4FB3A0;
-    --rest-soft:#17302B;
-    --scrim:rgba(4,8,14,.6);
+    --paper:#171512;
+    --grid-a:#232019;
+    --grid-b:#1D1B16;
+    --card:rgba(40,37,32,0.62);
+    --panel:rgba(40,37,32,0.55);
+    --field:rgba(255,255,255,0.06);
+    --glass-border:rgba(255,255,255,0.10);
+    --glass-shadow:0 8px 32px rgba(0,0,0,0.35), 0 1px 2px rgba(0,0,0,0.25);
+    --ink:#F3F0E9;
+    --ink-hover:#FFFFFF;
+    --on-ink:#171512;
+    --ink-2:#C8C3B8;
+    --ink-3:#A39D8F;
+    --line:rgba(255,255,255,0.14);
+    --signal:#E0966F;
+    --signal-soft:#3A2A1E;
+    --rest:#6FB4C4;
+    --rest-soft:#173036;
+    --scrim:rgba(4,4,3,.6);
+    --topic-s:58%;
+    --topic-l:70%;
+    --topic-bg-s:30%;
+    --topic-bg-l:20%;
+  }
+
+  /* alto contraste: sem vidro, sem blur, cor sólida — pensado pra baixa visão */
+  :root[data-theme="alto-contraste"]{
+    color-scheme:light;
+    --paper:#FFFFFF;
+    --grid-a:#FFFFFF;
+    --grid-b:#FFFFFF;
+    --card:#FFFFFF;
+    --panel:#FFFFFF;
+    --field:#FFFFFF;
+    --glass-border:#000000;
+    --glass-blur:none;
+    --glass-blur-strong:none;
+    --glass-shadow:none;
+    --ink:#000000;
+    --ink-hover:#000000;
+    --on-ink:#FFFFFF;
+    --ink-2:#000000;
+    --ink-3:#2B2A28;
+    --line:#000000;
+    --signal:#A03E00;
+    --signal-soft:#FFFFFF;
+    --rest:#00594A;
+    --rest-soft:#FFFFFF;
+    --scrim:rgba(0,0,0,.55);
+    --topic-s:70%;
+    --topic-l:28%;
+    --topic-bg-s:0%;
+    --topic-bg-l:100%;
+  }
+  :root[data-theme="alto-contraste"] .glow{display:none}
+  :root[data-theme="alto-contraste"] *{backdrop-filter:none !important;-webkit-backdrop-filter:none !important}
+  :root[data-theme="alto-contraste"] .panel,
+  :root[data-theme="alto-contraste"] dialog,
+  :root[data-theme="alto-contraste"] .figures,
+  :root[data-theme="alto-contraste"] .glossary-row,
+  :root[data-theme="alto-contraste"] .lib-row,
+  :root[data-theme="alto-contraste"] .empty-state{border-width:2px}
+
+  /* respeita preferências do sistema além do toggle manual */
+  @media (prefers-contrast: more), (forced-colors: active){
+    .panel,dialog,.toast,.figures,.empty-state,.glossary-row,.lib-row{
+      backdrop-filter:none !important;-webkit-backdrop-filter:none !important;border-width:2px;
+    }
+    .glow{opacity:.12}
+  }
+  @media (prefers-reduced-transparency: reduce){
+    .panel,dialog,.toast,.figures,.empty-state,.glossary-row,.lib-row,.modes,.range,.seg,.wd{
+      backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
+    }
+    .glow{display:none}
   }
 
   *{box-sizing:border-box}
   html,body{margin:0;padding:0}
 
+  .skip-link{
+    position:absolute;left:14px;top:-70px;z-index:100;
+    background:var(--ink);color:var(--on-ink);
+    padding:12px 18px;border-radius:var(--r-sm);
+    font-family:var(--sans);font-weight:700;font-size:13px;text-decoration:none;
+    transition:top .2s cubic-bezier(.22,.8,.28,1);
+  }
+  .skip-link:focus{top:14px}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
   body{
     font-family:var(--sans);
     color:var(--ink);
     background-color:var(--paper);
-    background-image:
-      repeating-linear-gradient(to right, var(--grid-a) 0 1px, transparent 1px 24px),
-      repeating-linear-gradient(to bottom, var(--grid-b) 0 1px, transparent 1px 24px);
-    background-position:0 0;
     -webkit-font-smoothing:antialiased;
     min-height:100vh;
+    overflow-x:hidden;
+    transition:background-color .4s cubic-bezier(.22,.8,.28,1), color .4s cubic-bezier(.22,.8,.28,1);
   }
 
-  .sheet{max-width:1140px;margin:0 auto;padding:calc(var(--sp)*4) calc(var(--sp)*3) calc(var(--sp)*8)}
+  /* ---------- glow de fundo: a "lagoa" por trás do vidro ---------- */
+  .glow{position:fixed;inset:-20%;z-index:0;pointer-events:none;filter:blur(70px);opacity:.5}
+  .glow span{position:absolute;border-radius:50%}
+  .glow .g1{width:46vw;height:46vw;left:-8%;top:4%;background:var(--signal);animation:glowdrift1 26s ease-in-out infinite}
+  .glow .g2{width:50vw;height:50vw;right:-12%;top:28%;background:var(--rest);animation:glowdrift2 32s ease-in-out infinite}
+  .glow .g3{width:30vw;height:30vw;left:32%;bottom:-10%;background:var(--rest);opacity:.45;animation:glowdrift1 22s ease-in-out infinite reverse}
+  @keyframes glowdrift1{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(3%,4%) scale(1.06)}}
+  @keyframes glowdrift2{0%,100%{transform:translate(0,0) scale(1)}50%{transform:translate(-4%,-3%) scale(1.04)}}
+  :root[data-theme="alto-contraste"] .glow span{animation:none}
+
+  .sheet{position:relative;z-index:1;max-width:1140px;margin:0 auto;padding:calc(var(--sp)*4) calc(var(--sp)*3) calc(var(--sp)*8)}
+
+  .app-footer{
+    padding:calc(var(--sp)*3) 0 calc(var(--sp)*1);
+    font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+    color:var(--ink-3);text-align:center;
+  }
 
   /* ---------- cabeçalho ---------- */
   .top{
-    display:flex;align-items:flex-end;justify-content:space-between;gap:calc(var(--sp)*2);
-    border-bottom:1px solid var(--ink);padding-bottom:calc(var(--sp)*1.5);margin-bottom:calc(var(--sp)*4);
+    display:flex;align-items:center;justify-content:space-between;gap:calc(var(--sp)*2);
+    padding:14px 18px;margin-bottom:calc(var(--sp)*4);
+    background:var(--panel);border:1px solid var(--glass-border);border-radius:var(--r-lg);
+    backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);
+    box-shadow:var(--glass-shadow);
+    flex-wrap:wrap;row-gap:10px;
   }
-  .brandwrap{display:flex;align-items:center;gap:13px}
-  .duck{width:38px;height:38px;flex:none;display:block}
-  @media (max-width:520px){ .duck{width:30px;height:30px} }
+  .brandwrap{display:flex;align-items:center;gap:13px;min-width:0}
+  .duck{width:38px;height:38px;flex:none;display:block;padding:6px;box-sizing:content-box;
+    background:var(--card);border:1px solid var(--glass-border);border-radius:var(--r-sm);
+  }
+  @media (max-width:520px){ .duck{width:26px;height:26px} }
 
   .brand h1{
-    font-family:var(--mono);font-weight:600;font-size:22px;letter-spacing:-.02em;margin:0;
+    font-family:var(--sans);font-weight:800;font-size:20px;letter-spacing:-.02em;margin:0;
   }
   .eyebrow{
-    font-family:var(--mono);font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;
-    color:var(--ink-3);margin:0 0 4px;
+    font-family:var(--sans);font-size:11px;font-weight:700;letter-spacing:.10em;text-transform:uppercase;
+    color:var(--rest);margin:0 0 4px;
   }
-  .top-actions{display:flex;gap:var(--sp)}
-
-  .app-footer{
-    font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;
-    color:var(--ink-3);text-align:center;
-    border-top:1px solid var(--line);margin-top:calc(var(--sp)*6);padding-top:calc(var(--sp)*2.5);
+  .top-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;min-width:0}
+  /* telas estreitas: os botões do topo viram só ícone (o rótulo continua acessível via aria-label) */
+  @media (max-width:760px){
+    .top-actions .btn-label{
+      position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
+      clip:rect(0,0,0,0);white-space:nowrap;border:0;
+    }
+    .top-actions .btn-ghost{padding:10px;width:40px;height:40px;justify-content:center}
   }
 
   /* ---------- botões ---------- */
-  button{font-family:var(--mono);cursor:pointer;border-radius:2px;transition:background-color .12s ease,color .12s ease,border-color .12s ease}
-  button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--signal);outline-offset:2px}
+  button{font-family:var(--sans);cursor:pointer;border-radius:var(--r-md);transition:background-color .12s ease,color .12s ease,border-color .12s ease,transform .12s ease;min-height:36px}
+  button:focus-visible,input:focus-visible,select:focus-visible,[tabindex]:focus-visible{outline:3px solid var(--ink);outline-offset:3px;border-radius:8px}
+  :root[data-theme="escuro"] button:focus-visible,:root[data-theme="escuro"] input:focus-visible,:root[data-theme="escuro"] select:focus-visible,:root[data-theme="escuro"] [tabindex]:focus-visible{outline-color:#fff}
 
   .btn-ghost{
-    background:transparent;border:1px solid var(--line);color:var(--ink-2);
-    font-size:11px;letter-spacing:.12em;text-transform:uppercase;padding:7px 11px;
+    background:var(--panel);border:1px solid var(--glass-border);color:var(--ink-2);
+    font-size:12.5px;font-weight:600;letter-spacing:.01em;border-radius:var(--r-pill);padding:9px 16px;
+    backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);
+    display:inline-flex;align-items:center;gap:7px;
   }
-  .btn-ghost:hover{border-color:var(--ink);color:var(--ink)}
+  .btn-ghost:hover{border-color:var(--ink-3);color:var(--ink)}
+  .btn-ghost svg{flex:none}
 
   .btn-main{
-    background:var(--ink);border:1px solid var(--ink);color:var(--on-ink);
-    font-size:12px;letter-spacing:.16em;text-transform:uppercase;font-weight:500;padding:13px 30px;
+    background:linear-gradient(135deg, var(--signal), var(--rest) 130%);
+    border:1px solid transparent;color:var(--on-ink);
+    font-size:13.5px;letter-spacing:.01em;font-weight:700;padding:14px 32px;border-radius:var(--r-pill);
+    box-shadow:0 6px 18px rgba(156,74,43,0.35);
+    display:inline-flex;align-items:center;gap:8px;
   }
-  .btn-main:hover{background:var(--ink-hover)}
-  .btn-main.running{background:var(--signal);border-color:var(--signal)}
-  .btn-main.running:hover{background:#9C5115}
+  .btn-main:hover{filter:brightness(1.05)}
+  .btn-main:active{transform:scale(.97)}
+  .btn-main.running{background:var(--signal);box-shadow:0 6px 18px rgba(156,74,43,0.35)}
+  .btn-main.running:hover{filter:brightness(1.08)}
+  :root[data-theme="alto-contraste"] .btn-main{background:#000;color:#fff;box-shadow:none}
+  :root[data-theme="alto-contraste"] .btn-ghost{background:#fff;border-width:2px}
 
   /* ---------- painéis ---------- */
   .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:calc(var(--sp)*3)}
   .panel{
     background:var(--panel);
-    border:1px solid var(--line);
-    border-radius:2px;
+    border:1px solid var(--glass-border);
+    border-radius:var(--r-lg);
     padding:calc(var(--sp)*3);
+    backdrop-filter:var(--glass-blur);
+    -webkit-backdrop-filter:var(--glass-blur);
+    box-shadow:var(--glass-shadow);
   }
   .panel-head{
     display:flex;align-items:center;justify-content:space-between;gap:var(--sp);
@@ -165,9 +278,31 @@
     font-family:var(--mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;
     color:var(--ink-2);margin:0;font-weight:500;
   }
+  /* hierarquia: os títulos de seção (h2/h3) sobem de nível — o resto (badges de estado) fica como eyebrow */
+  h2.panel-title{
+    font-size:18px;font-weight:700;letter-spacing:-.01em;text-transform:none;
+    color:var(--ink);display:flex;align-items:center;gap:10px;
+  }
+  h3.panel-title{
+    font-size:15px;font-weight:700;letter-spacing:-.005em;text-transform:none;
+    color:var(--ink);display:flex;align-items:center;gap:8px;
+  }
+  .panel-icon{
+    width:32px;height:32px;flex:none;border-radius:var(--r-sm);
+    display:flex;align-items:center;justify-content:center;
+    background:color-mix(in srgb, var(--signal) 26%, transparent);color:var(--ink);
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,0.35);
+  }
+  /* o ícone fica sempre na cor de tinta (contraste forte); só o fundo carrega a cor da ferramenta —
+     ícone e fundo na MESMA família de cor tendem a se confundir entre si */
+  .panel-icon svg{width:17px;height:17px}
+  .panel-icon.rest{background:color-mix(in srgb, var(--rest) 26%, transparent)}
+  :root[data-theme="alto-contraste"] .panel-icon{background:#fff;color:#000;box-shadow:inset 0 0 0 2px #000}
+  h3 .panel-icon{width:26px;height:26px}
+  h3 .panel-icon svg{width:14px;height:14px}
 
   /* ---------- timer ---------- */
-  .modes{display:flex;gap:0;border:1px solid var(--line);border-radius:2px;overflow:hidden;width:fit-content;margin:0 auto calc(var(--sp)*3)}
+  .modes{display:flex;gap:0;border:1px solid var(--glass-border);border-radius:var(--r-pill);overflow:hidden;width:fit-content;margin:0 auto calc(var(--sp)*3);background:var(--panel);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
   .modes button{
     background:transparent;border:0;border-right:1px solid var(--line);color:var(--ink-3);
     font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;padding:8px 14px;border-radius:0;
@@ -187,10 +322,30 @@
   .dial-label{
     font-family:var(--mono);font-size:10px;letter-spacing:.22em;text-transform:uppercase;color:var(--ink-3);
   }
-  .tick{stroke:var(--line);stroke-width:1}
-  .tick.major{stroke:var(--ink-3)}
-  .track{fill:none;stroke:var(--grid-a);stroke-width:6}
-  .trace{fill:none;stroke:var(--signal);stroke-width:6;stroke-linecap:butt;transition:stroke-dashoffset .3s linear}
+  /* ---------- patinho acompanhando os minutos, no lugar dos ponteiros ---------- */
+  /* rotação recalculada a cada frame (ver orbitFrame no JS) — sem transition CSS,
+     senão ela briga com as escritas por rAF e o giro fica com solavancos */
+  .duck-orbit{position:absolute;inset:0;pointer-events:none}
+  .duck-orbit-spin{
+    position:absolute;inset:0;transform-origin:50% 50%;
+    transform:rotate(0deg);
+  }
+  .duck-orbit-pos{
+    position:absolute;left:50%;top:6%;
+    transform:translate(-50%,-50%) rotate(0deg);
+  }
+  .duck-orbit-duck{display:block;color:var(--signal);filter:drop-shadow(0 2px 4px rgba(0,0,0,.18));transform-origin:50% 70%}
+  body.mode-pausa .duck-orbit-duck{color:var(--rest)}
+  body.timer-running .duck-orbit-duck{animation:duck-paddle 1s ease-in-out infinite}
+  @keyframes duck-paddle{
+    0%,100%{transform:rotate(-4deg) translateY(0)}
+    50%{transform:rotate(4deg) translateY(-1px)}
+  }
+  @media (prefers-reduced-motion: reduce){
+    .duck-orbit-duck{animation:none !important}
+  }
+  .track{fill:none;stroke:var(--grid-a);stroke-width:26}
+  .trace{fill:none;stroke:var(--signal);stroke-width:26;stroke-linecap:butt;transition:stroke-dashoffset .3s linear}
   body.mode-pausa .trace{stroke:var(--rest)}
 
   .controls{display:flex;align-items:center;justify-content:center;gap:var(--sp);margin-top:calc(var(--sp)*3)}
@@ -212,7 +367,7 @@
   .new-task{display:flex;gap:var(--sp);margin-bottom:calc(var(--sp)*2)}
   input[type=text],input[type=number],select{
     font-family:var(--sans);font-size:14px;color:var(--ink);
-    background:var(--field);border:1px solid var(--line);border-radius:2px;padding:9px 10px;
+    background:var(--field);border:1px solid var(--line);border-radius:var(--r-md);padding:9px 10px;
   }
   input[type=text]{flex:1;min-width:0}
   input[type=number]{width:62px;font-family:var(--mono);text-align:center}
@@ -226,7 +381,7 @@
   .task.active{background:linear-gradient(to right, var(--signal-soft), transparent 70%);margin:0 -8px;padding-left:8px;padding-right:8px}
   .task.done .title{color:var(--ink-3);text-decoration:line-through}
   .check{
-    width:17px;height:17px;flex:none;border:1px solid var(--ink-3);border-radius:2px;background:transparent;padding:0;
+    width:17px;height:17px;flex:none;border:1px solid var(--ink-3);border-radius:var(--r-md);background:transparent;padding:0;
     display:grid;place-items:center;color:transparent;font-size:11px;line-height:1;
   }
   .task.done .check{background:var(--rest);border-color:var(--rest);color:var(--on-ink)}
@@ -237,8 +392,9 @@
   .kill:hover{color:var(--signal)}
 
   .empty-state{
-    border:1px dashed var(--line);border-radius:2px;padding:calc(var(--sp)*3);text-align:center;
+    border:1px dashed var(--line);border-radius:var(--r-md);padding:calc(var(--sp)*3);text-align:center;
     color:var(--ink-3);font-size:13.5px;
+    background:var(--panel);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);
   }
 
   .list-foot{
@@ -251,7 +407,7 @@
 
   /* ---------- balanço ---------- */
   .stats{grid-column:1 / -1}
-  .range{display:flex;gap:0;border:1px solid var(--line);border-radius:2px;overflow:hidden}
+  .range{display:flex;gap:0;border:1px solid var(--glass-border);border-radius:var(--r-pill);overflow:hidden;background:var(--panel);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
   .range button{
     background:transparent;border:0;border-right:1px solid var(--line);color:var(--ink-3);
     font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;padding:6px 12px;border-radius:0;
@@ -259,7 +415,7 @@
   .range button:last-child{border-right:0}
   .range button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink)}
 
-  .figures{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:2px;margin-bottom:calc(var(--sp)*3)}
+  .figures{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--glass-border);border-radius:var(--r-md);margin-bottom:calc(var(--sp)*3);overflow:hidden;backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
   .fig{background:var(--card);padding:calc(var(--sp)*2)}
   .fig .n{font-family:var(--mono);font-size:24px;font-weight:500;font-variant-numeric:tabular-nums;letter-spacing:-.02em;line-height:1.1}
   .fig .l{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);margin-top:5px}
@@ -277,10 +433,12 @@
 
   /* ---------- ajustes ---------- */
   dialog{
-    border:1px solid var(--ink);border-radius:2px;padding:0;background:var(--card);color:var(--ink);
+    border:1px solid var(--glass-border);border-radius:var(--r-lg);padding:0;background:var(--panel);color:var(--ink);
     width:min(430px,92vw);
+    backdrop-filter:var(--glass-blur-strong);-webkit-backdrop-filter:var(--glass-blur-strong);
+    box-shadow:var(--glass-shadow);
   }
-  dialog::backdrop{background:var(--scrim)}
+  dialog::backdrop{background:var(--scrim);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px)}
   .dlg-head{display:flex;justify-content:space-between;align-items:center;padding:calc(var(--sp)*2) calc(var(--sp)*3);border-bottom:1px solid var(--line)}
   .dlg-body{padding:calc(var(--sp)*3);display:flex;flex-direction:column;gap:calc(var(--sp)*2)}
   .field{display:flex;align-items:center;justify-content:space-between;gap:var(--sp);font-size:14px}
@@ -293,8 +451,9 @@
 
   .toast{
     position:fixed;left:50%;bottom:24px;transform:translateX(-50%) translateY(8px);
-    background:var(--ink);color:var(--on-ink);font-family:var(--mono);font-size:11.5px;letter-spacing:.08em;
-    padding:10px 16px;border-radius:2px;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;
+    background:var(--ink);color:var(--on-ink);font-family:var(--sans);font-size:12.5px;font-weight:600;letter-spacing:.02em;
+    padding:12px 20px;border-radius:var(--r-pill);opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;z-index:50;
+    box-shadow:0 10px 30px rgba(0,0,0,0.25);
   }
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
@@ -305,7 +464,7 @@
     background:linear-gradient(to bottom, transparent 60%, var(--grid-a));
   }
   .spine{
-    width:26px;height:96px;border:0;border-radius:2px 2px 0 0;padding:6px 2px;cursor:default;
+    width:26px;height:96px;border:0;border-radius:var(--r-sm) var(--r-sm) 0 0;padding:6px 2px;cursor:default;
     background:hsl(var(--h) var(--topic-s) var(--topic-l));
     color:var(--on-ink);display:flex;align-items:flex-end;justify-content:center;
   }
@@ -316,7 +475,7 @@
   }
   .shelf-legend{font-size:11.5px;color:var(--ink-3);margin:10px 0 0;line-height:1.9}
   .lg{
-    display:inline-block;width:9px;height:9px;border-radius:2px;margin:0 3px 0 8px;
+    display:inline-block;width:9px;height:9px;border-radius:var(--r-md);margin:0 3px 0 8px;
     background:hsl(var(--h) var(--topic-s) var(--topic-l));
   }
 
@@ -336,7 +495,7 @@
   .party svg{width:64px;height:64px;filter:drop-shadow(0 6px 14px rgba(0,0,0,.35))}
   .party p{
     margin:0;font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;
-    color:var(--signal);background:var(--card);border:1px solid var(--signal);border-radius:2px;padding:6px 12px;
+    color:var(--signal);background:var(--card);border:1px solid var(--signal);border-radius:var(--r-md);padding:6px 12px;
   }
   @keyframes swim{
     0%{transform:translate(-50%,60px);opacity:0}
@@ -374,7 +533,7 @@
     color:var(--ink-3);white-space:nowrap;font-variant-numeric:tabular-nums;
   }
   #season, #card{width:min(560px,94vw)}
-  #card-preview{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:2px;background:#0F1621}
+  #card-preview{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:var(--r-md);background:#171512}
 
   /* ---------- leitura ---------- */
   .reading{grid-column:1 / -1}
@@ -392,16 +551,16 @@
   .book.lido .bar-fill{background:var(--ink-3)}
   .page-btn{
     font-family:var(--mono);font-size:10.5px;color:var(--ink-2);background:none;
-    border:1px solid transparent;border-radius:2px;padding:2px 5px;white-space:nowrap;font-variant-numeric:tabular-nums;
+    border:1px solid transparent;border-radius:var(--r-md);padding:2px 5px;white-space:nowrap;font-variant-numeric:tabular-nums;
   }
   .page-btn:hover{border-color:var(--line);color:var(--ink)}
   .page-btn b{color:var(--ink);font-weight:600}
   .page-input{
     font-family:var(--mono);font-size:11px;width:70px;padding:2px 5px;
-    border:1px solid var(--signal);border-radius:2px;background:var(--field);color:var(--ink);
+    border:1px solid var(--signal);border-radius:var(--r-md);background:var(--field);color:var(--ink);
   }
   .mini{
-    background:none;border:1px solid var(--line);border-radius:2px;color:var(--ink-3);
+    background:none;border:1px solid var(--line);border-radius:var(--r-md);color:var(--ink-3);
     font-family:var(--mono);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;padding:4px 8px;
   }
   .mini:hover{border-color:var(--ink);color:var(--ink)}
@@ -429,7 +588,7 @@
   .star:hover{color:var(--signal)}
   .kindtag{
     font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;
-    color:var(--ink-3);border:1px solid var(--line);border-radius:2px;padding:2px 5px;flex:none;
+    color:var(--ink-3);border:1px solid var(--line);border-radius:var(--r-md);padding:2px 5px;flex:none;
   }
 
   /* ---------- cápsula do tempo ---------- */
@@ -457,7 +616,7 @@
   .goal-top{display:flex;align-items:baseline;gap:var(--sp);flex-wrap:wrap}
   .goal-title{font-size:15.5px;font-weight:600;overflow-wrap:anywhere;background:none;border:0;color:var(--ink);padding:0;cursor:pointer;text-align:left;font-family:var(--sans)}
   .goal-title:hover{color:var(--signal)}
-  .goal-year{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--ink-3);border:1px solid var(--line);border-radius:2px;padding:2px 5px}
+  .goal-year{font-family:var(--mono);font-size:9px;letter-spacing:.14em;color:var(--ink-3);border:1px solid var(--line);border-radius:var(--r-md);padding:2px 5px}
   .goal-actions{margin-left:auto;display:flex;align-items:center;gap:6px}
   .goal-bar{display:flex;align-items:center;gap:var(--sp);margin-top:8px}
   .goal-pct{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);white-space:nowrap;font-variant-numeric:tabular-nums}
@@ -471,7 +630,7 @@
 
   .glossary-row{
     display:flex;align-items:center;gap:10px;width:100%;text-align:left;
-    border:1px solid var(--line);border-radius:2px;padding:9px 12px;background:var(--card);
+    border:1px solid var(--line);border-radius:var(--r-md);padding:9px 12px;background:var(--card);
     cursor:pointer;margin-bottom:7px;
   }
   .glossary-row:hover{border-color:var(--signal);background:var(--grid-b)}
@@ -486,7 +645,7 @@
   #lib-search{width:100%}
   .lib-row{
     display:flex;align-items:center;gap:10px;width:100%;text-align:left;
-    border:1px solid var(--line);border-radius:2px;padding:10px 12px;background:var(--card);
+    border:1px solid var(--line);border-radius:var(--r-md);padding:10px 12px;background:var(--card);
     cursor:pointer;
   }
   .lib-row:hover{border-color:var(--signal);background:var(--grid-b)}
@@ -509,7 +668,7 @@
   .lib-detail-top{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
   .lib-q{margin:0 0 12px;font-size:14px;line-height:1.6;color:var(--ink-2)}
   .lib-q b{display:block;color:var(--ink-3);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px}
-  .lib-a{margin:4px 0 0;padding:10px 12px;border-left:2px solid var(--rest);background:var(--rest-soft);border-radius:0 2px 2px 0;font-size:14px;line-height:1.6;color:var(--ink)}
+  .lib-a{margin:4px 0 0;padding:10px 12px;border-left:2px solid var(--rest);background:var(--rest-soft);border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.6;color:var(--ink)}
   .lib-a b{display:block;color:var(--rest);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
 
   /* ---------- mostrador único de dev ---------- */
@@ -555,7 +714,7 @@
 
   /* ---------- conta ---------- */
   .account-box{
-    border:1px solid var(--line);border-radius:2px;padding:calc(var(--sp)*2);
+    border:1px solid var(--line);border-radius:var(--r-md);padding:calc(var(--sp)*2);
     margin-bottom:calc(var(--sp)*2.5);background:var(--card);
   }
   .account-box .btn-ghost{margin-right:8px;margin-top:4px}
@@ -572,7 +731,7 @@
   #btn-account.logged-in:hover{border-color:var(--rest);color:var(--rest);opacity:.85}
   #auth-title{font-size:19px;color:var(--ink);font-weight:600}
   #auth-error:not(:empty){
-    background:var(--signal-soft);border-radius:2px;padding:8px 10px;margin:0;
+    background:var(--signal-soft);border-radius:var(--r-sm);padding:8px 10px;margin:0;
   }
   #auth .quiet{border-color:transparent;color:var(--ink-3);padding-left:0;padding-right:0}
   #auth .quiet:hover{border-color:transparent;color:var(--signal)}
@@ -582,7 +741,7 @@
   /* ---------- notas da tarefa ---------- */
   .note-btn{
     font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
-    background:none;border:1px solid transparent;border-radius:2px;padding:3px 6px;
+    background:none;border:1px solid transparent;border-radius:var(--r-md);padding:3px 6px;
     color:var(--ink-3);opacity:.6;cursor:pointer;flex:none;
   }
   .note-btn:hover{opacity:1;border-color:var(--line);color:var(--ink-2)}
@@ -615,7 +774,7 @@
   .tag.colored:hover{filter:brightness(1.06)}
   .group-name.colored{color:hsl(var(--h) var(--topic-s) var(--topic-l))}
   .swatch{
-    width:11px;height:11px;flex:none;border:0;border-radius:2px;padding:0;
+    width:11px;height:11px;flex:none;border:0;border-radius:var(--r-md);padding:0;
     background:hsl(var(--h) var(--topic-s) var(--topic-l));cursor:pointer;
   }
   .swatch:hover{outline:2px solid hsl(var(--h) var(--topic-s) var(--topic-l));outline-offset:2px}
@@ -628,7 +787,7 @@
   /* ---------- colar lista ---------- */
   textarea{
     font-family:var(--sans);font-size:14px;line-height:1.55;color:var(--ink);
-    background:var(--field);border:1px solid var(--line);border-radius:2px;padding:10px;
+    background:var(--field);border:1px solid var(--line);border-radius:var(--r-md);padding:10px;
     width:100%;min-height:190px;resize:vertical;
   }
   .paste-grid{display:flex;gap:var(--sp);flex-wrap:wrap;align-items:center}
@@ -664,7 +823,7 @@
   .tag.vazio:hover{opacity:1;border-color:var(--line);color:var(--ink-2)}
   .tag-input{
     font-family:var(--mono);font-size:11px;padding:2px 5px;width:110px;
-    border:1px solid var(--signal);border-radius:2px;background:var(--field);color:var(--ink);
+    border:1px solid var(--signal);border-radius:var(--r-md);background:var(--field);color:var(--ink);
   }
 
   /* ---------- hábitos ---------- */
@@ -693,7 +852,7 @@
   .hfreq{display:block;font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);margin-top:3px}
 
   .hcell{
-    width:26px;height:26px;border:1px solid var(--line);border-radius:2px;background:transparent;
+    width:26px;height:26px;border:1px solid var(--line);border-radius:var(--r-md);background:transparent;
     padding:0;display:inline-grid;place-items:center;color:transparent;font-size:12px;line-height:1;
   }
   .hcell:hover{border-color:var(--ink-2)}
@@ -706,7 +865,7 @@
   .new-habit{display:flex;gap:var(--sp);flex-wrap:wrap;align-items:center;margin-top:calc(var(--sp)*2.5);padding-top:calc(var(--sp)*2);border-top:1px solid var(--line)}
   .new-habit input[type=text]{flex:1;min-width:200px}
   .new-habit input[type=number]{width:62px}
-  .wd{display:flex;border:1px solid var(--line);border-radius:2px;overflow:hidden}
+  .wd{display:flex;border:1px solid var(--glass-border);border-radius:var(--r-pill);overflow:hidden;background:var(--panel);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
   .wd button{
     background:transparent;border:0;border-right:1px solid var(--line);color:var(--ink-3);
     font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:8px 9px;border-radius:0;
@@ -717,7 +876,7 @@
   /* ---------- prazos ---------- */
   .due{
     font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
-    border:1px solid transparent;border-radius:2px;padding:3px 6px;white-space:nowrap;flex:none;
+    border:1px solid transparent;border-radius:var(--r-md);padding:3px 6px;white-space:nowrap;flex:none;
     background:transparent;color:var(--ink-3);cursor:pointer;
   }
   .due:hover{border-color:var(--line)}
@@ -728,14 +887,14 @@
   .due.vazio{color:var(--ink-3);opacity:.6;letter-spacing:.12em}
   .due.vazio:hover{opacity:1;color:var(--ink-2)}
   .task.done .due{opacity:.45;background:transparent;color:var(--ink-3);border-color:transparent;font-weight:400}
-  .due-input{font-family:var(--mono);font-size:11px;padding:2px 4px;border:1px solid var(--signal);border-radius:2px;background:var(--field);color:var(--ink)}
+  .due-input{font-family:var(--mono);font-size:11px;padding:2px 4px;border:1px solid var(--signal);border-radius:var(--r-md);background:var(--field);color:var(--ink)}
   #task-due{width:148px;font-family:var(--mono);font-size:12px;color:var(--ink-2)}
   .warn{color:var(--signal);font-weight:600}
 
   /* ---------- som ---------- */
   .sound{grid-column:1 / -1}
   .sound-row{display:flex;flex-wrap:wrap;align-items:center;gap:calc(var(--sp)*2.5)}
-  .seg{display:flex;flex-wrap:wrap;border:1px solid var(--line);border-radius:2px;overflow:hidden}
+  .seg{display:flex;flex-wrap:wrap;border:1px solid var(--glass-border);border-radius:var(--r-pill);overflow:hidden;background:var(--panel);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
   .seg button{
     background:transparent;border:0;border-right:1px solid var(--line);color:var(--ink-3);
     font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;padding:8px 14px;border-radius:0;
@@ -749,13 +908,13 @@
   .embed-wrap{margin-top:calc(var(--sp)*2.5);padding-top:calc(var(--sp)*2);border-top:1px dashed var(--line)}
   .embed-form{display:flex;gap:var(--sp);flex-wrap:wrap;align-items:center}
   .embed-form input[type=text]{flex:1;min-width:240px}
-  .embed-frame{margin-top:calc(var(--sp)*2);border:1px solid var(--line);border-radius:2px;overflow:hidden}
+  .embed-frame{margin-top:calc(var(--sp)*2);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden}
   .embed-frame iframe{display:block;width:100%;border:0}
 
   /* ---------- etiquetas e filtros ---------- */
   .tag{
     font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;
-    color:var(--ink-2);background:var(--grid-a);border-radius:2px;padding:3px 6px;white-space:nowrap;flex:none;
+    color:var(--ink-2);background:var(--grid-a);border-radius:var(--r-md);padding:3px 6px;white-space:nowrap;flex:none;
   }
   .task.done .tag{opacity:.5}
   .now-task .tag{margin-left:2px}
@@ -793,12 +952,10 @@
     *{transition:none !important;animation:none !important}
   }
 </style>
-<script>
-  window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };
-</script>
-<script defer src="/_vercel/insights/script.js"></script>
 </head>
 <body>
+<div class="glow" aria-hidden="true"><span class="g1"></span><span class="g2"></span><span class="g3"></span></div>
+<a class="skip-link" href="#main">Pular para o conteúdo</a>
 <div class="sheet">
 
   <header class="top">
@@ -822,17 +979,36 @@
       </div>
     </div>
     <div class="top-actions">
-      <button class="btn-ghost" id="btn-season">Temporada</button>
-      <button class="btn-ghost" id="btn-card">Cartão da semana</button>
-      <button class="btn-ghost" id="btn-capsule">Cápsula<span class="tab-dot" id="capsule-dot" hidden></span></button>
+      <button class="btn-ghost" id="btn-season" aria-label="Temporada">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 0 1 8-8M20 12a8 8 0 0 1-8 8"/><path d="M4 12l3-3M4 12l3 3M20 12l-3-3M20 12l-3 3"/></svg>
+        <span class="btn-label">Temporada</span>
+      </button>
+      <button class="btn-ghost" id="btn-card" aria-label="Cartão da semana">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18"/></svg>
+        <span class="btn-label">Cartão da semana</span>
+      </button>
+      <button class="btn-ghost" id="btn-capsule" aria-label="Cápsula do tempo">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="5"/><path d="M7 12h10"/></svg>
+        <span class="btn-label">Cápsula</span><span class="tab-dot" id="capsule-dot" hidden></span>
+      </button>
+      <button class="btn-ghost" id="btn-theme" title="Alternar entre automático, claro, escuro e alto contraste">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4.2"/><path d="M12 2.5v2.4M12 19v2.4M4.9 4.9l1.7 1.7M17.4 17.4l1.7 1.7M2.5 12h2.4M19 12h2.4M4.9 19l1.7-1.7M17.4 6.6l1.7-1.7"/></svg>
+        <span class="btn-label">Tema</span>
+      </button>
       <div class="account-group">
-        <button class="btn-ghost" id="btn-account">Entrar</button>
-        <button class="btn-ghost" id="btn-settings">Ajustes</button>
+        <button class="btn-ghost" id="btn-account" aria-label="Entrar">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
+          <span class="btn-label">Entrar</span>
+        </button>
+        <button class="btn-ghost" id="btn-settings" aria-label="Ajustes">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+          <span class="btn-label">Ajustes</span>
+        </button>
       </div>
     </div>
   </header>
 
-  <main class="grid">
+  <main class="grid" id="main">
 
     <!-- TIMER -->
     <section class="panel">
@@ -844,11 +1020,24 @@
 
       <div class="dial">
         <svg viewBox="0 0 300 300" aria-hidden="true">
-          <g id="ticks"></g>
-          <circle class="track" cx="150" cy="150" r="118"></circle>
-          <circle class="trace" id="trace" cx="150" cy="150" r="118"
-                  transform="rotate(-90 150 150)" stroke-dasharray="741.4" stroke-dashoffset="0"></circle>
+          <circle class="track" cx="150" cy="150" r="112"></circle>
+          <circle class="trace" id="trace" cx="150" cy="150" r="112"
+                  transform="rotate(-90 150 150)" stroke-dasharray="703.7" stroke-dashoffset="703.7"></circle>
         </svg>
+        <div class="duck-orbit" id="duck-orbit" aria-hidden="true">
+          <div class="duck-orbit-spin" id="duck-orbit-spin">
+            <div class="duck-orbit-pos" id="duck-orbit-pos">
+              <svg class="duck-orbit-duck" viewBox="0 0 24 24" width="24" height="24">
+                <ellipse cx="10.3" cy="15.6" rx="7.1" ry="4.5" fill="currentColor"/>
+                <circle cx="15.1" cy="9.4" r="4.9" fill="currentColor"/>
+                <path d="M19.4 9.1 L23 10.3 L19.4 11.4 Z" fill="var(--ink)"/>
+                <circle cx="16.7" cy="7.9" r="1.1" fill="var(--paper)"/>
+                <circle cx="17.1" cy="7.55" r=".4" fill="#fff" opacity=".9"/>
+                <path d="M10.6 13.3c1.5-.85 3.2-.85 4.3.35" fill="none" stroke="var(--ink)" stroke-opacity=".16" stroke-width="1.1" stroke-linecap="round"/>
+              </svg>
+            </div>
+          </div>
+        </div>
         <div class="dial-face">
           <div class="digits" id="digits" role="timer" aria-live="off">25:00</div>
           <div class="dial-label" id="dial-label">Foco</div>
@@ -856,10 +1045,23 @@
       </div>
 
       <div class="controls">
-        <button class="btn-main" id="btn-start">Iniciar</button>
-        <button class="btn-ghost" id="btn-partial" title="Registra os minutos já feitos e encerra este bloco" hidden>Registrar e encerrar</button>
-        <button class="btn-ghost" id="btn-reset" title="Voltar ao início do bloco">Zerar</button>
-        <button class="btn-ghost" id="btn-skip" title="Ir para o próximo bloco">Pular</button>
+        <button class="btn-main" id="btn-start">
+          <svg id="icon-play" viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true"><path d="M7 5l12 7-12 7Z"/></svg>
+          <svg id="icon-pause" viewBox="0 0 24 24" width="15" height="15" fill="currentColor" aria-hidden="true" hidden><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>
+          <span id="btn-start-label">Iniciar</span>
+        </button>
+        <button class="btn-ghost" id="btn-partial" title="Registra os minutos já feitos e encerra este bloco" hidden>
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+          Registrar e encerrar
+        </button>
+        <button class="btn-ghost" id="btn-reset" title="Voltar ao início do bloco">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 1 0 3-6.2"/><path d="M4 4v4h4"/></svg>
+          Zerar
+        </button>
+        <button class="btn-ghost" id="btn-skip" title="Ir para o próximo bloco">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 4l10 8-10 8Z"/><path d="M18 4v16"/></svg>
+          Pular
+        </button>
       </div>
 
       <div class="now-task">
@@ -884,7 +1086,7 @@
     <!-- TAREFAS -->
     <section class="panel">
       <div class="panel-head">
-        <h2 class="panel-title">Tarefas</h2>
+        <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 12l2.5 2.5L16 9"/></svg></span>Tarefas</h2>
         <div class="head-right">
           <span class="panel-title" id="tasks-open"></span>
           <div class="seg small" id="task-view" role="group" aria-label="Organização da lista">
@@ -918,7 +1120,7 @@
     <!-- OBJETIVOS DO ANO -->
     <section class="panel goals" id="panel-goals">
       <div class="panel-head">
-        <h2 class="panel-title">Objetivos do ano</h2>
+        <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="1.5" fill="currentColor" stroke="none"/></svg></span>Objetivos do ano</h2>
         <span class="panel-title" id="goals-state"></span>
       </div>
 
@@ -937,7 +1139,7 @@
     <!-- PDI -->
     <section class="panel pdi" id="panel-pdi">
       <div class="panel-head">
-        <h2 class="panel-title">PDI</h2>
+        <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M14.8 9.2l-2 5.6-5.6 2 2-5.6z"/></svg></span>PDI</h2>
         <span class="panel-title" id="pdi-state"></span>
       </div>
       <p class="hint" style="margin:0 0 14px">Plano de desenvolvimento individual: as competências que você quer desenvolver, o que significa chegar lá, e os passos concretos no caminho.</p>
@@ -957,7 +1159,7 @@
     <!-- HÁBITOS -->
     <section class="panel habits" id="panel-habits">
       <div class="panel-head">
-        <h2 class="panel-title">Hábitos</h2>
+        <h2 class="panel-title"><span class="panel-icon rest" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c-4-2.5-7-6-7-10a7 7 0 0 1 14 0c0 4-3 7.5-7 10Z"/><path d="M12 8v5"/></svg></span>Hábitos</h2>
         <span class="panel-title" id="habits-today"></span>
       </div>
 
@@ -990,7 +1192,7 @@
     <!-- LEITURA -->
     <section class="panel reading" id="panel-reading">
       <div class="panel-head">
-        <h2 class="panel-title">Leitura</h2>
+        <h2 class="panel-title"><span class="panel-icon rest" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v18H6.5A2.5 2.5 0 0 1 4 18.5v-13Z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v18h5.5a2.5 2.5 0 0 0 2.5-2.5v-13Z"/></svg></span>Leitura</h2>
         <span class="panel-title" id="reading-state"></span>
       </div>
 
@@ -1017,7 +1219,7 @@
 
       <div class="sub-panel">
         <div class="panel-head">
-          <h3 class="panel-title">Balanço da leitura</h3>
+          <h3 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M11 20V4M18 20v-7"/></svg></span>Balanço da leitura</h3>
           <div class="range" role="group" aria-label="Período">
             <button data-range="semana" aria-pressed="true">Semana</button>
             <button data-range="mes" aria-pressed="false">Mês</button>
@@ -1044,7 +1246,7 @@
     <!-- FILMES E SÉRIES -->
     <section class="panel screen" id="panel-screen">
       <div class="panel-head">
-        <h2 class="panel-title">Filmes e séries</h2>
+        <h2 class="panel-title"><span class="panel-icon rest" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M8 5v14M16 5v14M3 10h5M16 10h5M3 15h5M16 15h5"/></svg></span>Filmes e séries</h2>
         <span class="panel-title" id="screen-state"></span>
       </div>
 
@@ -1074,7 +1276,7 @@
 
       <div class="sub-panel">
         <div class="panel-head">
-          <h3 class="panel-title">Balanço da tela</h3>
+          <h3 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M11 20V4M18 20v-7"/></svg></span>Balanço da tela</h3>
           <div class="range" role="group" aria-label="Período">
             <button data-range="semana" aria-pressed="true">Semana</button>
             <button data-range="mes" aria-pressed="false">Mês</button>
@@ -1095,7 +1297,7 @@
     <!-- FERRAMENTAS DE DEV -->
     <section class="panel dev" id="panel-dev" hidden>
       <div class="panel-head">
-        <h2 class="panel-title">Ferramentas de dev</h2>
+        <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 9l3 3-3 3M13 15h4"/></svg></span>Ferramentas de dev</h2>
       </div>
 
       <div class="devwatch">
@@ -1132,7 +1334,7 @@
 
       <div class="sub-panel">
         <div class="panel-head">
-          <h3 class="panel-title">Patoterapia</h3>
+          <h3 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14.5" r="6"/><circle cx="15.6" cy="8.6" r="3.4"/><path d="M18.7 8.1c1.2-.2 2.2.3 2.2 1s-1 1.2-2.2 1c-.5-.1-.9-.5-.9-1s.4-.9.9-1z"/><circle cx="16.5" cy="7.7" r=".5" fill="currentColor" stroke="none"/></svg></span>Patoterapia</h3>
           <span class="panel-title" id="duck-state"></span>
         </div>
         <p class="hint">Descrever o problema em voz escrita resolve boa parte deles antes de você pedir ajuda a alguém. O patinho não responde — essa é a ideia.</p>
@@ -1147,7 +1349,7 @@
     <!-- SOM -->
     <section class="panel sound" id="panel-sound">
       <div class="panel-head">
-        <h2 class="panel-title">Som</h2>
+        <h2 class="panel-title"><span class="panel-icon rest" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9Z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></span>Som</h2>
         <span class="panel-title" id="sound-state"></span>
       </div>
 
@@ -1179,7 +1381,7 @@
     <!-- BALANÇO -->
     <section class="panel stats">
       <div class="panel-head">
-        <h2 class="panel-title">Balanço</h2>
+        <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M11 20V4M18 20v-7"/></svg></span>Balanço</h2>
         <div class="range" role="group" aria-label="Período do balanço">
           <button data-range="semana" aria-pressed="true">Semana</button>
           <button data-range="mes" aria-pressed="false">Mês</button>
@@ -1218,7 +1420,7 @@
 
 <dialog id="settings">
   <div class="dlg-head">
-    <h2 class="panel-title">Ajustes</h2>
+    <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>Ajustes</h2>
     <button class="btn-ghost" id="dlg-close">Fechar</button>
   </div>
   <div class="dlg-body">
@@ -1244,9 +1446,6 @@
     <div class="field"><label for="s-auto">Começar o próximo bloco sozinho</label><span class="switch"><input type="checkbox" id="s-auto"></span></div>
     <div class="field"><label for="s-sound">Tocar aviso sonoro no fim</label><span class="switch"><input type="checkbox" id="s-sound"></span></div>
     <div class="field"><label for="s-notify">Mostrar notificação do sistema</label><span class="switch"><input type="checkbox" id="s-notify"></span></div>
-
-    <p class="cap-meta" style="margin-top:10px">Aparência</p>
-    <div class="field"><label for="s-theme">Tema</label><select id="s-theme"><option value="auto">Automático</option><option value="claro">Claro</option><option value="escuro">Escuro</option></select></div>
 
     <p class="cap-meta" style="margin-top:10px">Painéis visíveis</p>
     <div class="field"><label for="p-habits">Hábitos</label><span class="switch"><input type="checkbox" id="p-habits"></span></div>
@@ -1274,7 +1473,7 @@
 
 <dialog id="manual">
   <div class="dlg-head">
-    <h2 class="panel-title">Registrar pomodoro</h2>
+    <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/></svg></span>Registrar pomodoro</h2>
     <button class="btn-ghost" id="man-close">Fechar</button>
   </div>
   <div class="dlg-body">
@@ -1295,7 +1494,7 @@
 
 <dialog id="paste">
   <div class="dlg-head">
-    <h2 class="panel-title">Colar lista de tarefas</h2>
+    <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h6"/></svg></span>Colar lista de tarefas</h2>
     <button class="btn-ghost" id="paste-close">Fechar</button>
   </div>
   <div class="dlg-body">
@@ -1316,7 +1515,7 @@
 
 <dialog id="capsule">
   <div class="dlg-head">
-    <h2 class="panel-title">Cápsula do tempo</h2>
+    <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="5"/><path d="M7 12h10"/></svg></span>Cápsula do tempo</h2>
     <button class="btn-ghost" id="cap-close">Fechar</button>
   </div>
   <div class="dlg-body">
@@ -1339,7 +1538,7 @@
 
 <dialog id="capsule-read">
   <div class="dlg-head">
-    <h2 class="panel-title">Cápsula aberta</h2>
+    <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="5"/><path d="M7 9h10M9 13.5h1.4M13.6 13.5H15"/></svg></span>Cápsula aberta</h2>
     <button class="btn-ghost" id="capr-close">Fechar</button>
   </div>
   <div class="dlg-body">
@@ -1350,7 +1549,7 @@
 
 <dialog id="season">
   <div class="dlg-head">
-    <h2 class="panel-title">Temporadas</h2>
+    <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 8-8M20 12a8 8 0 0 1-8 8"/><path d="M4 12l3-3M4 12l3 3M20 12l-3-3M20 12l-3 3"/></svg></span>Temporadas</h2>
     <button class="btn-ghost" id="season-close">Fechar</button>
   </div>
   <div class="dlg-body">
@@ -1377,7 +1576,7 @@
 
 <dialog id="card">
   <div class="dlg-head">
-    <h2 class="panel-title">Cartão da semana</h2>
+    <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18"/></svg></span>Cartão da semana</h2>
     <button class="btn-ghost" id="card-close">Fechar</button>
   </div>
   <div class="dlg-body">
@@ -1392,7 +1591,7 @@
 
 <dialog id="duckpad">
   <div class="dlg-head">
-    <h2 class="panel-title">Patoterapia</h2>
+    <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14.5" r="6"/><circle cx="15.6" cy="8.6" r="3.4"/><path d="M18.7 8.1c1.2-.2 2.2.3 2.2 1s-1 1.2-2.2 1c-.5-.1-.9-.5-.9-1s.4-.9.9-1z"/><circle cx="16.5" cy="7.7" r=".5" fill="currentColor" stroke="none"/></svg></span>Patoterapia</h2>
     <button class="btn-ghost" id="duck-close">Fechar</button>
   </div>
   <div class="dlg-body">
@@ -1416,7 +1615,7 @@
 
 <dialog id="lib-detail">
   <div class="dlg-head">
-    <h2 class="panel-title" id="lib-detail-title">Sessão</h2>
+    <h2 class="panel-title" id="lib-detail-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3h11A2.5 2.5 0 0 1 20 5.5v9A2.5 2.5 0 0 1 17.5 17H9l-5 4Z"/></svg></span>Sessão</h2>
     <button class="btn-ghost" id="lib-detail-close">Fechar</button>
   </div>
   <div class="dlg-body">
@@ -1431,7 +1630,7 @@
 
 <dialog id="glossary">
   <div class="dlg-head">
-    <h2 class="panel-title">Glossário pessoal</h2>
+    <h2 class="panel-title"><span class="panel-icon rest" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v18H6.5A2.5 2.5 0 0 1 4 18.5v-13Z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v18h5.5a2.5 2.5 0 0 0 2.5-2.5v-13Z"/></svg></span>Glossário pessoal</h2>
     <button class="btn-ghost" id="glossary-close">Fechar</button>
   </div>
   <div class="dlg-body lib-body">
@@ -1443,7 +1642,7 @@
 
 <dialog id="duck-library">
   <div class="dlg-head">
-    <h2 class="panel-title">Biblioteca da Patoterapia</h2>
+    <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14.5" r="6"/><circle cx="15.6" cy="8.6" r="3.4"/><path d="M18.7 8.1c1.2-.2 2.2.3 2.2 1s-1 1.2-2.2 1c-.5-.1-.9-.5-.9-1s.4-.9.9-1z"/><circle cx="16.5" cy="7.7" r=".5" fill="currentColor" stroke="none"/></svg></span>Biblioteca da Patoterapia</h2>
     <button class="btn-ghost" id="lib-close">Fechar</button>
   </div>
   <div class="dlg-body lib-body">
@@ -1480,7 +1679,7 @@
 
 <dialog id="changepw">
   <div class="dlg-head">
-    <h2 class="panel-title">Trocar senha</h2>
+    <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2.5"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>Trocar senha</h2>
     <button class="btn-ghost" id="changepw-close">Fechar</button>
   </div>
   <div class="dlg-body">
@@ -1497,7 +1696,7 @@
 
 <dialog id="deleteaccount">
   <div class="dlg-head">
-    <h2 class="panel-title">Excluir conta</h2>
+    <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg></span>Excluir conta</h2>
     <button class="btn-ghost" id="delacc-close">Fechar</button>
   </div>
   <div class="dlg-body">
@@ -1533,10 +1732,10 @@
     watchLog: [],
     seasons: [],
     milestones: [],
-    panels: { habitos:false, leitura:false, tela:false, objetivos:false, pdi:false, temporada:false, capsula:false, musica:false },
+    panels: { habitos:true, leitura:true, tela:true, objetivos:true, pdi:true, temporada:true, capsula:true, musica:true },
     goals: [],
     pdi: [],
-    dev: true,
+    dev: false,
     build: { running:false, startedAt:null, label:"" },
     builds: [],
     review: { running:false, startedAt:null, label:"" },
@@ -1765,7 +1964,9 @@
 
   function applyAccountUI(){
     var logged = !!AUTH.email;
-    $("btn-account").textContent = logged ? "Conta" : "Entrar";
+    var btnAccountLabel = $("btn-account").querySelector(".btn-label");
+    if(btnAccountLabel) btnAccountLabel.textContent = logged ? "Conta" : "Entrar";
+    else $("btn-account").textContent = logged ? "Conta" : "Entrar";
     $("btn-account").classList.toggle("logged-in", logged);
     $("account-logged-out").hidden = logged;
     $("account-logged-in").hidden = !logged;
@@ -2039,6 +2240,7 @@
       return;
     }
     paintClock();
+    ensureOrbit();
     var decorrido = duration("foco") - remaining();
     $("btn-partial").hidden = !(S.timer.mode === "foco" && decorrido >= 5000);
     if(amb && S.sound.fade) applyAmbGain(0.4);
@@ -2151,21 +2353,48 @@
     var secs = Math.floor((ms % MIN) / 1000);
     var text = pad(mins) + ":" + pad(secs);
     $("digits").textContent = text;
-    var C = 2 * Math.PI * 118;
+    var C = 2 * Math.PI * 112;
     var elapsed = Math.min(1, Math.max(0, 1 - ms / total));
-    $("trace").setAttribute("stroke-dashoffset", (C * elapsed).toFixed(1));
+    /* a fatia AVANÇA (cresce) conforme o tempo passa — por isso o offset encolhe, ao contrário de um "tempo restante" que esvazia */
+    $("trace").setAttribute("stroke-dashoffset", (C * (1 - elapsed)).toFixed(1));
+    paintOrbit(elapsed);
     document.title = (S.timer.running ? text + " · " : "") + modeLabel(S.timer.mode) + " — Quack";
   }
 
+  // gira o patinho ao redor do mostrador. Roda em rAF (ver orbitFrame) em vez de
+  // só nos ticks de 250ms: em 4 atualizações/s + transition CSS o giro ficava
+  // com pequenos solavancos perceptíveis, sobretudo em voltas mais lentas (pausa longa).
+  function paintOrbit(elapsed){
+    if(elapsed === undefined){
+      var total = duration(S.timer.mode) || 1;
+      elapsed = Math.min(1, Math.max(0, 1 - remaining() / total));
+    }
+    var angle = elapsed * 360;
+    var spin = $("duck-orbit-spin"), pos = $("duck-orbit-pos");
+    if(spin) spin.style.transform = "rotate(" + angle.toFixed(2) + "deg)";
+    if(pos) pos.style.transform = "translate(-50%,-50%) rotate(" + (-angle).toFixed(2) + "deg)";
+  }
+
+  var orbitRaf = null;
+  function orbitFrame(){
+    paintOrbit();
+    orbitRaf = S.timer.running ? requestAnimationFrame(orbitFrame) : null;
+  }
+  function ensureOrbit(){
+    if(S.timer.running && !orbitRaf) orbitRaf = requestAnimationFrame(orbitFrame);
+  }
+
   function renderTimer(){
-    document.body.className = S.timer.mode === "foco" ? "mode-foco" : "mode-pausa";
+    document.body.className = (S.timer.mode === "foco" ? "mode-foco" : "mode-pausa") + (S.timer.running ? " timer-running" : "");
     var btns = document.querySelectorAll(".modes button");
     for(var i=0;i<btns.length;i++){
       btns[i].setAttribute("aria-pressed", String(btns[i].dataset.mode === S.timer.mode));
     }
     $("dial-label").textContent = modeLabel(S.timer.mode);
     var b = $("btn-start");
-    b.textContent = S.timer.running ? "Pausar" : "Iniciar";
+    $("btn-start-label").textContent = S.timer.running ? "Pausar" : "Iniciar";
+    $("icon-play").hidden = S.timer.running;
+    $("icon-pause").hidden = !S.timer.running;
     b.classList.toggle("running", S.timer.running);
     var decorrido = duration("foco") - remaining();
     $("btn-partial").hidden = !(S.timer.mode === "foco" && decorrido >= 5000);
@@ -2805,36 +3034,6 @@
     a.click();
     setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
     toast(S.sessions.length + " sessões exportadas");
-  }
-
-  function mdEscape(t){ return String(t || "").replace(/\r\n/g, "\n"); }
-
-  function exportDuckMarkdown(){
-    if(!S.duckNotes.length){ toast("Ainda não há sessões de patoterapia para exportar"); return; }
-    var linhas = ["# Patoterapia", ""];
-    S.duckNotes.forEach(function(n){
-      var d = new Date(n.at);
-      var titulo = (n.tag ? n.tag : "Sem tópico") + " — " + dayKey(n.at) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
-      linhas.push("## " + titulo + (n.solved ? " ✓" : ""));
-      linhas.push("");
-      linhas.push("**Problema:** " + mdEscape(n.problem));
-      if(n.expected) linhas.push("");
-      if(n.expected) linhas.push("**Esperado:** " + mdEscape(n.expected));
-      if(n.tried) linhas.push("");
-      if(n.tried) linhas.push("**Já tentei:** " + mdEscape(n.tried));
-      linhas.push("");
-      linhas.push("**Solução:** " + (n.solution ? mdEscape(n.solution) : "_ainda sem solução_"));
-      linhas.push("");
-      linhas.push("---");
-      linhas.push("");
-    });
-    var blob = new Blob([linhas.join("\n")], { type:"text/markdown;charset=utf-8" });
-    var a = document.createElement("a");
-    a.href = URL.createObjectURL(blob);
-    a.download = "quack-patoterapia-" + dayKey(Date.now()) + ".md";
-    a.click();
-    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
-    toast(S.duckNotes.length + " sessões exportadas");
   }
 
   /* ---------- hábitos ---------- */
@@ -3521,9 +3720,9 @@
   var cardOffset = 0;   // 0 = semana atual, -1 = anterior
 
   var CARD = {
-    bg:"#0F1621", grid:"#1A2433", grid2:"#16202C",
-    ink:"#DBE3EF", ink2:"#9AA9C0", ink3:"#67788F",
-    signal:"#E08A3C", green:"#4FB3A0", violet:"#8E86D8", line:"#2B3849"
+    bg:"#171512", grid:"#232019", grid2:"#1D1B16",
+    ink:"#F3F0E9", ink2:"#C8C3B8", ink3:"#A39D8F",
+    signal:"#E0966F", green:"#8FBF9A", violet:"#B79FE0", line:"#3A362E"
   };
 
   function cardData(){
@@ -3623,8 +3822,8 @@
     for(var y = 0; y <= H; y += 45){ g.beginPath(); g.moveTo(0, y+.5); g.lineTo(W, y+.5); g.stroke(); }
 
     var M = 80;                       // margem
-    var mono = '"IBM Plex Mono", ui-monospace, monospace';
-    var sans = '"IBM Plex Sans", -apple-system, Segoe UI, sans-serif';
+    var mono = '"Inter", ui-monospace, monospace';
+    var sans = '"Inter", -apple-system, Segoe UI, sans-serif';
 
     function txt(s, x, y, size, color, font, align, spacing){
       g.fillStyle = color;
@@ -3710,7 +3909,7 @@
     }
     if(!linhas.length) linhas.push("uma semana em branco também conta");
 
-    var maxLinhas = S.dev ? 7 : 4;
+    var maxLinhas = S.dev ? 6 : 4;
     var yy = fy + 58;
     linhas.slice(0, maxLinhas).forEach(function(l){
       txt("·  " + l, M, yy, 30, CARD.ink2, "sans");
@@ -3893,8 +4092,8 @@
     for(var y = 0; y <= H; y += 45){ g.beginPath(); g.moveTo(0, y+.5); g.lineTo(W, y+.5); g.stroke(); }
 
     var M = 80;
-    var mono = '"IBM Plex Mono", ui-monospace, monospace';
-    var sans = '"IBM Plex Sans", -apple-system, Segoe UI, sans-serif';
+    var mono = '"Inter", ui-monospace, monospace';
+    var sans = '"Inter", -apple-system, Segoe UI, sans-serif';
     function txt(t, x, y, size, color, font, align, spacing){
       g.fillStyle = color;
       g.font = "500 " + size + "px " + (font === "mono" ? mono : sans);
@@ -5507,7 +5706,6 @@
     });
   }
 
-
   /* ---------- cronômetros de dev: mostrador único, dois trackers ---------- */
   function fmtClock(ms){
     var tot = Math.floor(ms / 1000);
@@ -5525,30 +5723,27 @@
     return Math.floor(m / 60) + "h " + (m % 60) + "min";
   }
 
-  // define os cronômetros como dados, em vez de duplicar a lógica por aba
+  // define os dois cronômetros como dados, em vez de duplicar a lógica
   var TRACKS = {
     build: {
       state: function(){ return S.build; }, log: function(){ return S.builds; },
       verb: "esperando", action: "Cronometrar build", stopAction: "Terminou",
-      noun: ["build", "builds"], prefix: "b", pastWord: "registrado",
-      emptyPrefix: "Nenhum build", emptyWord: "cronometrado", longestPrefix: "O mais longo foi",
+      noun: ["build", "builds"],
       empty: "Comece o cronômetro quando disparar o CI e pare quando ele voltar.",
       doneMsg: "Build de ", waitWord: "de espera", countLabel: "Builds no período"
     },
     review: {
       state: function(){ return S.review; }, log: function(){ return S.reviews; },
       verb: "revisando", action: "Cronometrar revisão", stopAction: "Terminei",
-      noun: ["revisão", "revisões"], prefix: "r", pastWord: "registrada",
-      emptyPrefix: "Nenhuma revisão", emptyWord: "cronometrada", longestPrefix: "A mais longa foi",
+      noun: ["revisão", "revisões"],
       empty: "Comece o cronômetro quando abrir o PR e pare quando terminar de comentar.",
       doneMsg: "Revisão de ", waitWord: "revisando", countLabel: "Revisões no período"
     },
     meeting: {
       state: function(){ return S.meeting; }, log: function(){ return S.meetings; },
       verb: "em reunião", action: "Cronometrar reunião", stopAction: "Terminou",
-      noun: ["reunião", "reuniões"], prefix: "m", pastWord: "registrada",
-      emptyPrefix: "Nenhuma reunião", emptyWord: "cronometrada", longestPrefix: "A mais longa foi",
-      empty: "Comece o cronômetro quando a reunião começar e pare quando ela terminar.",
+      noun: ["reunião", "reuniões"],
+      empty: "Comece o cronômetro quando a reunião começar e pare quando acabar.",
       doneMsg: "Reunião de ", waitWord: "em reunião", countLabel: "Reuniões no período"
     }
   };
@@ -5561,14 +5756,11 @@
     return Math.max(0, Date.now() - st.startedAt);
   }
 
-  function anyTrackRunning(){
-    return Object.keys(TRACKS).some(function(k){ return TRACKS[k].state().running; });
-  }
-
   function devTick(){
     if(devTimer) clearTimeout(devTimer);
     renderDevWatch();
-    if(anyTrackRunning()) devTimer = setTimeout(devTick, 250);
+    var algumRodando = S.build.running || S.review.running || S.meeting.running;
+    if(algumRodando) devTimer = setTimeout(devTick, 250);
   }
 
   function startTrack(key){
@@ -5588,8 +5780,9 @@
     st.startedAt = null;
     // registros instantâneos são engano de clique, não dado
     if(ms >= 3000){
-      t.log().push({ id: t.prefix + inicio, start: inicio, end: inicio + ms, ms: ms, label: st.label || "" });
-      toast(t.doneMsg + fmtShort(ms) + " " + t.pastWord);
+      var prefixo = key === "build" ? "b" : "r";
+      t.log().push({ id: prefixo + inicio, start: inicio, end: inicio + ms, ms: ms, label: st.label || "" });
+      toast(t.doneMsg + fmtShort(ms) + (key === "review" ? " registrada" : " registrado"));
     }
     save(); renderDevWatch(); renderStats();
   }
@@ -5622,7 +5815,7 @@
     $("dev-cancel").hidden = !running;
     $("dev-track-state").textContent = running ? t.verb + (st.label ? " · " + st.label : "") : "";
 
-    // aba inativa ganha um ponto se estiver rodando por baixo dos panos
+    // qualquer outra aba rodando por baixo dos panos ganha um ponto
     Object.keys(TRACKS).forEach(function(k){
       $("tab-dot-" + k).hidden = (k === key) || !TRACKS[k].state().running;
     });
@@ -5640,7 +5833,7 @@
     $("dev-max").textContent = maior ? fmtShort(maior.ms) : "—";
 
     if(!noPeriodo.length){
-      $("dev-note").textContent = t.emptyPrefix + " " + t.emptyWord + " " +
+      $("dev-note").textContent = "Nenhuma " + (key === "review" ? "revisão" : "build") + " cronometrada " +
         periodLabel(r) + ". " + t.empty;
     }else{
       var hojeK = dayKey(Date.now());
@@ -5652,7 +5845,7 @@
       }
       txt += ".";
       if(maior && maior.label){
-        txt += " " + t.longestPrefix + " “" + maior.label + "”, com " + fmtShort(maior.ms) + ".";
+        txt += " " + (key === "review" ? "A mais longa foi" : "O mais longo foi") + " “" + maior.label + "”, com " + fmtShort(maior.ms) + ".";
       }
       $("dev-note").textContent = txt;
     }
@@ -5745,10 +5938,10 @@
     $("panel-screen").hidden = !S.panels.tela;
     $("panel-goals").hidden = !S.panels.objetivos;
     $("panel-pdi").hidden = !S.panels.pdi;
-    $("panel-dev").hidden = !S.dev;
     $("btn-season").hidden = !S.panels.temporada;
     $("btn-capsule").hidden = !S.panels.capsula;
     $("panel-sound").hidden = !S.panels.musica;
+    $("panel-dev").hidden = !S.dev;
   }
 
   /* ---------- tema ---------- */
@@ -5756,7 +5949,17 @@
     var t = S.theme || "auto";
     if(t === "auto") document.documentElement.removeAttribute("data-theme");
     else document.documentElement.setAttribute("data-theme", t);
-    if($("s-theme")) $("s-theme").value = t;
+    var names = { auto:"Tema: automático", claro:"Tema: claro", escuro:"Tema: escuro", "alto-contraste":"Tema: alto contraste" };
+    var label = names[t] || names.auto;
+    var btn = $("btn-theme");
+    var icon = btn.querySelector("svg");
+    btn.textContent = "";
+    if(icon) btn.appendChild(icon);
+    var span = document.createElement("span");
+    span.className = "btn-label";
+    span.textContent = label.replace(/^Tema: /, "");
+    btn.appendChild(span);
+    btn.setAttribute("aria-label", label);
   }
 
   /* ---------- player externo ---------- */
@@ -5855,6 +6058,36 @@
     toast(linhas.length + " registros exportados");
   }
 
+  function mdEscape(t){ return String(t || "").replace(/\r\n/g, "\n"); }
+
+  function exportDuckMarkdown(){
+    if(!S.duckNotes.length){ toast("Ainda não há sessões de patoterapia para exportar"); return; }
+    var linhas = ["# Patoterapia", ""];
+    S.duckNotes.forEach(function(n){
+      var d = new Date(n.at);
+      var titulo = (n.tag ? n.tag : "Sem tópico") + " — " + dayKey(n.at) + " " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+      linhas.push("## " + titulo + (n.solved ? " ✓" : ""));
+      linhas.push("");
+      linhas.push("**Problema:** " + mdEscape(n.problem));
+      if(n.expected) linhas.push("");
+      if(n.expected) linhas.push("**Esperado:** " + mdEscape(n.expected));
+      if(n.tried) linhas.push("");
+      if(n.tried) linhas.push("**Já tentei:** " + mdEscape(n.tried));
+      linhas.push("");
+      linhas.push("**Solução:** " + (n.solution ? mdEscape(n.solution) : "_ainda sem solução_"));
+      linhas.push("");
+      linhas.push("---");
+      linhas.push("");
+    });
+    var blob = new Blob([linhas.join("\n")], { type:"text/markdown;charset=utf-8" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = "quack-patoterapia-" + dayKey(Date.now()) + ".md";
+    a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+    toast(S.duckNotes.length + " sessões exportadas");
+  }
+
   /* ---------- avisos ---------- */
   function beep(isFocusEnd){
     if(!S.settings.sound) return;
@@ -5889,19 +6122,6 @@
     clearTimeout(toastTimer);
     toastTimer = setTimeout(function(){ el.classList.remove("show"); }, 2600);
   }
-
-  /* ---------- ticks do mostrador ---------- */
-  (function ticks(){
-    var out = [];
-    for(var i=0;i<60;i++){
-      var major = i % 5 === 0;
-      var a = (i/60) * Math.PI * 2 - Math.PI/2;
-      var r1 = major ? 130 : 134, r2 = 140;
-      out.push('<line class="tick'+(major?" major":"")+'" x1="'+(150+Math.cos(a)*r1).toFixed(1)+'" y1="'+(150+Math.sin(a)*r1).toFixed(1)+
-               '" x2="'+(150+Math.cos(a)*r2).toFixed(1)+'" y2="'+(150+Math.sin(a)*r2).toFixed(1)+'"></line>');
-    }
-    $("ticks").innerHTML = out.join("");
-  })();
 
   // mostrador pequeno do dev: 12 marcas, como um relógio de parede
   (function devTicks(){
@@ -6131,6 +6351,13 @@
     });
   };
 
+  // automático → claro → escuro → alto contraste
+  $("btn-theme").onclick = function(){
+    var seq = ["auto", "claro", "escuro", "alto-contraste"];
+    S.theme = seq[(seq.indexOf(S.theme || "auto") + 1) % seq.length];
+    save(); applyTheme();
+  };
+
   // player externo
   $("embed-set").onclick = function(){
     var raw = $("embed-url").value;
@@ -6190,7 +6417,6 @@
     if($("settings").open || $("manual").open || $("paste").open) return;
     if($("capsule").open || $("capsule-read").open) return;
     if($("season").open || $("card").open || $("duckpad").open || $("duck-library").open || $("lib-detail").open || $("glossary").open) return;
-    if($("auth").open || $("changepw").open || $("deleteaccount").open) return;
     if(e.code === "Space"){ e.preventDefault(); S.timer.running ? pause() : start(); }
     if(e.key === "r" || e.key === "R"){ reset(); }
     if(e.key === "i" || e.key === "I"){ addInterruption(); }
@@ -6215,7 +6441,6 @@
     $("p-capsule").checked = !!S.panels.capsula;
     $("p-music").checked = !!S.panels.musica;
     $("p-dev").checked = !!S.dev;
-    $("s-theme").value = S.theme || "auto";
     dlg.showModal();
   };
   $("dlg-close").onclick = function(){ dlg.close(); };
@@ -6254,12 +6479,7 @@
 
   $("p-dev").onchange = function(){
     S.dev = this.checked;
-    save(); applyPanels(); renderTasks();
-  };
-
-  $("s-theme").onchange = function(){
-    S.theme = this.value;
-    save(); applyTheme();
+    save(); applyPanels(); renderTasks();   // o botão de branch aparece nas tarefas
   };
 
   [["p-habits","habitos"], ["p-reading","leitura"], ["p-screen","tela"], ["p-goals","objetivos"], ["p-pdi","pdi"], ["p-season","temporada"], ["p-capsule","capsula"], ["p-music","musica"]].forEach(function(par){
@@ -6365,7 +6585,7 @@
   applyTheme();
   checkAuth();
   checkResetLink();
-  if(anyTrackRunning()) devTick();
+  if(S.build.running || S.review.running || S.meeting.running) devTick();
   checkMilestones(false);   // histórico antigo ganha suas marcas em silêncio
   renderHabitForm();
   resume();
