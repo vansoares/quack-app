@@ -727,7 +727,10 @@
 
   #duck-library{width:min(760px,95vw)}
   .lib-body{max-height:72vh;overflow-y:auto;display:flex;flex-direction:column;gap:calc(var(--sp)*2)}
-  #lib-search{width:100%}
+  .lib-search-row{display:flex;gap:var(--sp);align-items:center}
+  .lib-search-row input{flex:1;min-width:0}
+  #lib-unsolved-toggle{flex:none}
+  #lib-unsolved-toggle[aria-pressed="true"]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
   .lib-row{
     display:flex;align-items:center;gap:10px;width:100%;text-align:left;
     border:1px solid var(--line);border-radius:var(--r-md);padding:10px 12px;background:var(--card);
@@ -1762,7 +1765,10 @@
     <button class="btn-ghost" id="lib-close">Fechar</button>
   </div>
   <div class="dlg-body lib-body">
-    <input type="text" id="lib-search" placeholder="Buscar por palavra, erro, tópico…" aria-label="Buscar">
+    <div class="lib-search-row">
+      <input type="text" id="lib-search" placeholder="Buscar por palavra, erro, tópico…" aria-label="Buscar">
+      <button class="btn-ghost" type="button" id="lib-unsolved-toggle" aria-pressed="false">Só em aberto</button>
+    </div>
     <div class="filters" id="lib-filters" role="group" aria-label="Filtrar por tópico"></div>
     <div id="lib-list"></div>
     <p class="empty-state" id="lib-empty" hidden>Nada por aqui ainda. As sessões que você guardar na Patoterapia aparecem aqui, organizadas por tópico.</p>
@@ -5547,7 +5553,21 @@
   /* ---------- explicar ao patinho ---------- */
   var editingDuckId = null;   // quando definido, "Guardar" atualiza em vez de criar
   var libFilterTag = null;
+  var libOnlyUnsolved = false;
   var libSearch = "";
+
+  // true se algum campo tem texto que ainda não virou uma sessão salva —
+  // usado pra não deixar um Esc por reflexo apagar um parágrafo inteiro escrito à toa
+  function duckPadIsDirty(){
+    return !!($("dp-problem").value.trim() || $("dp-expected").value.trim() ||
+              $("dp-tried").value.trim() || $("dp-solution").value.trim());
+  }
+
+  function closeDuckPad(){
+    if(duckPadIsDirty() && !confirm("Descartar o que você escreveu nesta sessão?")) return;
+    editingDuckId = null;
+    $("duckpad").close();
+  }
 
   function openDuckPad(note){
     editingDuckId = note ? note.id : null;
@@ -5615,8 +5635,10 @@
   function renderDuckSummary(){
     var n = S.duckNotes.length;
     var resolvidos = S.duckNotes.filter(function(x){ return x.solved; }).length;
+    var abertas = n - resolvidos;
     $("duck-state").textContent = n ? n + (n === 1 ? " sessão" : " sessões") +
-      (resolvidos ? " · " + resolvidos + " resolvidas" : "") : "";
+      (resolvidos ? " · " + resolvidos + " resolvidas" : "") +
+      (abertas ? " · " + abertas + " em aberto" : "") : "";
     $("duck-count").textContent = n ? "(" + n + ")" : "";
   }
 
@@ -5624,8 +5646,9 @@
   function duckGroupKey(n){ return n.tag ? n.tag.toLowerCase() : "\u0000sem"; }
 
   function openLibrary(){
-    libSearch = ""; libFilterTag = null;
+    libSearch = ""; libFilterTag = null; libOnlyUnsolved = false;
     $("lib-search").value = "";
+    $("lib-unsolved-toggle").setAttribute("aria-pressed", "false");
     renderLibrary();
     $("duck-library").showModal();
   }
@@ -5771,6 +5794,7 @@
     var filtrados = S.duckNotes.filter(function(n){
       if(libFilterTag === "__sem__" && n.tag) return false;
       if(libFilterTag && libFilterTag !== "__sem__" && !sameTag(n.tag, libFilterTag)) return false;
+      if(libOnlyUnsolved && n.solved) return false;
       return matchesSearch(n, q);
     });
 
@@ -6338,13 +6362,22 @@
   $("dev-cancel").onclick = function(){ cancelTrack(S.devTab || "build"); };
   $("duck-open").onclick = function(){ openDuckPad(); };
   $("dp-save").onclick = saveDuckNote;
-  $("dp-cancel").onclick = function(){ editingDuckId = null; $("duckpad").close(); };
-  $("duck-close").onclick = function(){ editingDuckId = null; $("duckpad").close(); };
+  $("dp-cancel").onclick = closeDuckPad;
+  $("duck-close").onclick = closeDuckPad;
+  $("duckpad").addEventListener("cancel", function(e){
+    if(duckPadIsDirty() && !confirm("Descartar o que você escreveu nesta sessão?")){ e.preventDefault(); return; }
+    editingDuckId = null;
+  });
   $("duck-library-open").onclick = openLibrary;
   $("glossary-open").onclick = openGlossary;
   $("glossary-close").onclick = function(){ $("glossary").close(); };
   $("lib-close").onclick = function(){ $("duck-library").close(); };
   $("lib-search").addEventListener("input", function(){ libSearch = this.value.trim(); renderLibrary(); });
+  $("lib-unsolved-toggle").onclick = function(){
+    libOnlyUnsolved = !libOnlyUnsolved;
+    this.setAttribute("aria-pressed", String(libOnlyUnsolved));
+    renderLibrary();
+  };
   $("lib-detail-close").onclick = function(){ $("lib-detail").close(); };
 
   // temporadas
