@@ -664,6 +664,7 @@
   .sub-panel{margin-top:calc(var(--sp)*3);padding-top:calc(var(--sp)*2.5);border-top:1px solid var(--line)}
   .sub-panel .panel-head{margin-bottom:calc(var(--sp)*2)}
   .figures.four{grid-template-columns:repeat(4,1fr)}
+  .figures.three{grid-template-columns:repeat(3,1fr);margin:calc(var(--sp)*2) 0}
   .screen{grid-column:1 / -1}
   .stars{display:inline-flex;gap:1px;margin-left:2px}
   .star{
@@ -733,9 +734,11 @@
   #lib-unsolved-toggle[aria-pressed="true"]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
   .lib-row{
     display:flex;align-items:center;gap:10px;width:100%;text-align:left;
-    border:1px solid var(--line);border-radius:var(--r-md);padding:10px 12px;background:var(--card);
+    border:1px solid var(--line);border-left:3px solid var(--line);border-radius:var(--r-md);padding:10px 12px;background:var(--card);
     cursor:pointer;
   }
+  .lib-row.solved{border-left-color:var(--rest)}
+  .lib-row.open{border-left-color:var(--signal)}
   .lib-row:hover{border-color:var(--signal);background:var(--grid-b)}
   .lib-row .lib-title{
     flex:1;min-width:0;font-size:13.5px;color:var(--ink);
@@ -745,6 +748,10 @@
   .lib-row .lib-solved{
     font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
     color:var(--rest);flex:none;
+  }
+  .lib-row .lib-open-tag{
+    font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--signal);flex:none;
   }
   .lib-row .lib-actions{display:flex;gap:2px;flex:none}
   .lib-row .lib-actions button{position:relative;z-index:1}
@@ -758,6 +765,20 @@
   .lib-q b{display:block;color:var(--ink-3);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px}
   .lib-a{margin:4px 0 0;padding:10px 12px;border-left:2px solid var(--rest);background:var(--rest-soft);border-radius:0 var(--r-sm) var(--r-sm) 0;font-size:14px;line-height:1.6;color:var(--ink)}
   .lib-a b{display:block;color:var(--rest);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px}
+
+  /* patinho: separa visualmente "contar o problema" de "como resolveu" —
+     a mesma cor de destaque (--rest) usada aqui reaparece no .lib-a ao reler a sessão depois */
+  #duckpad .dlg-body{gap:calc(var(--sp)*2.5)}
+  .dp-group{display:flex;flex-direction:column;gap:calc(var(--sp)*2)}
+  .dp-solution-wrap{
+    display:flex;flex-direction:column;gap:6px;
+    padding:calc(var(--sp)*1.5) calc(var(--sp)*2);
+    border-left:2px solid var(--rest);background:var(--rest-soft);
+    border-radius:0 var(--r-md) var(--r-md) 0;
+  }
+  .dp-solution-wrap .k{color:var(--rest)}
+  .dp-solution-wrap textarea{background:var(--field)}
+  .dp-optional{text-transform:none;letter-spacing:normal;font-weight:400;color:var(--ink-3)}
 
   /* ---------- mostrador único de dev ---------- */
   .devwatch{display:flex;flex-direction:column;align-items:center;text-align:center}
@@ -1428,14 +1449,18 @@
         <p class="note" id="dev-note"></p>
       </div>
 
-      <div class="sub-panel">
+      <div class="sub-panel duck-sub">
         <div class="panel-head">
           <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14.5" r="6"/><circle cx="15.6" cy="8.6" r="3.4"/><path d="M18.7 8.1c1.2-.2 2.2.3 2.2 1s-1 1.2-2.2 1c-.5-.1-.9-.5-.9-1s.4-.9.9-1z"/><circle cx="16.5" cy="7.7" r=".5" fill="currentColor" stroke="none"/></svg></span>Patoterapia</h3>
-          <span class="panel-title" id="duck-state"></span>
         </div>
         <p class="hint">Descrever o problema em voz escrita resolve boa parte deles antes de você pedir ajuda a alguém. O patinho não responde — essa é a ideia.</p>
-        <div class="paste-grid" style="margin-top:10px">
-          <button class="btn-ghost" id="duck-open">Começar sessão</button>
+        <div class="figures three" id="duck-figures" hidden>
+          <div class="fig"><div class="n" id="duck-fig-total">0</div><div class="l">Sessões</div></div>
+          <div class="fig"><div class="n" id="duck-fig-solved">0</div><div class="l">Resolvidas</div></div>
+          <div class="fig"><div class="n" id="duck-fig-open">0</div><div class="l">Em aberto</div></div>
+        </div>
+        <div class="paste-grid">
+          <button class="btn-main" id="duck-open">Começar sessão</button>
           <button class="btn-ghost" id="duck-library-open">Biblioteca <span id="duck-count"></span></button>
           <button class="btn-ghost" id="glossary-open">Glossário</button>
         </div>
@@ -1714,14 +1739,18 @@
     <button class="btn-ghost" id="duck-close">Fechar</button>
   </div>
   <div class="dlg-body">
-    <label class="k" for="dp-problem">O que está acontecendo</label>
-    <textarea id="dp-problem" style="min-height:80px" placeholder="O teste de integração falha só no CI, e só às terças…"></textarea>
-    <label class="k" for="dp-expected">O que você esperava</label>
-    <textarea id="dp-expected" style="min-height:64px" placeholder="Que passasse igual passa local"></textarea>
-    <label class="k" for="dp-tried">O que já tentou</label>
-    <textarea id="dp-tried" style="min-height:64px" placeholder="Rodei com -race, limpei cache, subi o timeout…"></textarea>
-    <label class="k" for="dp-solution">Como resolveu (se já resolveu)</label>
-    <textarea id="dp-solution" style="min-height:64px" placeholder="O gzip mudava o Content-Length antes da validação — passei a ler o header original…"></textarea>
+    <div class="dp-group">
+      <label class="k" for="dp-problem">O que está acontecendo</label>
+      <textarea id="dp-problem" style="min-height:80px" placeholder="O teste de integração falha só no CI, e só às terças…"></textarea>
+      <label class="k" for="dp-expected">O que você esperava</label>
+      <textarea id="dp-expected" style="min-height:64px" placeholder="Que passasse igual passa local"></textarea>
+      <label class="k" for="dp-tried">O que já tentou</label>
+      <textarea id="dp-tried" style="min-height:64px" placeholder="Rodei com -race, limpei cache, subi o timeout…"></textarea>
+    </div>
+    <div class="dp-solution-wrap">
+      <label class="k" for="dp-solution">Como resolveu <span class="dp-optional">— se já resolveu</span></label>
+      <textarea id="dp-solution" style="min-height:64px" placeholder="O gzip mudava o Content-Length antes da validação — passei a ler o header original…"></textarea>
+    </div>
     <label class="k" for="dp-tag">Tópico</label>
     <input type="text" id="dp-tag" list="duck-tag-options" placeholder="ex.: JWT, CI, GZIP" maxlength="24" aria-label="Tópico">
     <datalist id="duck-tag-options"></datalist>
@@ -5636,9 +5665,10 @@
     var n = S.duckNotes.length;
     var resolvidos = S.duckNotes.filter(function(x){ return x.solved; }).length;
     var abertas = n - resolvidos;
-    $("duck-state").textContent = n ? n + (n === 1 ? " sessão" : " sessões") +
-      (resolvidos ? " · " + resolvidos + " resolvidas" : "") +
-      (abertas ? " · " + abertas + " em aberto" : "") : "";
+    $("duck-figures").hidden = !n;
+    $("duck-fig-total").textContent = n;
+    $("duck-fig-solved").textContent = resolvidos;
+    $("duck-fig-open").textContent = abertas;
     $("duck-count").textContent = n ? "(" + n + ")" : "";
   }
 
@@ -5694,7 +5724,7 @@
 
   function libraryRow(n){
     var row = document.createElement("button");
-    row.className = "lib-row";
+    row.className = "lib-row " + (n.solved ? "solved" : "open");
     row.type = "button";
 
     if(n.tag){
@@ -5710,12 +5740,10 @@
     title.textContent = n.problem;
     row.appendChild(title);
 
-    if(n.solved){
-      var sv = document.createElement("span");
-      sv.className = "lib-solved";
-      sv.textContent = "resolvido";
-      row.appendChild(sv);
-    }
+    var sv = document.createElement("span");
+    sv.className = n.solved ? "lib-solved" : "lib-open-tag";
+    sv.textContent = n.solved ? "resolvido" : "em aberto";
+    row.appendChild(sv);
 
     var dt = document.createElement("span");
     dt.className = "lib-date";
@@ -5750,12 +5778,10 @@
     dt.className = "cap-when";
     dt.textContent = new Date(n.at).toLocaleDateString("pt-BR");
     meta.appendChild(dt);
-    if(n.solved){
-      var sv = document.createElement("span");
-      sv.className = "lib-solved";
-      sv.textContent = "resolvido";
-      meta.appendChild(sv);
-    }
+    var sv = document.createElement("span");
+    sv.className = n.solved ? "lib-solved" : "lib-open-tag";
+    sv.textContent = n.solved ? "resolvido" : "em aberto";
+    meta.appendChild(sv);
 
     var body = $("lib-detail-body");
     body.innerHTML = "";
