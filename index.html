@@ -653,6 +653,25 @@
   .bar-track{height:5px;flex:1;background:var(--grid-a);border-radius:3px;overflow:hidden;min-width:80px}
   .bar-fill{height:100%;background:var(--rest);border-radius:3px}
   .book.lido .bar-fill{background:var(--ink-3)}
+
+  /* ---------- padrões de produtividade ---------- */
+  .pattern-row{display:flex;align-items:center;gap:10px;padding:5px 0}
+  .pattern-row .lbl{
+    font-family:var(--mono);font-size:11px;color:var(--ink-2);min-width:64px;max-width:110px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .pattern-row .val{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);white-space:nowrap;font-variant-numeric:tabular-nums}
+
+  /* ---------- notas soltas ---------- */
+  .loose-notes{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:10px}
+  .loose-note{border:1px solid var(--grid-a);border-radius:var(--r-md);background:var(--card);padding:9px 12px}
+  .loose-note-head{display:flex;align-items:center;gap:8px;margin-bottom:5px}
+  .loose-note-date{font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--ink-3);text-transform:uppercase;flex:1}
+  .loose-note textarea{
+    min-height:64px;border:0;background:none;padding:0;width:100%;
+    font-size:13.5px;line-height:1.6;color:var(--ink);resize:vertical;
+  }
+  .loose-note textarea:focus{outline:none}
   .page-btn{
     font-family:var(--mono);font-size:10.5px;color:var(--ink-2);background:none;
     border:1px solid transparent;border-radius:var(--r-md);padding:2px 5px;white-space:nowrap;font-variant-numeric:tabular-nums;
@@ -1224,8 +1243,10 @@
                 <ellipse cx="10.3" cy="15.6" rx="7.1" ry="4.5" fill="currentColor"/>
                 <circle cx="15.1" cy="9.4" r="4.9" fill="currentColor"/>
                 <path d="M19.4 9.1 L23 10.3 L19.4 11.4 Z" fill="var(--ink)"/>
-                <circle cx="16.7" cy="7.9" r="1.1" fill="var(--paper)"/>
-                <circle cx="17.1" cy="7.55" r=".4" fill="#fff" opacity=".9"/>
+                <g id="orbit-eyes">
+                  <circle cx="16.7" cy="7.9" r="1.1" fill="var(--paper)"/>
+                  <circle cx="17.1" cy="7.55" r=".4" fill="#fff" opacity=".9"/>
+                </g>
                 <path d="M10.6 13.3c1.5-.85 3.2-.85 4.3.35" fill="none" stroke="var(--ink)" stroke-opacity=".16" stroke-width="1.1" stroke-linecap="round"/>
               </svg>
             </div>
@@ -1234,6 +1255,7 @@
         <div class="dial-face">
           <div class="digits" id="digits" role="timer" aria-live="off">25:00</div>
           <div class="dial-label" id="dial-label">Foco</div>
+          <div class="dial-label" id="sprint-badge" hidden></div>
         </div>
       </div>
 
@@ -1315,6 +1337,22 @@
       </div>
     </section>
 
+    <!-- NOTAS SOLTAS -->
+    <section class="panel" id="panel-notes">
+      <div class="panel-head">
+        <h2 class="panel-title"><span class="panel-icon clover" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M15 3v5h5"/><path d="M8 13h8M8 17h5"/></svg></span>Notas soltas</h2>
+        <span class="panel-title" id="notes-state"></span>
+      </div>
+      <p class="hint" style="margin:0 0 14px">Rascunho rápido, sem estrutura — o que não cabe numa tarefa nem num objetivo. Salva sozinho ao sair do campo.</p>
+
+      <div class="new-book">
+        <button class="btn-ghost" id="note-add">Nova nota</button>
+      </div>
+
+      <ul class="loose-notes" id="notes-list"></ul>
+      <div class="empty-state" id="notes-empty" hidden>Nenhuma nota ainda. Clique em "Nova nota" para começar um rascunho.</div>
+    </section>
+
     <!-- OBJETIVOS DO ANO -->
     <section class="panel goals" id="panel-goals">
       <div class="panel-head">
@@ -1351,6 +1389,47 @@
         <input type="text" id="pdi-title" placeholder="Competência ou área (ex.: liderança técnica)" maxlength="90" aria-label="Competência">
         <input type="text" id="pdi-target" placeholder="o que significa chegar lá (opcional)" maxlength="140" aria-label="Meta">
         <button class="btn-ghost" id="pdi-add">Adicionar</button>
+      </div>
+    </section>
+
+    <!-- SEMANA -->
+    <section class="panel week" id="panel-week">
+      <div class="panel-head">
+        <h2 class="panel-title"><span class="panel-icon amber" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span>Semana</h2>
+        <span class="panel-title" id="week-goals-state"></span>
+      </div>
+      <p class="hint" style="margin:0 0 14px">O que precisa ser verdade até domingo — mais curto e mais concreto que os objetivos do ano.</p>
+
+      <ul class="goal-list" id="week-goal-list"></ul>
+      <div class="empty-state" id="week-goal-empty" hidden>Nenhum objetivo para esta semana ainda.</div>
+
+      <div class="new-book">
+        <input type="text" id="week-goal-title" placeholder="Objetivo da semana" maxlength="90" aria-label="Objetivo da semana">
+        <button class="btn-ghost" id="week-goal-add">Adicionar</button>
+      </div>
+
+      <div class="sub-panel">
+        <div class="panel-head">
+          <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3 5 14h6l-1 7 9-12h-6z"/></svg></span>Sprint de foco</h3>
+          <span class="panel-title" id="sprint-state"></span>
+        </div>
+        <p class="hint">Uma sequência de blocos de foco encadeados um atrás do outro — um clique começa tudo, sem reconfigurar o timer a cada bloco.</p>
+        <div class="new-book">
+          <input type="number" id="sprint-blocks" min="2" max="12" title="Quantos blocos de foco" aria-label="Blocos no sprint">
+          <button class="btn-main" id="sprint-start">Iniciar sprint</button>
+          <button class="btn-ghost" id="sprint-cancel" hidden>Cancelar sprint</button>
+        </div>
+      </div>
+
+      <div class="sub-panel">
+        <div class="panel-head">
+          <h3 class="panel-title"><span class="panel-icon clover" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></span>Padrões de produtividade</h3>
+        </div>
+        <p class="hint" id="pattern-note"></p>
+        <div class="empty-state" id="pattern-empty" hidden>Ainda sem sessões suficientes para ver um padrão — complete alguns pomodoros e volte aqui.</div>
+        <div id="pattern-hours"></div>
+        <p class="cap-meta" style="margin-top:14px" id="pattern-tags-title" hidden>Por etiqueta</p>
+        <div id="pattern-tags"></div>
       </div>
     </section>
 
@@ -1710,6 +1789,8 @@
     <div class="field"><label for="p-reading">Leitura</label><span class="switch"><input type="checkbox" id="p-reading"></span></div>
     <div class="field"><label for="p-screen">Filmes e séries</label><span class="switch"><input type="checkbox" id="p-screen"></span></div>
     <div class="field"><label for="p-goals">Objetivos do ano</label><span class="switch"><input type="checkbox" id="p-goals"></span></div>
+    <div class="field"><label for="p-week">Semana</label><span class="switch"><input type="checkbox" id="p-week"></span></div>
+    <div class="field"><label for="p-notes">Notas soltas</label><span class="switch"><input type="checkbox" id="p-notes"></span></div>
     <div class="field"><label for="p-pdi">PDI</label><span class="switch"><input type="checkbox" id="p-pdi"></span></div>
     <div class="field"><label for="p-season">Temporada</label><span class="switch"><input type="checkbox" id="p-season"></span></div>
     <div class="field"><label for="p-capsule">Cápsula do tempo</label><span class="switch"><input type="checkbox" id="p-capsule"></span></div>
@@ -1995,7 +2076,7 @@
 
   var DEFAULTS = {
     version: 1,
-    settings: { focus:25, short:5, long:15, longEvery:4, auto:false, sound:true, notify:false },
+    settings: { focus:25, short:5, long:15, longEvery:4, auto:false, sound:true, notify:false, sprintBlocks:4 },
     tasks: [],
     sessions: [],
     habits: [],
@@ -2006,8 +2087,11 @@
     watchLog: [],
     seasons: [],
     milestones: [],
-    panels: { habitos:true, leitura:true, tela:true, objetivos:true, pdi:true, temporada:true, capsula:true, musica:true },
+    panels: { habitos:true, leitura:true, tela:true, objetivos:true, pdi:true, temporada:true, capsula:true, musica:true, semana:true, notas:true },
     goals: [],
+    weekGoals: [],
+    notes: [],
+    sprint: { active:false, total:4, done:0 },
     pdi: [],
     dev: false,
     build: { running:false, startedAt:null, label:"" },
@@ -2074,6 +2158,9 @@
     if(Array.isArray(d.milestones)) s.milestones = d.milestones;
     if(d.panels) Object.assign(s.panels, d.panels);
     if(Array.isArray(d.goals)) s.goals = d.goals;
+    if(Array.isArray(d.weekGoals)) s.weekGoals = d.weekGoals;
+    if(Array.isArray(d.notes)) s.notes = d.notes;
+    if(d.sprint) Object.assign(s.sprint, d.sprint);
     if(Array.isArray(d.pdi)) s.pdi = d.pdi;
     if(typeof d.dev !== "undefined") s.dev = !!d.dev;
     if(d.build) Object.assign(s.build, d.build);
@@ -2135,7 +2222,7 @@
   function markDeletedMany(ids){ ids.forEach(markDeleted); }
 
   var SYNCED_ARRAYS = ["tasks","sessions","habits","books","readLog","capsules",
-    "media","watchLog","seasons","milestones","builds","duckNotes","goals","pdi","reviews","meetings","studyTopics"];
+    "media","watchLog","seasons","milestones","builds","duckNotes","goals","weekGoals","notes","pdi","reviews","meetings","studyTopics"];
 
   // funde um estado recebido (de outra aba ou do servidor) com o que só existe aqui,
   // sem perder nada dos dois lados — a mesma regra vale local ou remotamente
@@ -2553,7 +2640,9 @@
     S.timer.remaining = duration(mode);
     S.timer.interruptions = 0;
     save(); render(); syncAmbient();
-    if(autoRun && S.settings.auto) start();
+    // um sprint força o encadeamento mesmo com "continuar automaticamente" desligado —
+    // é a diferença entre configurar o timer uma vez e ficar clicando a cada bloco
+    if(autoRun && (S.settings.auto || (S.sprint && S.sprint.active))) start();
   }
 
   function nextMode(){
@@ -2587,6 +2676,13 @@
         });
         if(t){ t.done = (t.done || 0) + 1; }
         checkMilestones(!silent);
+        if(S.sprint && S.sprint.active){
+          S.sprint.done++;
+          if(S.sprint.done >= S.sprint.total){
+            S.sprint.active = false;
+            toast("Sprint concluído — " + S.sprint.total + " blocos de foco seguidos");
+          }
+        }
       }
     }
     if(!silent){
@@ -2595,6 +2691,43 @@
              mode === "foco" ? "Hora de pausar." : "De volta ao foco.");
     }
     setMode(nextMode(), !silent);
+  }
+
+  /* ---------- sprint de foco ---------- */
+  // uma sequência curta e agressiva de blocos de foco, disparada com um clique —
+  // sem precisar mexer em "continuar automaticamente" nas configurações toda vez
+  function startSprint(){
+    if(S.timer.running){ toast("Pare o timer atual antes de iniciar um sprint"); return; }
+    var n = parseInt($("sprint-blocks").value, 10);
+    if(isNaN(n)) n = S.settings.sprintBlocks || 4;
+    n = Math.min(12, Math.max(2, n));
+    S.settings.sprintBlocks = n;
+    S.sprint = { active:true, total:n, done:0 };
+    setMode("foco", false);
+    start();
+    toast("Sprint iniciado — " + n + " blocos de foco seguidos");
+  }
+
+  function cancelSprint(){
+    if(!confirm("Cancelar o sprint em andamento?")) return;
+    S.sprint.active = false;
+    save(); renderSprint();
+    toast("Sprint cancelado");
+  }
+
+  function renderSprint(){
+    $("sprint-blocks").value = S.settings.sprintBlocks || 4;
+    $("sprint-blocks").disabled = !!S.sprint.active;
+    $("sprint-start").hidden = !!S.sprint.active;
+    $("sprint-cancel").hidden = !S.sprint.active;
+    $("sprint-state").textContent = S.sprint.active
+      ? "Bloco " + (S.sprint.done + 1) + " de " + S.sprint.total
+      : "";
+    var badge = $("sprint-badge");
+    if(badge){
+      badge.hidden = !S.sprint.active;
+      if(S.sprint.active) badge.textContent = "Sprint " + (S.sprint.done + 1) + "/" + S.sprint.total;
+    }
   }
 
   var rafId = null;
@@ -2714,6 +2847,7 @@
     renderHabits(); renderBooks(); renderMedia(); renderCapsuleBanner();
     renderEyebrow(); applyPanels();
     renderGoals(); renderPdi(); renderDevWatch(); renderDuckSummary(); renderStudyTopics();
+    renderWeekGoals(); renderSprint(); renderPatterns(); renderNotes();
   }
 
   function paintClock(){
@@ -2754,8 +2888,42 @@
     if(S.timer.running && !orbitRaf) orbitRaf = requestAnimationFrame(orbitFrame);
   }
 
+  /* ---------- humor do patinho ---------- */
+  // o pato que orbita o timer troca de olhar conforme o dia vai indo — não é
+  // um estado novo, só uma leitura do que já existe em S.sessions/S.timer
+  var ORBIT_EYES = {
+    normal: '<circle cx="16.7" cy="7.9" r="1.1" fill="var(--paper)"/><circle cx="17.1" cy="7.55" r=".4" fill="#fff" opacity=".9"/>',
+    cool: '<path d="M15.0 7.55 q1.7 -1.25 3.4 0 q0.25 1.45 -1.7 1.45 q-1.95 0 -1.7 -1.45 Z" fill="#12181f"/><circle cx="17.15" cy="7.45" r=".22" fill="#fff" opacity=".75"/>',
+    sleepy: '<path d="M15.9 8.0 q0.8 .55 1.7 0" fill="none" stroke="var(--ink)" stroke-width=".85" stroke-linecap="round" opacity=".75"/>'
+  };
+
+  function lastSessionEnd(){
+    var max = 0;
+    S.sessions.forEach(function(s){ if(s.end > max) max = s.end; });
+    return max || null;
+  }
+
+  function duckMood(){
+    var hojeKey = dayKey(Date.now());
+    var hoje = S.sessions.filter(function(s){ return dayKey(s.end) === hojeKey; }).length;
+    if(hoje >= 4) return "cool";
+    var last = lastSessionEnd();
+    if(!S.timer.running && (!last || Date.now() - last > 2*60*60*1000)) return "sleepy";
+    return "normal";
+  }
+
+  function paintDuckMood(){
+    var eyes = $("orbit-eyes");
+    if(!eyes) return;
+    var mood = duckMood();
+    if(eyes.getAttribute("data-mood") === mood) return;   // evita reescrever à toa
+    eyes.setAttribute("data-mood", mood);
+    eyes.innerHTML = ORBIT_EYES[mood] || ORBIT_EYES.normal;
+  }
+
   function renderTimer(){
     document.body.className = (S.timer.mode === "foco" ? "mode-foco" : "mode-pausa") + (S.timer.running ? " timer-running" : "");
+    paintDuckMood();
     var btns = document.querySelectorAll(".modes button");
     for(var i=0;i<btns.length;i++){
       btns[i].setAttribute("aria-pressed", String(btns[i].dataset.mode === S.timer.mode));
@@ -5861,6 +6029,320 @@
     input.focus();
   }
 
+  /* ---------- objetivos da semana ---------- */
+  // mesma mecânica de "objetivos do ano" (goalPct/checkGoalDone são genéricas e
+  // servem pros dois), só troca o rótulo de ano por um intervalo de semana
+  // calculado sozinho — não tem por que pedir pra digitar a semana
+  var openWeekGoal = null;
+
+  function weekLabel(ms){
+    var start = new Date(ms), end = addDays(start, 6);
+    var opts = { day:"numeric", month:"short" };
+    return start.toLocaleDateString("pt-BR", opts) + " – " + end.toLocaleDateString("pt-BR", opts);
+  }
+
+  function weekGoalRow(g){
+    var li = document.createElement("li");
+    li.className = "goal" + (g.doneAt ? " done" : "");
+
+    var top = document.createElement("div");
+    top.className = "goal-top";
+
+    var tt = document.createElement("button");
+    tt.className = "goal-title";
+    tt.textContent = g.title;
+    tt.title = "Clique para ver os passos";
+    tt.onclick = function(){ openWeekGoal = (openWeekGoal === g.id) ? null : g.id; renderWeekGoals(); };
+
+    var yr = document.createElement("span");
+    yr.className = "goal-year";
+    yr.textContent = weekLabel(g.weekStart);
+
+    var acts = document.createElement("div");
+    acts.className = "goal-actions";
+    var toggle = document.createElement("button");
+    toggle.className = "mini";
+    toggle.textContent = openWeekGoal === g.id ? "Ocultar passos" : "Passos (" + ((g.steps || []).length) + ")";
+    toggle.onclick = function(){ openWeekGoal = (openWeekGoal === g.id) ? null : g.id; renderWeekGoals(); };
+    var del = document.createElement("button");
+    del.className = "kill";
+    del.textContent = "×";
+    del.setAttribute("aria-label", "Excluir objetivo");
+    del.onclick = function(){
+      if(!confirm("Excluir “" + g.title + "” e seus passos?")) return;
+      S.weekGoals = S.weekGoals.filter(function(x){ return x.id !== g.id; });
+      markDeleted(g.id);
+      if(openWeekGoal === g.id) openWeekGoal = null;
+      save(); renderWeekGoals();
+    };
+    acts.appendChild(toggle); acts.appendChild(del);
+    top.appendChild(tt); top.appendChild(yr); top.appendChild(acts);
+    li.appendChild(top);
+
+    var bar = document.createElement("div");
+    bar.className = "goal-bar";
+    var track = document.createElement("div");
+    track.className = "bar-track";
+    var fill = document.createElement("div");
+    fill.className = "bar-fill";
+    var pct = goalPct(g);
+    fill.style.width = pct + "%";
+    track.appendChild(fill);
+    var lab = document.createElement("span");
+    lab.className = "goal-pct";
+    var feitos = (g.steps || []).filter(function(x){ return x.done; }).length;
+    lab.innerHTML = (g.steps || []).length
+      ? "<b>" + feitos + "</b>/" + g.steps.length + " passos · " + pct + "%"
+      : "sem passos ainda";
+    bar.appendChild(track); bar.appendChild(lab);
+    li.appendChild(bar);
+
+    if(openWeekGoal === g.id){
+      var ul = document.createElement("ul");
+      ul.className = "steps";
+      (g.steps || []).forEach(function(st){
+        var sl = document.createElement("li");
+        sl.className = "step" + (st.done ? " done" : "");
+        var chk = document.createElement("button");
+        chk.className = "check";
+        chk.textContent = "✓";
+        chk.setAttribute("aria-label", st.done ? "Reabrir passo" : "Concluir passo");
+        chk.onclick = function(){
+          st.done = !st.done;
+          st.doneAt = st.done ? Date.now() : null;
+          checkGoalDone(g);
+          save(); renderWeekGoals();
+        };
+        if(st.done) chk.style.cssText = "background:var(--rest);border-color:var(--rest);color:var(--on-ink)";
+        var sb = document.createElement("button");
+        sb.className = "step-title";
+        sb.textContent = st.title;
+        sb.title = "Criar uma tarefa a partir deste passo";
+        sb.onclick = function(){
+          S.tasks.unshift({ id: uid(), title: st.title, tag: g.title.slice(0, 24), due: null, est: 1, note: null,
+                            done: 0, completed: false, createdAt: Date.now(), completedAt: null });
+          save(); renderTasks(); renderStats();
+          toast("Tarefa criada a partir do passo");
+        };
+        var sd = document.createElement("button");
+        sd.className = "kill";
+        sd.textContent = "×";
+        sd.setAttribute("aria-label", "Excluir passo");
+        sd.onclick = function(){
+          g.steps = g.steps.filter(function(x){ return x.id !== st.id; });
+          checkGoalDone(g);
+          save(); renderWeekGoals();
+        };
+        sl.appendChild(chk); sl.appendChild(sb); sl.appendChild(sd);
+        ul.appendChild(sl);
+      });
+      li.appendChild(ul);
+
+      var add = document.createElement("div");
+      add.className = "step-add";
+      var inp = document.createElement("input");
+      inp.type = "text";
+      inp.placeholder = "Novo passo — pequeno o suficiente para caber num dia";
+      inp.maxLength = 120;
+      inp.setAttribute("aria-label", "Novo passo");
+      function criar(){
+        var v = inp.value.trim();
+        if(!v) return;
+        if(!g.steps) g.steps = [];
+        g.steps.push({ id: uid(), title: v, done: false, doneAt: null });
+        inp.value = "";
+        checkGoalDone(g);
+        save(); renderWeekGoals();
+        setTimeout(function(){
+          var campos = document.querySelectorAll(".step-add input");
+          if(campos.length) campos[campos.length-1].focus();
+        }, 0);
+      }
+      inp.addEventListener("keydown", function(e){ if(e.key === "Enter") criar(); });
+      var bt = document.createElement("button");
+      bt.className = "btn-ghost";
+      bt.textContent = "Somar";
+      bt.onclick = criar;
+      add.appendChild(inp); add.appendChild(bt);
+      li.appendChild(add);
+    }
+
+    return li;
+  }
+
+  function renderWeekGoals(){
+    var list = $("week-goal-list");
+    list.innerHTML = "";
+    var ordenados = S.weekGoals.slice().sort(function(a, b){
+      if(!!a.doneAt !== !!b.doneAt) return a.doneAt ? 1 : -1;
+      return (b.weekStart - a.weekStart) || (a.createdAt - b.createdAt);
+    });
+    ordenados.forEach(function(g){ list.appendChild(weekGoalRow(g)); });
+    $("week-goal-empty").hidden = S.weekGoals.length > 0;
+
+    var inicio = startOfWeek(Date.now()).getTime();
+    var daSemana = S.weekGoals.filter(function(g){ return g.weekStart === inicio; });
+    var cumpridos = daSemana.filter(function(g){ return g.doneAt; }).length;
+    $("week-goals-state").textContent = daSemana.length
+      ? cumpridos + " de " + daSemana.length + " cumpridos esta semana"
+      : "";
+  }
+
+  function addWeekGoal(){
+    var input = $("week-goal-title");
+    var t = input.value.trim();
+    if(!t){ input.focus(); return; }
+    var g = { id: uid(), title: t, weekStart: startOfWeek(Date.now()).getTime(), steps: [], createdAt: Date.now(), doneAt: null };
+    S.weekGoals.push(g);
+    input.value = "";
+    openWeekGoal = g.id;
+    save(); renderWeekGoals();
+    input.focus();
+  }
+
+  /* ---------- padrões de produtividade ---------- */
+  // dois recortes sobre S.sessions: em que horário do dia o foco de fato
+  // acontece, e quais etiquetas concentram mais tempo — sem inventar métrica
+  // nova, só reorganizando o que o timer já registra
+  function hourLabel(h){ return pad(h) + "h"; }
+
+  function renderPatterns(){
+    var sess = S.sessions;
+    var box = $("pattern-hours"), tagBox = $("pattern-tags");
+    box.innerHTML = ""; tagBox.innerHTML = "";
+    $("pattern-tags-title").hidden = true;
+
+    if(!sess.length){
+      $("pattern-empty").hidden = false;
+      $("pattern-note").textContent = "";
+      return;
+    }
+    $("pattern-empty").hidden = true;
+
+    var buckets = new Array(24);
+    for(var i=0;i<24;i++) buckets[i] = 0;
+    sess.forEach(function(s){ buckets[new Date(s.end).getHours()]++; });
+    var maxB = Math.max.apply(null, buckets);
+
+    var idxs = [];
+    for(i=0;i<24;i++) idxs.push(i);
+    idxs.sort(function(a,b){ return buckets[b] - buckets[a]; });
+    var top = idxs.filter(function(i){ return buckets[i] > 0; }).slice(0, 5);
+
+    top.forEach(function(h){
+      var row = document.createElement("div");
+      row.className = "pattern-row";
+      var lbl = document.createElement("span");
+      lbl.className = "lbl";
+      lbl.textContent = hourLabel(h) + "–" + hourLabel((h+1) % 24);
+      var track = document.createElement("div");
+      track.className = "bar-track";
+      var fill = document.createElement("div");
+      fill.className = "bar-fill";
+      fill.style.width = Math.round(buckets[h] / maxB * 100) + "%";
+      track.appendChild(fill);
+      var val = document.createElement("span");
+      val.className = "val";
+      val.textContent = buckets[h] + (buckets[h] === 1 ? " pomodoro" : " pomodoros");
+      row.appendChild(lbl); row.appendChild(track); row.appendChild(val);
+      box.appendChild(row);
+    });
+
+    var melhores = top.slice(0, 3).map(function(h){ return hourLabel(h) + "–" + hourLabel((h+1) % 24); });
+    $("pattern-note").textContent = "Você concentra mais pomodoros entre " +
+      (melhores.length > 1 ? melhores.slice(0,-1).join(", ") + " e " + melhores.slice(-1) : melhores[0]) + ".";
+
+    var byTag = {};
+    sess.forEach(function(s){
+      var k = s.tag || "sem etiqueta";
+      if(!byTag[k]) byTag[k] = { count:0, min:0 };
+      byTag[k].count++; byTag[k].min += s.min;
+    });
+    var tags = Object.keys(byTag).map(function(k){
+      return { tag:k, count:byTag[k].count, min:byTag[k].min };
+    }).sort(function(a,b){ return b.count - a.count; }).slice(0, 6);
+
+    if(tags.length > 1){
+      $("pattern-tags-title").hidden = false;
+      var maxC = tags[0].count;
+      tags.forEach(function(x){
+        var row = document.createElement("div");
+        row.className = "pattern-row";
+        var lbl = document.createElement("span");
+        lbl.className = "lbl";
+        lbl.textContent = x.tag;
+        lbl.title = x.tag;
+        var track = document.createElement("div");
+        track.className = "bar-track";
+        var fill = document.createElement("div");
+        fill.className = "bar-fill";
+        fill.style.width = Math.round(x.count / maxC * 100) + "%";
+        track.appendChild(fill);
+        var val = document.createElement("span");
+        val.className = "val";
+        val.textContent = x.count + " · " + fmtDuration(x.min * MIN) + " · méd. " + Math.round(x.min / x.count) + "min";
+        row.appendChild(lbl); row.appendChild(track); row.appendChild(val);
+        tagBox.appendChild(row);
+      });
+    }
+  }
+
+  /* ---------- notas soltas ---------- */
+  // rascunho sem estrutura: sem título, sem tag, sem categoria — o textarea
+  // já é a nota inteira, e salva sozinho ao perder o foco
+  function addNote(){
+    var n = { id: uid(), text: "", createdAt: Date.now(), updatedAt: Date.now() };
+    S.notes.unshift(n);
+    save(); renderNotes();
+    setTimeout(function(){
+      var tas = document.querySelectorAll("#notes-list textarea");
+      if(tas.length) tas[0].focus();
+    }, 0);
+  }
+
+  function renderNotes(){
+    var list = $("notes-list");
+    list.innerHTML = "";
+    $("notes-empty").hidden = S.notes.length > 0;
+    $("notes-state").textContent = S.notes.length ? S.notes.length + (S.notes.length === 1 ? " nota" : " notas") : "";
+
+    S.notes.forEach(function(n){
+      var li = document.createElement("li");
+      li.className = "loose-note";
+
+      var head = document.createElement("div");
+      head.className = "loose-note-head";
+      var date = document.createElement("span");
+      date.className = "loose-note-date";
+      date.textContent = new Date(n.updatedAt || n.createdAt).toLocaleDateString("pt-BR", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" });
+      var del = document.createElement("button");
+      del.className = "kill";
+      del.textContent = "×";
+      del.setAttribute("aria-label", "Excluir nota");
+      del.onclick = function(){
+        if(n.text.trim() && !confirm("Excluir esta nota?")) return;
+        S.notes = S.notes.filter(function(x){ return x.id !== n.id; });
+        markDeleted(n.id);
+        save(); renderNotes();
+      };
+      head.appendChild(date); head.appendChild(del);
+
+      var ta = document.createElement("textarea");
+      ta.value = n.text;
+      ta.placeholder = "Escreva qualquer coisa…";
+      ta.setAttribute("aria-label", "Nota");
+      ta.addEventListener("blur", function(){
+        if(ta.value === n.text) return;
+        n.text = ta.value;
+        n.updatedAt = Date.now();
+        save(); renderNotes();
+      });
+
+      li.appendChild(head); li.appendChild(ta);
+      list.appendChild(li);
+    });
+  }
+
   /* ---------- explicar ao patinho ---------- */
   var editingDuckId = null;   // quando definido, "Guardar" atualiza em vez de criar
   var editingDuckKind = "debug";
@@ -6531,6 +7013,8 @@
     $("panel-screen").hidden = !S.panels.tela;
     $("panel-goals").hidden = !S.panels.objetivos;
     $("panel-pdi").hidden = !S.panels.pdi;
+    $("panel-week").hidden = !S.panels.semana;
+    $("panel-notes").hidden = !S.panels.notas;
     $("btn-season").hidden = !S.panels.temporada;
     $("btn-capsule").hidden = !S.panels.capsula;
     $("panel-sound").hidden = !S.panels.musica;
@@ -6732,6 +7216,8 @@
   $("btn-start").onclick = function(){ S.timer.running ? pause() : start(); };
   $("btn-partial").onclick = bankPartial;
   $("btn-reset").onclick = reset;
+  $("sprint-start").onclick = startSprint;
+  $("sprint-cancel").onclick = cancelSprint;
   $("btn-skip").onclick = function(){
     if(S.timer.mode === "foco"){
       if(!confirm("Pular o bloco de foco? Ele não entra na contagem.")) return;
@@ -6797,6 +7283,13 @@
   $("goal-add").onclick = addGoal;
   $("goal-title").addEventListener("keydown", function(e){ if(e.key === "Enter") addGoal(); });
   $("goal-year").value = new Date().getFullYear();
+
+  // objetivos da semana
+  $("week-goal-add").onclick = addWeekGoal;
+  $("week-goal-title").addEventListener("keydown", function(e){ if(e.key === "Enter") addWeekGoal(); });
+
+  // notas soltas
+  $("note-add").onclick = addNote;
 
   // ferramentas de dev
   document.querySelectorAll("#dev-tabs button").forEach(function(b){
@@ -7075,6 +7568,8 @@
     $("p-screen").checked = !!S.panels.tela;
     $("p-goals").checked = !!S.panels.objetivos;
     $("p-pdi").checked = !!S.panels.pdi;
+    $("p-week").checked = !!S.panels.semana;
+    $("p-notes").checked = !!S.panels.notas;
     $("p-season").checked = !!S.panels.temporada;
     $("p-capsule").checked = !!S.panels.capsula;
     $("p-music").checked = !!S.panels.musica;
@@ -7120,7 +7615,7 @@
     save(); applyPanels(); renderTasks(); renderTimer();   // o botão de branch aparece nas tarefas; "Estudando" some/aparece junto
   };
 
-  [["p-habits","habitos"], ["p-reading","leitura"], ["p-screen","tela"], ["p-goals","objetivos"], ["p-pdi","pdi"], ["p-season","temporada"], ["p-capsule","capsula"], ["p-music","musica"]].forEach(function(par){
+  [["p-habits","habitos"], ["p-reading","leitura"], ["p-screen","tela"], ["p-goals","objetivos"], ["p-pdi","pdi"], ["p-season","temporada"], ["p-capsule","capsula"], ["p-music","musica"], ["p-week","semana"], ["p-notes","notas"]].forEach(function(par){
     $(par[0]).onchange = function(){
       S.panels[par[1]] = this.checked;
       save(); applyPanels();
