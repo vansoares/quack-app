@@ -776,6 +776,9 @@
   }
   .study-row .study-title{flex:1;min-width:0;font-size:13.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .study-row .kill{flex:none;position:relative;z-index:1}
+  .study-row .check{position:relative;z-index:1}
+  .study-row.done .check{background:var(--rest);border-color:var(--rest);color:var(--on-ink)}
+  .study-row.done .study-title{color:var(--ink-3);text-decoration:line-through}
 
   #lib-detail{width:min(520px,94vw)}
   .lib-detail-top{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
@@ -6100,11 +6103,29 @@
     save(); renderStudyTopics(); renderTimer();
   }
 
+  function toggleStudyTopicDone(id){
+    var item = findStudyTopic(id);
+    if(!item) return;
+    item.done = !item.done;
+    item.doneAt = item.done ? Date.now() : null;
+    // um tópico concluído não faz mais sentido como "estudando agora"
+    if(item.done && S.activeStudyTopicId === id) S.activeStudyTopicId = null;
+    save(); renderStudyTopics(); renderTimer();
+  }
+
   function studyTopicRow(item){
     var row = document.createElement("button");
     row.type = "button";
-    row.className = "study-row";
+    row.className = "study-row" + (item.done ? " done" : "");
     row.setAttribute("aria-pressed", String(S.activeStudyTopicId === item.id));
+
+    var chk = document.createElement("button");
+    chk.className = "check";
+    chk.type = "button";
+    chk.textContent = "✓";
+    chk.setAttribute("aria-label", item.done ? "Reabrir tópico" : "Concluir tópico");
+    chk.onclick = function(ev){ ev.stopPropagation(); toggleStudyTopicDone(item.id); };
+    row.appendChild(chk);
 
     var type = document.createElement("span");
     type.className = "study-type";
@@ -7089,6 +7110,10 @@
       var linha = window.innerHeight * 0.3;
       var atual = null;
       targets.forEach(function(el){
+        // seção desligada nos Ajustes (Hábitos/Leitura/Ferramentas de dev, por
+        // exemplo) continua no DOM com "hidden" e top:0 — sem esse filtro ela
+        // sempre "passava da linha" e travava o item ativo nela
+        if(el.hidden) return;
         if(el.getBoundingClientRect().top <= linha) atual = el;
       });
       if(atual) setCurrent(byTarget[atual.id]);
