@@ -761,6 +761,22 @@
   .lib-group-name:first-child{margin-top:0}
   .lib-list-inner{display:flex;flex-direction:column;gap:7px}
 
+  /* ---------- tópicos de estudo ---------- */
+  #study-list{display:flex;flex-direction:column;gap:7px}
+  .study-row{
+    display:flex;align-items:center;gap:10px;width:100%;text-align:left;
+    border:1px solid var(--line);border-radius:var(--r-md);padding:10px 12px;background:var(--card);
+    cursor:pointer;
+  }
+  .study-row:hover{border-color:var(--signal);background:var(--grid-b)}
+  .study-row[aria-pressed="true"]{border-color:var(--signal);background:var(--signal-soft)}
+  .study-row .study-type{
+    font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-3);flex:none;border:1px solid var(--line);border-radius:var(--r-pill);padding:2px 8px;
+  }
+  .study-row .study-title{flex:1;min-width:0;font-size:13.5px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .study-row .kill{flex:none;position:relative;z-index:1}
+
   #lib-detail{width:min(520px,94vw)}
   .lib-detail-top{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
   .lib-q{margin:0 0 12px;font-size:14px;line-height:1.6;color:var(--ink-2)}
@@ -1220,6 +1236,11 @@
         <span class="v empty" id="now-task">nenhuma tarefa selecionada</span>
       </div>
 
+      <div class="now-task" id="now-study-row" hidden>
+        <span class="k">Estudando</span>
+        <span class="v empty" id="now-study">nenhum tópico selecionado</span>
+      </div>
+
       <div class="tally">
         <span class="k">Hoje</span>
         <span id="tally-marks"></span>
@@ -1498,6 +1519,26 @@
           <button class="btn-ghost" id="duck-library-open">Biblioteca <span id="duck-count"></span></button>
           <button class="btn-ghost" id="glossary-open">Glossário</button>
         </div>
+      </div>
+
+      <div class="sub-panel">
+        <div class="panel-head">
+          <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v18H6.5A2.5 2.5 0 0 1 4 18.5v-13Z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v18h5.5a2.5 2.5 0 0 0 2.5-2.5v-13Z"/></svg></span>Tópicos de estudo</h3>
+        </div>
+        <p class="hint">Guarde o que você quer estudar — livro, vídeo, curso, podcast. Clique num item pra vincular ao pomodoro atual.</p>
+        <div class="new-task">
+          <input type="text" id="study-title" placeholder="ex.: Padrões de projeto em Go" maxlength="120" aria-label="Título do tópico">
+          <select id="study-type" aria-label="Tipo">
+            <option value="livro">Livro</option>
+            <option value="video">Vídeo</option>
+            <option value="curso">Curso</option>
+            <option value="podcast">Podcast</option>
+            <option value="outro">Outro</option>
+          </select>
+          <button class="btn-ghost" id="study-add">Adicionar</button>
+        </div>
+        <div id="study-list"></div>
+        <p class="empty-state" id="study-empty" hidden>Nada por aqui ainda. Adicione algo que você quer estudar.</p>
       </div>
     </section>
 
@@ -1947,6 +1988,8 @@
     // servidor antes do push chegar) simplesmente volta na próxima fusão,
     // porque mergeById só sabe unir listas, não sabe que algo foi removido
     deletedIds: [],
+    studyTopics: [],
+    activeStudyTopicId: null,
     activeTaskId: null,
     timer: { mode:"foco", running:false, endsAt:null, remaining:25*MIN, streak:0, interruptions:0 },
     range: "semana",
@@ -2007,6 +2050,8 @@
     if(d.devTab) s.devTab = d.devTab;
     if(Array.isArray(d.duckNotes)) s.duckNotes = d.duckNotes;
     if(Array.isArray(d.deletedIds)) s.deletedIds = d.deletedIds;
+    if(Array.isArray(d.studyTopics)) s.studyTopics = d.studyTopics;
+    if(typeof d.activeStudyTopicId !== "undefined") s.activeStudyTopicId = d.activeStudyTopicId;
     if(d.timer) Object.assign(s.timer, d.timer);
     if(typeof d.activeTaskId !== "undefined") s.activeTaskId = d.activeTaskId;
     if(d.range) s.range = d.range;
@@ -2055,7 +2100,7 @@
   function markDeletedMany(ids){ ids.forEach(markDeleted); }
 
   var SYNCED_ARRAYS = ["tasks","sessions","habits","books","readLog","capsules",
-    "media","watchLog","seasons","milestones","builds","duckNotes","goals","pdi","reviews","meetings"];
+    "media","watchLog","seasons","milestones","builds","duckNotes","goals","pdi","reviews","meetings","studyTopics"];
 
   // funde um estado recebido (de outra aba ou do servidor) com o que só existe aqui,
   // sem perder nada dos dois lados — a mesma regra vale local ou remotamente
@@ -2434,6 +2479,7 @@
     if(!confirm("Registrar " + min + (min === 1 ? " minuto" : " minutos") + " de foco e encerrar este bloco?")) return;
 
     var t = findTask(S.activeTaskId);
+    var stp = findStudyTopic(S.activeStudyTopicId);
     var endedAt = Date.now();
     S.sessions.push({
       id: "p" + endedAt,             // prefixo "p" distingue de blocos completos, sem colidir
@@ -2442,6 +2488,8 @@
       taskId: S.activeTaskId,
       taskName: t ? t.title : "",
       tag: t ? (t.tag || null) : null,
+      studyTopicId: S.activeStudyTopicId,
+      studyTopicName: stp ? stp.title : "",
       int: S.timer.interruptions || 0,
       src: "partial"
     });
@@ -2484,6 +2532,7 @@
     var mode = S.timer.mode;
     if(mode === "foco"){
       var t = findTask(S.activeTaskId);
+      var stp = findStudyTopic(S.activeStudyTopicId);
       var sid = "t" + endedAt;   // determinístico: o mesmo bloco nunca entra duas vezes
       var jaExiste = S.sessions.some(function(x){ return x.id === sid; });
       if(!jaExiste){
@@ -2495,6 +2544,8 @@
           taskId: S.activeTaskId,
           taskName: t ? t.title : "",
           tag: t ? (t.tag || null) : null,
+          studyTopicId: S.activeStudyTopicId,
+          studyTopicName: stp ? stp.title : "",
           int: S.timer.interruptions || 0,
           src: "timer"
         });
@@ -2530,6 +2581,11 @@
   /* ---------- tarefas ---------- */
   function findTask(id){
     for(var i=0;i<S.tasks.length;i++) if(S.tasks[i].id === id) return S.tasks[i];
+    return null;
+  }
+
+  function findStudyTopic(id){
+    for(var i=0;i<S.studyTopics.length;i++) if(S.studyTopics[i].id === id) return S.studyTopics[i];
     return null;
   }
 
@@ -2624,7 +2680,7 @@
     renderTimer(); renderTasks(); renderStats(); renderSound();
     renderHabits(); renderBooks(); renderMedia(); renderCapsuleBanner();
     renderEyebrow(); applyPanels();
-    renderGoals(); renderPdi(); renderDevWatch(); renderDuckSummary();
+    renderGoals(); renderPdi(); renderDevWatch(); renderDuckSummary(); renderStudyTopics();
   }
 
   function paintClock(){
@@ -2693,6 +2749,12 @@
       chip.textContent = t.tag;
       el.parentNode.appendChild(chip);
     }
+
+    $("now-study-row").hidden = !S.dev;
+    var st = findStudyTopic(S.activeStudyTopicId);
+    var studyEl = $("now-study");
+    studyEl.textContent = st ? st.title : "nenhum tópico selecionado";
+    studyEl.classList.toggle("empty", !st);
 
     // interrupções só fazem sentido durante um bloco de foco em andamento
     var canInterrupt = S.timer.mode === "foco" && S.timer.running;
@@ -6010,6 +6072,69 @@
     });
   }
 
+  /* ---------- tópicos de estudo ---------- */
+  var STUDY_TYPE_LABEL = { livro:"Livro", video:"Vídeo", curso:"Curso", podcast:"Podcast", outro:"Outro" };
+
+  function addStudyTopic(){
+    var input = $("study-title");
+    var title = input.value.trim().slice(0, 120);
+    if(!title){ toast("Descreva o que você quer estudar primeiro"); input.focus(); return; }
+    var type = $("study-type").value;
+    if(!STUDY_TYPE_LABEL[type]) type = "outro";
+    S.studyTopics.unshift({ id: uid(), title: title, type: type, createdAt: Date.now() });
+    input.value = "";
+    save(); renderStudyTopics();
+  }
+
+  function deleteStudyTopic(id){
+    if(!confirm("Excluir este tópico de estudo?")) return;
+    S.studyTopics = S.studyTopics.filter(function(x){ return x.id !== id; });
+    markDeleted(id);
+    if(S.activeStudyTopicId === id) S.activeStudyTopicId = null;
+    save(); renderStudyTopics(); renderTimer();
+  }
+
+  // clicar de novo no mesmo tópico solta a associação — mesmo padrão do toggle de tarefa ativa
+  function toggleActiveStudyTopic(id){
+    S.activeStudyTopicId = (S.activeStudyTopicId === id) ? null : id;
+    save(); renderStudyTopics(); renderTimer();
+  }
+
+  function studyTopicRow(item){
+    var row = document.createElement("button");
+    row.type = "button";
+    row.className = "study-row";
+    row.setAttribute("aria-pressed", String(S.activeStudyTopicId === item.id));
+
+    var type = document.createElement("span");
+    type.className = "study-type";
+    type.textContent = STUDY_TYPE_LABEL[item.type] || "Outro";
+    row.appendChild(type);
+
+    var title = document.createElement("span");
+    title.className = "study-title";
+    title.textContent = item.title;
+    row.appendChild(title);
+
+    var del = document.createElement("button");
+    del.className = "kill";
+    del.type = "button";
+    del.textContent = "×";
+    del.setAttribute("aria-label", "Excluir");
+    del.onclick = function(ev){ ev.stopPropagation(); deleteStudyTopic(item.id); };
+    row.appendChild(del);
+
+    row.onclick = function(){ toggleActiveStudyTopic(item.id); };
+    return row;
+  }
+
+  function renderStudyTopics(){
+    var box = $("study-list");
+    box.innerHTML = "";
+    $("study-empty").hidden = S.studyTopics.length > 0;
+    S.studyTopics.forEach(function(item){ box.appendChild(studyTopicRow(item)); });
+  }
+
   /* ---------- cronômetros de dev: mostrador único, dois trackers ---------- */
   function fmtClock(ms){
     var tot = Math.floor(ms / 1000);
@@ -6525,6 +6650,8 @@
   };
   $("dev-cancel").onclick = function(){ cancelTrack(S.devTab || "build"); };
   $("duck-open").onclick = function(){ openDuckPad(); };
+  $("study-add").onclick = addStudyTopic;
+  $("study-title").addEventListener("keydown", function(e){ if(e.key === "Enter") addStudyTopic(); });
   $("dp-save").onclick = saveDuckNote;
   $("dp-cancel").onclick = closeDuckPad;
   $("duck-close").onclick = closeDuckPad;
@@ -6813,7 +6940,7 @@
 
   $("p-dev").onchange = function(){
     S.dev = this.checked;
-    save(); applyPanels(); renderTasks();   // o botão de branch aparece nas tarefas
+    save(); applyPanels(); renderTasks(); renderTimer();   // o botão de branch aparece nas tarefas; "Estudando" some/aparece junto
   };
 
   [["p-habits","habitos"], ["p-reading","leitura"], ["p-screen","tela"], ["p-goals","objetivos"], ["p-pdi","pdi"], ["p-season","temporada"], ["p-capsule","capsula"], ["p-music","musica"]].forEach(function(par){
@@ -6853,7 +6980,7 @@
         var atual = { tasks:S.tasks, sessions:S.sessions, habits:S.habits,
                       books:S.books, readLog:S.readLog, capsules:S.capsules,
                       media:S.media, watchLog:S.watchLog,
-                      seasons:S.seasons, milestones:S.milestones, builds:S.builds, duckNotes:S.duckNotes, goals:S.goals, pdi:S.pdi, reviews:S.reviews, meetings:S.meetings };
+                      seasons:S.seasons, milestones:S.milestones, builds:S.builds, duckNotes:S.duckNotes, goals:S.goals, pdi:S.pdi, reviews:S.reviews, meetings:S.meetings, studyTopics:S.studyTopics };
         var rev = S.rev || 0;
         var tumbasAntes = S.deletedIds;
         S = adopt(clone(DEFAULTS), d);
@@ -6876,6 +7003,7 @@
           S.pdi        = mergeById(atual.pdi, S.pdi, tumbas);
           S.reviews    = mergeById(atual.reviews, S.reviews, tumbas);
           S.meetings   = mergeById(atual.meetings, S.meetings, tumbas);
+          S.studyTopics = mergeById(atual.studyTopics, S.studyTopics, tumbas);
         }
         S.rev = rev;
         S.timer.running = false; S.timer.endsAt = null;
