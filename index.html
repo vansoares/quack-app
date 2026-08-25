@@ -926,7 +926,21 @@
   .avatar-swatch svg{width:18px;height:18px}
   .avatar-swatch:hover{border-color:var(--ink-3)}
   .avatar-swatch[aria-pressed="true"]{border-color:var(--ink);background:var(--panel)}
-  #auth, #changepw, #deleteaccount{width:min(420px,92vw)}
+  #auth, #changepw, #deleteaccount, #profiles{width:min(420px,92vw)}
+  .prof-list{list-style:none;margin:calc(var(--sp)*2) 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .prof-row{
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+    border:1px solid var(--grid-a);border-radius:var(--r-md);padding:9px 11px;
+  }
+  .prof-row.active{border-color:var(--rest);background:var(--signal-soft)}
+  .prof-row .prof-name{
+    flex:1;min-width:80px;background:none;border:0;text-align:left;color:var(--ink);
+    font-size:14px;font-weight:600;padding:0;cursor:pointer;overflow-wrap:anywhere;
+  }
+  .prof-row .prof-badge{
+    font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--rest);border:1px solid var(--rest);border-radius:var(--r-md);padding:2px 5px;flex:none;
+  }
   #auth .dlg-body input, #changepw .dlg-body input, #deleteaccount .dlg-body input{
     width:100%;margin-bottom:12px;
   }
@@ -1169,6 +1183,15 @@
   .task.done .tag{opacity:.5}
   .now-task .tag{margin-left:2px}
 
+  /* ---------- tag de perfil (cabeçalho) ---------- */
+  .profile-tag{
+    font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--ink-2);background:var(--grid-a);border:1px solid var(--glass-border);border-radius:var(--r-pill);
+    padding:5px 10px;white-space:nowrap;cursor:pointer;align-self:center;
+  }
+  .profile-tag:hover{border-color:var(--rest);color:var(--rest)}
+  .profile-tag[hidden]{display:none}
+
   .filters{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 calc(var(--sp)*2.5)}
   .filters button{
     background:transparent;border:1px solid var(--line);color:var(--ink-3);
@@ -1256,6 +1279,7 @@
         </button>
       </div>
       <div class="account-group">
+        <button class="profile-tag" id="btn-profile-tag" hidden></button>
         <button class="btn-ghost" id="btn-account" aria-label="Entrar">
           <svg id="btn-account-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
           <svg id="btn-account-duck" class="mini-duck" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" hidden>
@@ -1799,6 +1823,7 @@
           <div class="avatar-picker" id="avatar-picker" role="group" aria-label="Escolher patinho"></div>
         </div>
 
+        <button class="btn-ghost" id="btn-manage-profiles">Gerenciar perfis</button>
         <button class="btn-ghost" id="account-change-pw">Trocar senha</button>
         <button class="btn-ghost" id="account-logout">Sair</button>
         <button class="btn-ghost danger" id="account-delete">Excluir conta</button>
@@ -2061,6 +2086,21 @@
   </div>
 </dialog>
 
+<dialog id="profiles">
+  <div class="dlg-head">
+    <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><circle cx="17.5" cy="8.5" r="2.3"/><path d="M15.7 12.3a4.6 4.6 0 0 1 5.3 4.5"/></svg></span>Perfis</h2>
+    <button class="btn-ghost icon-only" id="profiles-close" aria-label="Fechar" title="Fechar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="dlg-body">
+    <p class="hint" style="margin:0">Cada perfil tem suas próprias tarefas, hábitos, sessões — tudo separado. Painéis visíveis também são por perfil (ex.: um perfil "Trabalho" com as ferramentas de dev ligadas, um "Pessoal" com hábitos e leitura).</p>
+    <ul class="prof-list" id="profile-list"></ul>
+    <div class="new-book">
+      <input type="text" id="profile-new-name" placeholder="Nome do novo perfil (ex.: Trabalho)" maxlength="30" aria-label="Nome do novo perfil">
+      <button class="btn-ghost" id="profile-new-add">Criar perfil</button>
+    </div>
+  </div>
+</dialog>
+
 <dialog id="changepw">
   <div class="dlg-head">
     <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2.5"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>Trocar senha</h2>
@@ -2168,6 +2208,12 @@
   var REV = 0;                 // última revisão que esta aba conhece
   var S = load();
 
+  // container de perfis: por baixo é sempre um perfil (ou mais), mesmo sem
+  // conta — só que sem conta a interface de perfis nem aparece. Isso evita
+  // dois caminhos de código diferentes pra logado/anônimo
+  var PROFILES = loadProfiles();
+  PROFILES.archive[PROFILES.activeProfileId] = S;   // liga os dois pela mesma referência
+
   function parseState(raw){
     try{ return JSON.parse(raw); }catch(e){ return null; }
   }
@@ -2230,6 +2276,76 @@
     return s;
   }
 
+  /* ---------- perfis ---------- */
+  // cada perfil é um blob independente, do mesmo formato de DEFAULTS/S —
+  // trocar de perfil é trocar qual blob a variável S aponta, nunca misturar
+  // campos de dois perfis dentro do mesmo objeto
+  var PKEY = "foco.profiles.v1";
+
+  function newProfileMeta(name){
+    return { id: uid(), name: name, createdAt: Date.now() };
+  }
+
+  function findProfileMeta(id){
+    return PROFILES.profiles.filter(function(p){ return p.id === id; })[0] || null;
+  }
+
+  // na primeira vez que uma cópia antiga (sem esse conceito) roda este
+  // código, cria um perfil "Pessoal" — o arquivo dele é preenchido pelo S
+  // que já existia, logo abaixo, sem perder nada
+  function loadProfiles(){
+    try{
+      var raw = localStorage.getItem(PKEY);
+      if(raw){
+        var d = JSON.parse(raw);
+        if(d && Array.isArray(d.profiles) && d.profiles.length && d.archive && d.activeProfileId){
+          return d;
+        }
+      }
+    }catch(e){}
+    var meta = newProfileMeta("Pessoal");
+    return { activeProfileId: meta.id, profiles: [meta], archive: {} };
+  }
+
+  function saveProfiles(){
+    try{ localStorage.setItem(PKEY, JSON.stringify(PROFILES)); }catch(e){}
+    schedulePush();   // qualquer mudança no container (criar/renomear/excluir perfil) precisa sincronizar
+  }
+
+  // formato antigo (de antes dos perfis existirem): um blob só, sem
+  // conceito de perfil — vira um perfil "Pessoal" único antes de fundir
+  function normalizeProfilesContainer(raw){
+    if(raw && Array.isArray(raw.profiles) && raw.archive && raw.activeProfileId) return raw;
+    var meta = newProfileMeta("Pessoal");
+    var archive = {};
+    archive[meta.id] = raw || {};
+    return { activeProfileId: meta.id, profiles: [meta], archive: archive };
+  }
+
+  // funde o container de perfis inteiro: une a lista por id (nome do lado
+  // remoto prevalece em conflito, mesma convenção do resto do adopt()) e
+  // funde os dados de cada perfil presente em qualquer um dos dois lados
+  function mergeProfilesContainer(local, remote){
+    var byId = {}, order = [];
+    (local.profiles || []).forEach(function(p){
+      byId[p.id] = { id:p.id, name:p.name, createdAt:p.createdAt };
+      order.push(p.id);
+    });
+    (remote.profiles || []).forEach(function(p){
+      if(byId[p.id]) byId[p.id].name = p.name;
+      else{ byId[p.id] = { id:p.id, name:p.name, createdAt:p.createdAt }; order.push(p.id); }
+    });
+    var archive = {};
+    order.forEach(function(id){
+      var localBlob = local.archive && local.archive[id];
+      var remoteBlob = remote.archive && remote.archive[id];
+      if(localBlob && remoteBlob) archive[id] = mergeProfileBlob(localBlob, remoteBlob);
+      else archive[id] = remoteBlob || localBlob || clone(DEFAULTS);
+    });
+    var activeId = (local.activeProfileId && byId[local.activeProfileId]) ? local.activeProfileId : order[0];
+    return { activeProfileId: activeId, profiles: order.map(function(id){ return byId[id]; }), archive: archive };
+  }
+
   // união por id: quem chega primeiro na lista vence, e nada duplica.
   // "tumbas" (ids apagados) ficam de fora dos dois lados — sem isso, um item
   // excluído aqui mas ainda presente numa cópia desatualizada simplesmente
@@ -2267,17 +2383,23 @@
   var SYNCED_ARRAYS = ["tasks","sessions","habits","books","readLog","capsules",
     "media","watchLog","seasons","milestones","builds","duckNotes","goals","notes","pdi","reviews","meetings","studyTopics"];
 
-  // funde um estado recebido (de outra aba ou do servidor) com o que só existe aqui,
-  // sem perder nada dos dois lados — a mesma regra vale local ou remotamente
-  function mergeIncoming(d){
+  // funde um blob de perfil recebido (de outra aba, do servidor, ou de outro
+  // perfil na fusão do container inteiro) com um blob local, sem perder nada
+  // dos dois lados — pura, não depende de qual é o S/perfil ativo agora
+  function mergeProfileBlob(localBlob, remoteBlob){
     var locais = {};
-    SYNCED_ARRAYS.forEach(function(k){ locais[k] = S[k]; });
-    var novo = adopt(clone(DEFAULTS), d);
-    var tumbas = unionIds(S.deletedIds, novo.deletedIds);
+    SYNCED_ARRAYS.forEach(function(k){ locais[k] = localBlob[k]; });
+    var novo = adopt(clone(DEFAULTS), remoteBlob);
+    var tumbas = unionIds(localBlob.deletedIds, novo.deletedIds);
     novo.deletedIds = tumbas;
     SYNCED_ARRAYS.forEach(function(k){ novo[k] = mergeById(novo[k], locais[k], tumbas); });
     return novo;
   }
+
+  // atalho usado pela sincronização entre abas, que sempre funde contra o
+  // perfil ativo (S) — a fusão do container inteiro (perfil por perfil) usa
+  // mergeProfileBlob direto, ver mergeProfilesContainer
+  function mergeIncoming(d){ return mergeProfileBlob(S, d); }
 
   function save(){
     try{
@@ -2285,6 +2407,7 @@
       S.savedAt = Date.now();
       localStorage.setItem(KEY, JSON.stringify(S));
       REV = S.rev;
+      saveProfiles();   // S e o arquivo do perfil ativo são o mesmo objeto — só falta gravar
     }catch(e){
       toast("Não deu para salvar: armazenamento do navegador indisponível");
     }
@@ -2300,6 +2423,7 @@
     if((d.rev || 0) <= REV) return;         // revisão já conhecida ou mais antiga
 
     S = mergeIncoming(d);
+    PROFILES.archive[PROFILES.activeProfileId] = S;
     REV = S.rev || 0;
 
     applyTheme();
@@ -2341,7 +2465,9 @@
 
   function pushToServer(){
     if(!SERVER_OK || !AUTH.email) return;
-    api("/api/state", { method:"PUT", body:S }).then(function(){
+    // manda o container inteiro, não só o perfil ativo — mandar só o S de
+    // agora sobrescreveria (e apagaria) os outros perfis no servidor
+    api("/api/state", { method:"PUT", body:PROFILES }).then(function(){
       setSyncNote("sincronizado agora há pouco");
     }).catch(function(){
       setSyncNote("não deu para sincronizar agora — tentando de novo em breve");
@@ -2382,21 +2508,167 @@
           );
           if(!misturar){
             S = clone(DEFAULTS);
+            PROFILES.archive[PROFILES.activeProfileId] = S;
             REV = 0;
           }
         }
       }
 
-      if(remoto) S = mergeIncoming(remoto);
+      if(remoto){
+        PROFILES = mergeProfilesContainer(PROFILES, normalizeProfilesContainer(remoto));
+        S = PROFILES.archive[PROFILES.activeProfileId];
+      }
       REV = S.rev || 0;
       try{ localStorage.setItem(LAST_ACCOUNT_KEY, AUTH.email); }catch(e){}
 
       save();               // grava local com a revisão nova e já agenda o push de reconciliação
-      applyTheme(); render(); renderEmbed(); syncAmbient();
+      applyTheme(); render(); renderEmbed(); syncAmbient(); renderProfileTag();
       setSyncNote("sincronizado com sua conta");
     }).catch(function(){
       pulling = false;
       setSyncNote("não deu para buscar seus dados agora");
+    });
+  }
+
+  function activeProfileMeta(){ return findProfileMeta(PROFILES.activeProfileId); }
+
+  // mesma sequência que toda troca de estado inteiro no app já usa
+  // (pullFromServer, importar backup, apagar tudo): troca o S, salva,
+  // e roda o mesmo cascata de renderização
+  function switchProfile(id){
+    if(id === PROFILES.activeProfileId) return;
+    if(S.timer.running){ toast("Pare o timer antes de trocar de perfil"); return; }
+    var blob = PROFILES.archive[id];
+    PROFILES.activeProfileId = id;
+    S = blob ? adopt(clone(DEFAULTS), blob) : clone(DEFAULTS);
+    PROFILES.archive[id] = S;
+    REV = 0;
+    save();
+    applyTheme(); render(); renderEmbed(); syncAmbient();
+    renderProfileTag(); renderProfilesDialog();
+    var meta = findProfileMeta(id);
+    toast("Perfil “" + (meta ? meta.name : "") + "” ativado");
+  }
+
+  function createProfile(name){
+    var trimmed = (name || "").trim().slice(0, 30);
+    if(!trimmed){ toast("Dê um nome ao perfil"); return; }
+    var meta = newProfileMeta(trimmed);
+    PROFILES.profiles.push(meta);
+    PROFILES.archive[meta.id] = clone(DEFAULTS);
+    switchProfile(meta.id);
+  }
+
+  function renameProfile(id, name){
+    var trimmed = (name || "").trim().slice(0, 30);
+    if(!trimmed) return;
+    var meta = findProfileMeta(id);
+    if(!meta || meta.name === trimmed) return;
+    meta.name = trimmed;
+    save();
+    renderProfileTag(); renderProfilesDialog();
+  }
+
+  async function deleteProfile(id){
+    if(PROFILES.profiles.length <= 1){ toast("Não dá pra excluir o único perfil"); return; }
+    var meta = findProfileMeta(id);
+    if(!meta) return;
+    if(id === PROFILES.activeProfileId && S.timer.running){
+      toast("Pare o timer antes de excluir o perfil ativo");
+      return;
+    }
+    var ok = await askConfirm("Excluir o perfil “" + meta.name + "” e todos os dados dele? Não tem volta.", { danger:true });
+    if(!ok) return;
+
+    PROFILES.profiles = PROFILES.profiles.filter(function(p){ return p.id !== id; });
+    delete PROFILES.archive[id];
+
+    if(id === PROFILES.activeProfileId){
+      var next = PROFILES.profiles[0];
+      PROFILES.activeProfileId = next.id;
+      var blob = PROFILES.archive[next.id];
+      S = blob ? adopt(clone(DEFAULTS), blob) : clone(DEFAULTS);
+      PROFILES.archive[next.id] = S;
+      REV = 0;
+      save();
+      applyTheme(); render(); renderEmbed(); syncAmbient();
+    }else{
+      saveProfiles();
+    }
+    renderProfileTag(); renderProfilesDialog();
+    toast("Perfil “" + meta.name + "” excluído");
+  }
+
+  function renderProfileTag(){
+    var btn = $("btn-profile-tag");
+    var logged = !!AUTH.email;
+    btn.hidden = !logged;
+    if(!logged) return;
+    var meta = activeProfileMeta();
+    btn.textContent = meta ? meta.name : "Perfil";
+  }
+
+  var editingProfileId = null;
+
+  function renderProfilesDialog(){
+    var list = $("profile-list");
+    list.innerHTML = "";
+    PROFILES.profiles.forEach(function(p){
+      var li = document.createElement("li");
+      li.className = "prof-row" + (p.id === PROFILES.activeProfileId ? " active" : "");
+
+      if(editingProfileId === p.id){
+        var inp = document.createElement("input");
+        inp.type = "text";
+        inp.value = p.name;
+        inp.maxLength = 30;
+        inp.style.cssText = "flex:1;min-width:80px";
+        inp.setAttribute("aria-label", "Renomear perfil " + p.name);
+        var settled = false;
+        function commit(){
+          if(settled) return;
+          settled = true;
+          renameProfile(p.id, inp.value);
+          editingProfileId = null;
+        }
+        inp.addEventListener("blur", commit);
+        inp.addEventListener("keydown", function(e){
+          if(e.key === "Enter") commit();
+          if(e.key === "Escape"){ settled = true; editingProfileId = null; renderProfilesDialog(); }
+        });
+        li.appendChild(inp);
+        setTimeout(function(){ inp.focus(); inp.select(); }, 0);
+      }else{
+        var name = document.createElement("button");
+        name.className = "prof-name";
+        name.textContent = p.name;
+        name.title = "Clique para renomear";
+        name.onclick = function(){ editingProfileId = p.id; renderProfilesDialog(); };
+        li.appendChild(name);
+      }
+
+      if(p.id === PROFILES.activeProfileId){
+        var badge = document.createElement("span");
+        badge.className = "prof-badge";
+        badge.textContent = "ativo";
+        li.appendChild(badge);
+      }else{
+        var use = document.createElement("button");
+        use.className = "mini";
+        use.textContent = "Usar";
+        use.onclick = function(){ switchProfile(p.id); };
+        li.appendChild(use);
+      }
+
+      var del = document.createElement("button");
+      del.className = "kill";
+      del.textContent = "×";
+      del.setAttribute("aria-label", "Excluir perfil " + p.name);
+      del.disabled = PROFILES.profiles.length <= 1;
+      del.onclick = function(){ deleteProfile(p.id); };
+      li.appendChild(del);
+
+      list.appendChild(li);
     });
   }
 
@@ -2433,7 +2705,6 @@
   }
 
   function applyAccountUI(){
-    console.log("[debug applyAccountUI]", JSON.stringify(AUTH), new Error().stack);
     var logged = !!AUTH.email;
     var label = AUTH.username || "Conta";
     var btnAccountLabel = $("btn-account").querySelector(".btn-label");
@@ -2458,6 +2729,7 @@
       $("account-username").value = AUTH.username || "";
       renderAvatarPicker();
     }
+    renderProfileTag();
   }
 
   function onAuthSuccess(res){
@@ -7341,6 +7613,16 @@
     if(e.key === "Enter"){ e.preventDefault(); $("account-username-save").click(); }
   });
 
+  $("btn-profile-tag").onclick = function(){ renderProfilesDialog(); $("profiles").showModal(); };
+  $("btn-manage-profiles").onclick = function(){ $("settings").close(); renderProfilesDialog(); $("profiles").showModal(); };
+  $("profiles-close").onclick = function(){ $("profiles").close(); };
+  $("profile-new-add").onclick = function(){
+    var inp = $("profile-new-name");
+    createProfile(inp.value);
+    inp.value = "";
+  };
+  $("profile-new-name").addEventListener("keydown", function(e){ if(e.key === "Enter") $("profile-new-add").click(); });
+
   $("account-change-pw").onclick = function(){
     $("pw-current").value = ""; $("pw-new").value = ""; $("changepw-error").textContent = "";
     $("changepw").showModal();
@@ -7571,6 +7853,7 @@
         var rev = S.rev || 0;
         var tumbasAntes = S.deletedIds;
         S = adopt(clone(DEFAULTS), d);
+        PROFILES.archive[PROFILES.activeProfileId] = S;
         if(mesclar){
           var tumbas = unionIds(tumbasAntes, S.deletedIds);
           S.deletedIds = tumbas;
@@ -7606,9 +7889,11 @@
   };
 
   $("btn-wipe").onclick = async function(){
-    if(!(await askConfirm("Apagar todas as tarefas, sessões e ajustes? Isso não tem volta.", { danger:true, confirmLabel:"Apagar tudo" }))) return;
-    localStorage.removeItem(KEY);
+    // só o perfil ativo — com perfis existindo, "tudo" apagar os outros
+    // também seria uma surpresa e tanto
+    if(!(await askConfirm("Apagar todas as tarefas, sessões e ajustes deste perfil? Isso não tem volta.", { danger:true, confirmLabel:"Apagar tudo" }))) return;
     S = clone(DEFAULTS);
+    PROFILES.archive[PROFILES.activeProfileId] = S;
     save(); render(); dlg.close();
     toast("Tudo apagado");
   };
