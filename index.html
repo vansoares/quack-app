@@ -6905,14 +6905,24 @@
       targets.push(el);
     });
     if(!targets.length || !("IntersectionObserver" in window)) return;
-    var io = new IntersectionObserver(function(entries){
-      var best = null;
-      entries.forEach(function(entry){
-        if(entry.isIntersecting && (!best || entry.intersectionRatio > best.intersectionRatio)) best = entry;
+
+    // "threshold: 0.5" exigia metade da seção inteira visível de uma vez —
+    // nunca acontece em seções mais altas que a tela (Hábitos, por exemplo),
+    // então o item ativo travava na primeira seção curta e nunca mais mudava.
+    // Em vez de medir proporção visível, marca como atual a última seção
+    // (na ordem da página) cujo topo já passou por uma linha de referência
+    // perto do topo da viewport — o observer só dispara o recálculo.
+    function recalc(){
+      var linha = window.innerHeight * 0.3;
+      var atual = null;
+      targets.forEach(function(el){
+        if(el.getBoundingClientRect().top <= linha) atual = el;
       });
-      if(best) setCurrent(byTarget[best.target.id]);
-    }, { threshold: 0.5 });
+      if(atual) setCurrent(byTarget[atual.id]);
+    }
+    var io = new IntersectionObserver(recalc, { rootMargin: "0px 0px -70% 0px", threshold: 0 });
     targets.forEach(function(el){ io.observe(el); });
+    recalc();
   }
 
   applyTheme();
