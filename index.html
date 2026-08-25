@@ -475,8 +475,6 @@
   }
   .task.done .check{background:var(--rest);border-color:var(--rest);color:var(--on-ink)}
   .task .title{flex:1;min-width:0;font-size:14.5px;overflow-wrap:anywhere;background:none;border:0;text-align:left;font-family:var(--sans);color:var(--ink);padding:0;cursor:pointer}
-  .task .count{font-family:var(--mono);font-size:11.5px;color:var(--ink-3);white-space:nowrap;font-variant-numeric:tabular-nums}
-  .task .count b{color:var(--ink);font-weight:600}
   .kill{background:none;border:0;color:var(--ink-3);font-size:15px;line-height:1;padding:2px 4px}
   .kill:hover{color:var(--signal)}
 
@@ -2844,10 +2842,6 @@
                         : "Definir um prazo";
     dueEl.onclick = function(){ editDue(t, dueEl); };
 
-    var count = document.createElement("span");
-    count.className = "count";
-    count.innerHTML = "<b>" + (t.done || 0) + "</b>/" + (t.est || 1);
-
     var del = document.createElement("button");
     del.className = "kill";
     del.textContent = "×";
@@ -2865,12 +2859,12 @@
       renderTasks();
     };
 
-    // prazo, nota e pomodoros ficam num painel à parte — perto da tarefa
-    // só o essencial (etiqueta), o resto é detalhe que você abre quando precisa
+    // prazo e nota ficam num painel à parte — perto da tarefa só o essencial
+    // (etiqueta), o resto é detalhe que você abre quando precisa
     var expanded = !!expandedTasks[t.id] || editingNote === t.id;
     var toggle = document.createElement("button");
     toggle.className = "task-toggle";
-    toggle.setAttribute("aria-label", expanded ? "Ocultar detalhes" : "Mostrar prazo, nota e pomodoros");
+    toggle.setAttribute("aria-label", expanded ? "Ocultar detalhes" : "Mostrar prazo e nota");
     toggle.setAttribute("aria-expanded", String(expanded));
     toggle.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
     toggle.onclick = function(){
@@ -2888,7 +2882,6 @@
       detail.className = "task-detail";
       detail.appendChild(dueEl);
       detail.appendChild(nota);
-      detail.appendChild(count);
 
       if(editingNote === t.id){
         var ta = document.createElement("textarea");
