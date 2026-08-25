@@ -2276,6 +2276,7 @@
   }
 
   function applyAccountUI(){
+    console.log("[debug applyAccountUI]", JSON.stringify(AUTH), new Error().stack);
     var logged = !!AUTH.email;
     var label = AUTH.username || "Conta";
     var btnAccountLabel = $("btn-account").querySelector(".btn-label");
