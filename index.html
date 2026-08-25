@@ -1530,7 +1530,7 @@
         <div class="panel-head">
           <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14.5" r="6"/><circle cx="15.6" cy="8.6" r="3.4"/><path d="M18.7 8.1c1.2-.2 2.2.3 2.2 1s-1 1.2-2.2 1c-.5-.1-.9-.5-.9-1s.4-.9.9-1z"/><circle cx="16.5" cy="7.7" r=".5" fill="currentColor" stroke="none"/></svg></span>Patoterapia</h3>
         </div>
-        <p class="hint">Descrever o problema em voz escrita resolve boa parte deles antes de você pedir ajuda a alguém. O patinho não responde — essa é a ideia.</p>
+        <p class="hint">Descrever em voz escrita resolve boa parte — seja um bug (Debug) ou uma decisão de design antes de codar (Arquitetura). O patinho não responde — essa é a ideia.</p>
         <div class="figures three" id="duck-figures" hidden>
           <div class="fig"><div class="n" id="duck-fig-total">0</div><div class="l">Sessões</div></div>
           <div class="fig"><div class="n" id="duck-fig-solved">0</div><div class="l">Resolvidas</div></div>
@@ -1849,16 +1849,20 @@
     <button class="btn-ghost" id="duck-close">Fechar</button>
   </div>
   <div class="dlg-body">
+    <div class="modes small" id="dp-kind-tabs" role="group" aria-label="Tipo de sessão">
+      <button type="button" data-kind="debug" aria-pressed="true">Debug</button>
+      <button type="button" data-kind="arquitetura" aria-pressed="false">Arquitetura</button>
+    </div>
     <div class="dp-group">
-      <label class="k" for="dp-problem">O que está acontecendo</label>
+      <label class="k" for="dp-problem" id="dp-problem-label">O que está acontecendo</label>
       <textarea id="dp-problem" style="min-height:80px" placeholder="O teste de integração falha só no CI, e só às terças…"></textarea>
-      <label class="k" for="dp-expected">O que você esperava</label>
+      <label class="k" for="dp-expected" id="dp-expected-label">O que você esperava</label>
       <textarea id="dp-expected" style="min-height:64px" placeholder="Que passasse igual passa local"></textarea>
-      <label class="k" for="dp-tried">O que já tentou</label>
+      <label class="k" for="dp-tried" id="dp-tried-label">O que já tentou</label>
       <textarea id="dp-tried" style="min-height:64px" placeholder="Rodei com -race, limpei cache, subi o timeout…"></textarea>
     </div>
     <div class="dp-solution-wrap">
-      <label class="k" for="dp-solution">Como resolveu <span class="dp-optional">— se já resolveu</span></label>
+      <label class="k" for="dp-solution" id="dp-solution-label">Como resolveu <span class="dp-optional" id="dp-solution-optional">— se já resolveu</span></label>
       <textarea id="dp-solution" style="min-height:64px" placeholder="O gzip mudava o Content-Length antes da validação — passei a ler o header original…"></textarea>
     </div>
     <label class="k" for="dp-tag">Tópico</label>
@@ -1907,6 +1911,11 @@
     <div class="lib-search-row">
       <input type="text" id="lib-search" placeholder="Buscar por palavra, erro, tópico…" aria-label="Buscar">
       <button class="btn-ghost" type="button" id="lib-unsolved-toggle" aria-pressed="false">Só em aberto</button>
+    </div>
+    <div class="filters" id="lib-kind-filters" role="group" aria-label="Filtrar por tipo">
+      <button type="button" data-kind="" aria-pressed="true">Tudo</button>
+      <button type="button" data-kind="debug" aria-pressed="false">Debug</button>
+      <button type="button" data-kind="arquitetura" aria-pressed="false">Arquitetura</button>
     </div>
     <div class="filters" id="lib-filters" role="group" aria-label="Filtrar por tópico"></div>
     <div id="lib-list"></div>
@@ -5850,9 +5859,49 @@
 
   /* ---------- explicar ao patinho ---------- */
   var editingDuckId = null;   // quando definido, "Guardar" atualiza em vez de criar
+  var editingDuckKind = "debug";
   var libFilterTag = null;
+  var libFilterKind = null;   // null = tudo; "debug" | "arquitetura"
   var libOnlyUnsolved = false;
   var libSearch = "";
+
+  // mesma ideia da Patoterapia original (debug), mas pra decisão de arquitetura
+  // antes de codar em vez de um problema durante — os campos e o "resolvido"
+  // viram "decidido", o resto (biblioteca, glossário, busca) é tudo compartilhado
+  var DUCK_KIND_COPY = {
+    debug: {
+      label: "Debug",
+      problem: "O que está acontecendo", problemPh: "O teste de integração falha só no CI, e só às terças…",
+      expected: "O que você esperava", expectedPh: "Que passasse igual passa local",
+      tried: "O que já tentou", triedPh: "Rodei com -race, limpei cache, subi o timeout…",
+      solution: "Como resolveu", solutionOptional: "— se já resolveu",
+      solutionPh: "O gzip mudava o Content-Length antes da validação — passei a ler o header original…"
+    },
+    arquitetura: {
+      label: "Arquitetura",
+      problem: "O que você vai construir", problemPh: "Invalidar cache entre serviços quando um pedido muda de status…",
+      expected: "Que opções você considerou", expectedPh: "Webhook, polling, fila de eventos…",
+      tried: "Trade-offs de cada uma", triedPh: "Webhook é mais rápido mas exige endpoint público; fila é mais robusta mas soma infra…",
+      solution: "O que decidiu", solutionOptional: "— se já decidiu",
+      solutionPh: "Fila de eventos — a robustez compensa a infra extra, e já tem um broker rodando."
+    }
+  };
+
+  function applyDuckKindCopy(kind){
+    var c = DUCK_KIND_COPY[kind] || DUCK_KIND_COPY.debug;
+    $("dp-problem-label").textContent = c.problem;
+    $("dp-problem").placeholder = c.problemPh;
+    $("dp-expected-label").textContent = c.expected;
+    $("dp-expected").placeholder = c.expectedPh;
+    $("dp-tried-label").textContent = c.tried;
+    $("dp-tried").placeholder = c.triedPh;
+    $("dp-solution-label").firstChild.textContent = c.solution + " ";
+    $("dp-solution-optional").textContent = c.solutionOptional;
+    $("dp-solution").placeholder = c.solutionPh;
+    document.querySelectorAll("#dp-kind-tabs button").forEach(function(b){
+      b.setAttribute("aria-pressed", String(b.dataset.kind === kind));
+    });
+  }
 
   // true se algum campo tem texto que ainda não virou uma sessão salva —
   // usado pra não deixar um Esc por reflexo apagar um parágrafo inteiro escrito à toa
@@ -5869,11 +5918,13 @@
 
   function openDuckPad(note){
     editingDuckId = note ? note.id : null;
+    editingDuckKind = note ? (note.kind || "debug") : "debug";
     $("dp-problem").value = note ? note.problem : "";
     $("dp-expected").value = note ? (note.expected || "") : "";
     $("dp-tried").value = note ? (note.tried || "") : "";
     $("dp-solution").value = note ? (note.solution || "") : "";
     $("dp-tag").value = note ? (note.tag || "") : "";
+    applyDuckKindCopy(editingDuckKind);
     renderDuckTagOptions();
     $("duckpad").showModal();
     $("dp-problem").focus();
@@ -5905,13 +5956,14 @@
         note.tried = $("dp-tried").value.trim().slice(0, 2000);
         note.solution = solution;
         note.tag = tag;
+        note.kind = editingDuckKind;
         note.solved = !!solution;
         note.updatedAt = Date.now();
       }
     }else{
       ficouResolvido = !!solution;
       S.duckNotes.unshift({
-        id: uid(), at: Date.now(),
+        id: uid(), at: Date.now(), kind: editingDuckKind,
         problem: problema.slice(0, 2000),
         expected: $("dp-expected").value.trim().slice(0, 2000),
         tried: $("dp-tried").value.trim().slice(0, 2000),
@@ -5945,9 +5997,12 @@
   function duckGroupKey(n){ return n.tag ? n.tag.toLowerCase() : "\u0000sem"; }
 
   function openLibrary(){
-    libSearch = ""; libFilterTag = null; libOnlyUnsolved = false;
+    libSearch = ""; libFilterTag = null; libFilterKind = null; libOnlyUnsolved = false;
     $("lib-search").value = "";
     $("lib-unsolved-toggle").setAttribute("aria-pressed", "false");
+    document.querySelectorAll("#lib-kind-filters button").forEach(function(b){
+      b.setAttribute("aria-pressed", String(b.dataset.kind === ""));
+    });
     renderLibrary();
     $("duck-library").showModal();
   }
@@ -6004,6 +6059,13 @@
       row.appendChild(dot);
     }
 
+    if((n.kind || "debug") === "arquitetura"){
+      var kindTag = document.createElement("span");
+      kindTag.className = "study-type";
+      kindTag.textContent = "Arquitetura";
+      row.appendChild(kindTag);
+    }
+
     var title = document.createElement("span");
     title.className = "lib-title";
     title.textContent = n.problem;
@@ -6052,7 +6114,15 @@
     sv.className = n.solved ? "lib-solved" : "lib-open-tag";
     sv.textContent = n.solved ? "resolvido" : "em aberto";
     meta.appendChild(sv);
+    var kind = n.kind || "debug";
+    if(kind === "arquitetura"){
+      var kindTag = document.createElement("span");
+      kindTag.className = "study-type";
+      kindTag.textContent = "Arquitetura";
+      meta.appendChild(kindTag);
+    }
 
+    var c = DUCK_KIND_COPY[kind] || DUCK_KIND_COPY.debug;
     var body = $("lib-detail-body");
     body.innerHTML = "";
     function bloco(label, val, destaque){
@@ -6065,10 +6135,10 @@
       wrap.appendChild(document.createTextNode(val));
       body.appendChild(wrap);
     }
-    bloco("Problema", n.problem, false);
-    bloco("Esperava", n.expected, false);
-    bloco("Tentou", n.tried, false);
-    bloco("Como resolveu", n.solution, true);
+    bloco(c.problem, n.problem, false);
+    bloco(c.expected, n.expected, false);
+    bloco(c.tried, n.tried, false);
+    bloco(c.solution, n.solution, true);
 
     $("lib-detail-edit").onclick = function(){
       $("lib-detail").close();
@@ -6092,6 +6162,7 @@
       if(libFilterTag === "__sem__" && n.tag) return false;
       if(libFilterTag && libFilterTag !== "__sem__" && !sameTag(n.tag, libFilterTag)) return false;
       if(libOnlyUnsolved && n.solved) return false;
+      if(libFilterKind && (n.kind || "debug") !== libFilterKind) return false;
       return matchesSearch(n, q);
     });
 
@@ -6743,6 +6814,12 @@
   $("study-title").addEventListener("keydown", function(e){ if(e.key === "Enter") addStudyTopic(); });
   $("dp-save").onclick = saveDuckNote;
   $("dp-cancel").onclick = closeDuckPad;
+  $("dp-kind-tabs").addEventListener("click", function(e){
+    var b = e.target.closest("button[data-kind]");
+    if(!b) return;
+    editingDuckKind = b.dataset.kind;
+    applyDuckKindCopy(editingDuckKind);
+  });
   $("duck-close").onclick = closeDuckPad;
   $("duckpad").addEventListener("cancel", function(e){
     if(duckPadIsDirty() && !confirm("Descartar o que você escreveu nesta sessão?")){ e.preventDefault(); return; }
@@ -6758,6 +6835,15 @@
     this.setAttribute("aria-pressed", String(libOnlyUnsolved));
     renderLibrary();
   };
+  $("lib-kind-filters").addEventListener("click", function(e){
+    var b = e.target.closest("button[data-kind]");
+    if(!b) return;
+    libFilterKind = b.dataset.kind || null;
+    document.querySelectorAll("#lib-kind-filters button").forEach(function(x){
+      x.setAttribute("aria-pressed", String(x === b));
+    });
+    renderLibrary();
+  });
   $("lib-detail-close").onclick = function(){ $("lib-detail").close(); };
 
   // temporadas
