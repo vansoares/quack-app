@@ -1345,10 +1345,10 @@
       </div>
     </section>
 
-    <!-- NOTAS SOLTAS -->
+    <!-- QUACK NOTES -->
     <section class="panel" id="panel-notes">
       <div class="panel-head">
-        <h2 class="panel-title"><span class="panel-icon clover" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M15 3v5h5"/><path d="M8 13h8M8 17h5"/></svg></span>Notas soltas</h2>
+        <h2 class="panel-title"><span class="panel-icon clover" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M15 3v5h5"/><path d="M8 13h8M8 17h5"/></svg></span>Quack Notes</h2>
         <span class="panel-title" id="notes-state"></span>
       </div>
       <p class="hint" style="margin:0 0 14px">Rascunho rápido, sem estrutura — o que não cabe numa tarefa nem num objetivo. Salva sozinho ao sair do campo.</p>
@@ -1359,6 +1359,17 @@
 
       <ul class="loose-notes" id="notes-list"></ul>
       <div class="empty-state" id="notes-empty" hidden>Nenhuma nota ainda. Clique em "Nova nota" para começar um rascunho.</div>
+    </section>
+
+    <!-- PADRÕES DE PRODUTIVIDADE -->
+    <section class="panel" id="panel-patterns" hidden>
+      <div class="panel-head">
+        <h2 class="panel-title"><span class="panel-icon clover" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></span>Padrões de produtividade</h2>
+      </div>
+      <p class="hint" id="pattern-note"></p>
+      <div id="pattern-hours"></div>
+      <p class="cap-meta" style="margin-top:14px" id="pattern-tags-title" hidden>Por etiqueta</p>
+      <div id="pattern-tags"></div>
     </section>
 
     <!-- OBJETIVOS DO ANO -->
@@ -1649,17 +1660,6 @@
         <p class="hint" id="embed-hint"></p>
         <div class="embed-frame" id="embed-frame" hidden></div>
       </div>
-    </section>
-
-    <!-- PADRÕES DE PRODUTIVIDADE -->
-    <section class="panel" id="panel-patterns" hidden>
-      <div class="panel-head">
-        <h2 class="panel-title"><span class="panel-icon clover" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></span>Padrões de produtividade</h2>
-      </div>
-      <p class="hint" id="pattern-note"></p>
-      <div id="pattern-hours"></div>
-      <p class="cap-meta" style="margin-top:14px" id="pattern-tags-title" hidden>Por etiqueta</p>
-      <div id="pattern-tags"></div>
     </section>
 
     <!-- BALANÇO -->
