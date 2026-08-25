@@ -279,6 +279,7 @@
     display:inline-flex;align-items:center;gap:7px;
   }
   .btn-ghost:hover{border-color:var(--ink-3);color:var(--ink)}
+  .btn-ghost.icon-only{padding:0;width:36px;height:36px;flex:none;justify-content:center}
   .btn-ghost svg{flex:none}
   .btn-ghost[hidden]{display:none}
 
@@ -1292,9 +1293,9 @@
       <div class="new-task">
         <input type="text" id="task-input" placeholder="O que você vai fazer?" maxlength="140" aria-label="Nova tarefa">
         <input type="text" id="task-tag" list="tag-options" placeholder="etiqueta" maxlength="24" title="Projeto ou área" aria-label="Etiqueta">
-        <input type="date" id="task-due" title="Prazo (opcional)" aria-label="Prazo">
-        <input type="number" id="task-est" min="1" max="24" value="1" title="Pomodoros estimados" aria-label="Pomodoros estimados">
-        <button class="btn-ghost" id="task-add">Adicionar</button>
+        <button class="btn-ghost icon-only" id="task-add" aria-label="Adicionar tarefa" title="Adicionar tarefa">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
         <datalist id="tag-options"></datalist>
       </div>
 
@@ -2660,15 +2661,12 @@
     var input = $("task-input");
     var title = input.value.trim();
     if(!title){ input.focus(); return; }
-    var est = parseInt($("task-est").value, 10);
-    if(!(est > 0)) est = 1;
     var tag = normTag($("task-tag").value);
-    var due = $("task-due").value || null;
-    S.tasks.unshift({ id: uid(), title: title, tag: tag, due: due, est: est, note: null,
+    // prazo e estimativa de pomodoros não entram na criação — dá pra
+    // definir depois no detalhamento da tarefa, sem sobrecarregar aqui
+    S.tasks.unshift({ id: uid(), title: title, tag: tag, due: null, est: 1, note: null,
                       done: 0, completed: false, createdAt: Date.now(), completedAt: null });
     input.value = "";
-    $("task-est").value = 1;
-    $("task-due").value = "";
     // a etiqueta permanece no campo: quem trabalha em lote costuma repetir o projeto
     save(); renderTasks(); renderStats();
     input.focus();
@@ -2842,6 +2840,12 @@
                         : "Definir um prazo";
     dueEl.onclick = function(){ editDue(t, dueEl); };
 
+    var estEl = document.createElement("button");
+    estEl.className = "due";
+    estEl.textContent = (t.est || 1) + (t.est === 1 ? " pomodoro" : " pomodoros");
+    estEl.title = "Pomodoros estimados — clique para mudar";
+    estEl.onclick = function(){ editEst(t, estEl); };
+
     var del = document.createElement("button");
     del.className = "kill";
     del.textContent = "×";
@@ -2881,6 +2885,7 @@
       var detail = document.createElement("div");
       detail.className = "task-detail";
       detail.appendChild(dueEl);
+      detail.appendChild(estEl);
       detail.appendChild(nota);
 
       if(editingNote === t.id){
@@ -3105,6 +3110,32 @@
       if(settled) return;
       settled = true;
       task.due = inp.value || null;   // campo vazio remove o prazo
+      save(); renderTasks();
+    }
+    inp.addEventListener("change", commit);
+    inp.addEventListener("blur", commit);
+    inp.addEventListener("keydown", function(e){
+      if(e.key === "Escape"){ settled = true; renderTasks(); }
+      if(e.key === "Enter"){ commit(); }
+    });
+  }
+
+  function editEst(task, anchor){
+    var inp = document.createElement("input");
+    inp.type = "number";
+    inp.min = "1"; inp.max = "24";
+    inp.className = "due-input";
+    inp.value = task.est || 1;
+    inp.setAttribute("aria-label", "Pomodoros estimados para " + task.title);
+    anchor.replaceWith(inp);
+    inp.focus(); inp.select();
+
+    var settled = false;
+    function commit(){
+      if(settled) return;
+      settled = true;
+      var v = parseInt(inp.value, 10);
+      task.est = (v > 0) ? v : 1;
       save(); renderTasks();
     }
     inp.addEventListener("change", commit);
@@ -6902,8 +6933,6 @@
   $("task-add").onclick = addTask;
   $("task-input").addEventListener("keydown", function(e){ if(e.key === "Enter") addTask(); });
   $("task-tag").addEventListener("keydown", function(e){ if(e.key === "Enter") addTask(); });
-  $("task-due").addEventListener("keydown", function(e){ if(e.key === "Enter") addTask(); });
-  $("task-est").addEventListener("keydown", function(e){ if(e.key === "Enter") addTask(); });
 
   function addInterruption(){
     if(S.timer.mode !== "foco" || !S.timer.running) return;
