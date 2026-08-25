@@ -515,6 +515,13 @@
   .list-foot > span:last-child{white-space:nowrap}
   .list-foot button{background:none;border:0;color:var(--ink-3);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;padding:0}
   .list-foot button:hover{color:var(--signal)}
+  /* com 3 ações (mais "ocultar concluídas") o bloco inteiro não cabe numa
+     linha só em telas estreitas — sem isso a página inteira estourava a
+     largura da viewport pra caber o texto sem quebrar */
+  @media (max-width:420px){
+    .list-foot > span:last-child{white-space:normal;display:flex;flex-wrap:wrap;gap:6px calc(var(--sp)*2)}
+    .list-foot > span:last-child button{margin-left:0 !important}
+  }
 
   /* ---------- balanço ---------- */
   .stats{grid-column:1 / -1}
@@ -1370,6 +1377,7 @@
         <span id="task-summary"></span>
         <span>
           <button id="btn-paste">Colar lista</button>
+          <button id="toggle-hide-done" style="margin-left:14px">Ocultar concluídas</button>
           <button id="clear-done" style="margin-left:14px">Limpar concluídas</button>
         </span>
       </div>
@@ -2124,6 +2132,7 @@
     range: "semana",
     filterTag: null,
     groupTasks: false,
+    hideCompleted: false,
     collapsed: [],
     topicColors: {},
     sound: { ambient:"off", volume:35, follow:true, fade:true, embed:null },
@@ -2187,6 +2196,7 @@
     if(d.range) s.range = d.range;
     if(typeof d.filterTag !== "undefined") s.filterTag = d.filterTag;
     if(typeof d.groupTasks !== "undefined") s.groupTasks = !!d.groupTasks;
+    if(typeof d.hideCompleted !== "undefined") s.hideCompleted = !!d.hideCompleted;
     if(Array.isArray(d.collapsed)) s.collapsed = d.collapsed;
     if(d.topicColors) s.topicColors = d.topicColors;
     if(d.sound) Object.assign(s.sound, d.sound);
@@ -3164,8 +3174,20 @@
     list.innerHTML = "";
     var pending = S.tasks.filter(function(t){ return !t.completed; });
     var doneList = S.tasks.filter(function(t){ return t.completed; });
+    var showDone = !S.hideCompleted;
 
-    $("task-empty").hidden = (pending.length + doneList.length) > 0;
+    $("toggle-hide-done").textContent = S.hideCompleted ? "Mostrar concluídas" : "Ocultar concluídas";
+    $("toggle-hide-done").hidden = doneList.length === 0;
+
+    if(pending.length === 0 && doneList.length > 0 && !showDone){
+      $("task-empty").hidden = false;
+      $("task-empty").textContent = "Tudo concluído — " + doneList.length +
+        (doneList.length === 1 ? " tarefa concluída oculta." : " tarefas concluídas ocultas.") +
+        ' Clique em "Mostrar concluídas" pra ver.';
+    }else{
+      $("task-empty").hidden = (pending.length + doneList.length) > 0;
+      $("task-empty").textContent = 'Sua lista está vazia. Escreva a primeira tarefa acima e clique nela para vincular ao timer.';
+    }
 
     var atrasadas = 0, vencemHoje = 0;
     pending.forEach(function(t){
@@ -3186,7 +3208,9 @@
 
     if(!S.groupTasks){
       // quem tem prazo sobe, em ordem de vencimento; sem prazo mantém a ordem de entrada
-      pending.slice().sort(byDue).concat(doneList).forEach(function(t){
+      var visible = pending.slice().sort(byDue);
+      if(showDone) visible = visible.concat(doneList);
+      visible.forEach(function(t){
         list.appendChild(taskRow(t));
       });
     }else{
@@ -3217,7 +3241,7 @@
         g.items.slice().sort(byDue).forEach(function(t){ list.appendChild(taskRow(t)); });
       });
 
-      if(doneList.length){
+      if(doneList.length && showDone){
         list.appendChild(groupHeader("\u0000feitas", "Concluídas", doneList, null));
         if(!isCollapsed("\u0000feitas")){
           doneList.forEach(function(t){ list.appendChild(taskRow(t)); });
@@ -7355,6 +7379,11 @@
   $("btn-csv-habits").onclick = exportHabitsCsv;
   $("btn-csv-media").onclick = exportMediaCsv;
   $("btn-md-duck").onclick = exportDuckMarkdown;
+
+  $("toggle-hide-done").onclick = function(){
+    S.hideCompleted = !S.hideCompleted;
+    save(); renderTasks();
+  };
 
   $("clear-done").onclick = function(){
     var n = S.tasks.filter(function(t){ return t.completed; }).length;
