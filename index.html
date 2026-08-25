@@ -470,7 +470,7 @@
   .task.active{background:linear-gradient(to right, var(--signal-soft), transparent 70%);margin:0 -8px;padding-left:8px;padding-right:8px}
   .task.done .title{color:var(--ink-3);text-decoration:line-through}
   .check{
-    width:17px;height:17px;flex:none;border:1px solid var(--ink-3);border-radius:var(--r-md);background:transparent;padding:0;
+    width:17px;height:17px;flex:none;border:1px solid var(--ink-3);border-radius:4px;background:transparent;padding:0;
     display:grid;place-items:center;color:transparent;font-size:11px;line-height:1;
   }
   .task.done .check{background:var(--rest);border-color:var(--rest);color:var(--on-ink)}
@@ -479,6 +479,18 @@
   .task .count b{color:var(--ink);font-weight:600}
   .kill{background:none;border:0;color:var(--ink-3);font-size:15px;line-height:1;padding:2px 4px}
   .kill:hover{color:var(--signal)}
+
+  .task-toggle{
+    flex:none;background:none;border:0;color:var(--ink-3);padding:2px 4px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .task-toggle:hover{color:var(--ink)}
+  .task-toggle svg{transition:transform .15s ease}
+  .task-toggle[aria-expanded="true"] svg{transform:rotate(180deg)}
+  .task-detail{
+    flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp);
+    margin:2px 0 0 26px;padding-top:8px;border-top:1px dashed var(--line);
+  }
 
   .empty-state{
     border:1px dashed var(--line);border-radius:var(--r-md);padding:calc(var(--sp)*3);text-align:center;
@@ -2795,6 +2807,7 @@
   }
 
   var editingNote = null;   // id da tarefa cuja nota está aberta para edição
+  var expandedTasks = {};   // ids das tarefas com o painel de detalhe (prazo/nota/pomodoros) aberto
 
   function taskRow(t){
     var li = document.createElement("li");
@@ -2852,43 +2865,65 @@
       renderTasks();
     };
 
+    // prazo, nota e pomodoros ficam num painel à parte — perto da tarefa
+    // só o essencial (etiqueta), o resto é detalhe que você abre quando precisa
+    var expanded = !!expandedTasks[t.id] || editingNote === t.id;
+    var toggle = document.createElement("button");
+    toggle.className = "task-toggle";
+    toggle.setAttribute("aria-label", expanded ? "Ocultar detalhes" : "Mostrar prazo, nota e pomodoros");
+    toggle.setAttribute("aria-expanded", String(expanded));
+    toggle.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+    toggle.onclick = function(){
+      expandedTasks[t.id] = !expanded;
+      renderTasks();
+    };
+
     li.appendChild(chk); li.appendChild(title);
     if(chip) li.appendChild(chip);
-    li.appendChild(dueEl);
-    li.appendChild(nota);
-    li.appendChild(count); li.appendChild(del);
+    li.appendChild(toggle);
+    li.appendChild(del);
 
-    if(editingNote === t.id){
-      var ta = document.createElement("textarea");
-      ta.className = "note-edit";
-      ta.value = t.note || "";
-      ta.placeholder = "Onde parei, links, próximo passo…";
-      ta.setAttribute("aria-label", "Nota de " + t.title);
-      var settled = false;
-      function commit(){
-        if(settled) return;
-        settled = true;
-        var v = ta.value.trim();
-        t.note = v || null;      // nota vazia é removida
-        editingNote = null;
-        save(); renderTasks();
+    if(expanded){
+      var detail = document.createElement("div");
+      detail.className = "task-detail";
+      detail.appendChild(dueEl);
+      detail.appendChild(nota);
+      detail.appendChild(count);
+
+      if(editingNote === t.id){
+        var ta = document.createElement("textarea");
+        ta.className = "note-edit";
+        ta.value = t.note || "";
+        ta.placeholder = "Onde parei, links, próximo passo…";
+        ta.setAttribute("aria-label", "Nota de " + t.title);
+        var settled = false;
+        function commit(){
+          if(settled) return;
+          settled = true;
+          var v = ta.value.trim();
+          t.note = v || null;      // nota vazia é removida
+          editingNote = null;
+          save(); renderTasks();
+        }
+        ta.addEventListener("blur", commit);
+        ta.addEventListener("keydown", function(e){
+          if(e.key === "Escape"){ settled = true; editingNote = null; renderTasks(); }
+          // Enter quebra linha; para salvar sem sair do teclado, Ctrl+Enter
+          if(e.key === "Enter" && (e.ctrlKey || e.metaKey)){ e.preventDefault(); commit(); }
+        });
+        detail.appendChild(ta);
+        setTimeout(function(){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 0);
+      }else if(temNota){
+        // a nota fica visível sem precisar de clique extra: nota escondida é nota esquecida
+        var view = document.createElement("button");
+        view.className = "note-view";
+        view.textContent = t.note;
+        view.title = "Clique para editar";
+        view.onclick = function(){ editingNote = t.id; renderTasks(); };
+        detail.appendChild(view);
       }
-      ta.addEventListener("blur", commit);
-      ta.addEventListener("keydown", function(e){
-        if(e.key === "Escape"){ settled = true; editingNote = null; renderTasks(); }
-        // Enter quebra linha; para salvar sem sair do teclado, Ctrl+Enter
-        if(e.key === "Enter" && (e.ctrlKey || e.metaKey)){ e.preventDefault(); commit(); }
-      });
-      li.appendChild(ta);
-      setTimeout(function(){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 0);
-    }else if(temNota){
-      // a nota fica visível sem precisar de clique: nota escondida é nota esquecida
-      var view = document.createElement("button");
-      view.className = "note-view";
-      view.textContent = t.note;
-      view.title = "Clique para editar";
-      view.onclick = function(){ editingNote = t.id; renderTasks(); };
-      li.appendChild(view);
+
+      li.appendChild(detail);
     }
 
     return li;
