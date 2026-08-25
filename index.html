@@ -479,18 +479,27 @@
   .task.active{background:linear-gradient(to right, var(--signal-soft), transparent 70%);margin:0 -8px;padding-left:8px;padding-right:8px}
   .task.done .title{color:var(--ink-3);text-decoration:line-through}
   .check{
+    position:relative;
     width:17px;height:17px;min-height:0;flex:none;border:1px solid var(--ink-3);border-radius:4px;background:transparent;padding:0;
     display:grid;place-items:center;color:transparent;font-size:11px;line-height:1;
   }
+  /* a caixinha visual fica pequena de propósito, mas a área de toque real
+     é bem maior — sem isso, marcar uma tarefa como feita no celular exige
+     bater o dedo num alvo de 17px */
+  .check::before{content:"";position:absolute;inset:-10px}
   .task.done .check{background:var(--rest);border-color:var(--rest);color:var(--on-ink)}
   .task .title{flex:1;min-width:0;font-size:14.5px;overflow-wrap:anywhere;background:none;border:0;text-align:left;font-family:var(--sans);color:var(--ink);padding:0;cursor:pointer}
   .kill{background:none;border:0;color:var(--ink-3);font-size:15px;line-height:1;padding:2px 4px}
   .kill:hover{color:var(--signal)}
+  /* excluir tarefa é o botão mais arriscado da fileira — mais respiro em
+     relação ao ícone de expandir do lado, que faz uma coisa bem mais leve */
+  .task .kill{padding:8px 8px;margin-left:4px}
 
   .task-toggle{
     flex:none;background:none;border:0;color:var(--ink-3);padding:2px 4px;
     display:flex;align-items:center;justify-content:center;
   }
+  .task .task-toggle{padding:8px 6px}
   .task-toggle:hover{color:var(--ink)}
   .task-toggle svg{transition:transform .15s ease}
   .task-toggle[aria-expanded="true"] svg{transform:rotate(180deg)}
@@ -2085,6 +2094,22 @@
   </div>
 </dialog>
 
+<!-- confirmação genérica — substitui o confirm() nativo do navegador, que
+     quebra a cara do app (aparece com o estilo padrão do sistema) -->
+<dialog id="confirm-dlg">
+  <div class="dlg-head">
+    <h2 class="panel-title" id="confirm-title">Confirmar</h2>
+    <button class="btn-ghost icon-only" id="confirm-close" aria-label="Cancelar" title="Cancelar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="dlg-body">
+    <p class="hint" id="confirm-message" style="font-size:14px;color:var(--ink);white-space:pre-line"></p>
+  </div>
+  <div class="dlg-foot">
+    <button class="btn-ghost" id="confirm-cancel">Cancelar</button>
+    <button class="btn-main" id="confirm-ok">Confirmar</button>
+  </div>
+</dialog>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -2341,7 +2366,7 @@
   function pullFromServer(isFirstPull){
     if(!SERVER_OK || !AUTH.email || pulling) return;
     pulling = true;
-    api("/api/state").then(function(res){
+    api("/api/state").then(async function(res){
       pulling = false;
       var remoto = res.state;
 
@@ -2350,10 +2375,10 @@
         try{ ultimaConta = localStorage.getItem(LAST_ACCOUNT_KEY); }catch(e){}
         var localTemDados = SYNCED_ARRAYS.some(function(k){ return (S[k] || []).length > 0; });
         if(localTemDados && ultimaConta && ultimaConta !== AUTH.email){
-          var misturar = confirm(
+          var misturar = await askConfirm(
             "Este navegador tem dados salvos de outra sessão (" + ultimaConta + " ou uso sem login).\n\n" +
-            "OK = mesclar esses dados com a conta " + AUTH.email + "\n" +
-            "Cancelar = começar esta conta do zero neste navegador (nada é apagado do servidor)"
+            "Nada é apagado do servidor de qualquer forma — a escolha é só sobre o que fica neste navegador.",
+            { title:"Dados de outra sessão", confirmLabel:"Mesclar com " + AUTH.email, cancelLabel:"Começar do zero" }
           );
           if(!misturar){
             S = clone(DEFAULTS);
@@ -2609,7 +2634,7 @@
   }
 
   // encerra o bloco de foco antes do fim e ainda registra o tempo já feito
-  function bankPartial(){
+  async function bankPartial(){
     if(S.timer.mode !== "foco") return;
     var elapsed = duration("foco") - remaining();
     var min = Math.round(elapsed / MIN);
@@ -2617,7 +2642,9 @@
       reset();
       return;
     }
-    if(!confirm("Registrar " + min + (min === 1 ? " minuto" : " minutos") + " de foco e encerrar este bloco?")) return;
+    var ok = await askConfirm("Registrar " + min + (min === 1 ? " minuto" : " minutos") + " de foco e encerrar este bloco?",
+      { confirmLabel:"Registrar" });
+    if(!ok) return;
 
     var t = findTask(S.activeTaskId);
     var stp = findStudyTopic(S.activeStudyTopicId);
@@ -3022,7 +3049,10 @@
     del.className = "kill";
     del.textContent = "×";
     del.setAttribute("aria-label", "Excluir tarefa");
-    del.onclick = function(){ removeTask(t.id); };
+    del.onclick = async function(){
+      if(!(await askConfirm("Excluir “" + t.title + "”?", { danger:true }))) return;
+      removeTask(t.id);
+    };
 
     var temNota = !!(t.note && t.note.trim());
     var nota = document.createElement("button");
@@ -3799,8 +3829,8 @@
       del.className = "kill";
       del.textContent = "×";
       del.setAttribute("aria-label", "Excluir hábito");
-      del.onclick = function(){
-        if(!confirm("Excluir “" + h.name + "”? O histórico de marcações vai junto.")) return;
+      del.onclick = async function(){
+        if(!(await askConfirm("Excluir “" + h.name + "”? O histórico de marcações vai junto.", { danger:true }))) return;
         S.habits = S.habits.filter(function(x){ return x.id !== h.id; });
         markDeleted(h.id);
         save(); renderHabits();
@@ -4107,8 +4137,8 @@
     del.className = "kill";
     del.textContent = "×";
     del.setAttribute("aria-label", "Excluir livro");
-    del.onclick = function(){
-      if(!confirm("Excluir “" + b.title + "”? O histórico de páginas fica no balanço.")) return;
+    del.onclick = async function(){
+      if(!(await askConfirm("Excluir “" + b.title + "”? O histórico de páginas fica no balanço.", { danger:true }))) return;
       S.books = S.books.filter(function(x){ return x.id !== b.id; });
       markDeleted(b.id);
       save(); renderBooks();
@@ -4858,12 +4888,12 @@
     $("season-past-wrap").hidden = past.length === 0;
   }
 
-  function startSeason(){
+  async function startSeason(){
     var nome = $("season-name").value.trim();
     if(!nome){ toast("Dê um nome à temporada"); $("season-name").focus(); return; }
     var atual = currentSeason();
     if(atual){
-      if(!confirm("Isso encerra “" + atual.name + "” hoje e começa “" + nome + "”. Continuar?")) return;
+      if(!(await askConfirm("Isso encerra “" + atual.name + "” hoje e começa “" + nome + "”.", { confirmLabel:"Trocar de temporada" }))) return;
       atual.endedAt = Date.now();
     }
     S.seasons.push({ id: uid(), name: nome.slice(0, 40), startedAt: Date.now(), endedAt: null,
@@ -4873,10 +4903,10 @@
     toast("Temporada “" + nome + "” iniciada");
   }
 
-  function endSeason(){
+  async function endSeason(){
     var atual = currentSeason();
     if(!atual) return;
-    if(!confirm("Encerrar “" + atual.name + "” hoje? O cartão de encerramento abre em seguida.")) return;
+    if(!(await askConfirm("Encerrar “" + atual.name + "” hoje? O cartão de encerramento abre em seguida.", { confirmLabel:"Encerrar" }))) return;
     atual.endedAt = Date.now();
     if(S.range === "temporada") S.range = "semana";   // o período apontava para ela
     save(); render();
@@ -5122,8 +5152,8 @@
     del.className = "kill";
     del.textContent = "×";
     del.setAttribute("aria-label", "Excluir");
-    del.onclick = function(){
-      if(!confirm("Excluir “" + m.title + "”?")) return;
+    del.onclick = async function(){
+      if(!(await askConfirm("Excluir “" + m.title + "”?", { danger:true }))) return;
       S.media = S.media.filter(function(x){ return x.id !== m.id; });
       markDeleted(m.id);
       save(); renderMedia();
@@ -5412,8 +5442,8 @@
       del.className = "kill";
       del.textContent = "×";
       del.setAttribute("aria-label", "Descartar cápsula");
-      del.onclick = function(){
-        if(!confirm("Descartar esta cápsula sem ler?")) return;
+      del.onclick = async function(){
+        if(!(await askConfirm("Descartar esta cápsula sem ler?", { danger:true, confirmLabel:"Descartar" }))) return;
         S.capsules = S.capsules.filter(function(x){ return x.id !== c.id; });
         markDeleted(c.id);
         save(); renderCapsuleLists(); renderCapsuleBanner();
@@ -5723,8 +5753,8 @@
     del.className = "kill";
     del.textContent = "×";
     del.setAttribute("aria-label", "Excluir");
-    del.onclick = function(){
-      if(!confirm("Excluir “" + item.title + "” e seus passos?")) return;
+    del.onclick = async function(){
+      if(!(await askConfirm("Excluir “" + item.title + "” e seus passos?", { danger:true }))) return;
       S.pdi = S.pdi.filter(function(x){ return x.id !== item.id; });
       markDeleted(item.id);
       if(openPdi === item.id) openPdi = null;
@@ -5902,8 +5932,8 @@
     del.className = "kill";
     del.textContent = "×";
     del.setAttribute("aria-label", "Excluir objetivo");
-    del.onclick = function(){
-      if(!confirm("Excluir “" + g.title + "” e seus passos?")) return;
+    del.onclick = async function(){
+      if(!(await askConfirm("Excluir “" + g.title + "” e seus passos?", { danger:true }))) return;
       S.goals = S.goals.filter(function(x){ return x.id !== g.id; });
       markDeleted(g.id);
       if(openGoal === g.id) openGoal = null;
@@ -6155,8 +6185,8 @@
       del.className = "kill";
       del.textContent = "×";
       del.setAttribute("aria-label", "Excluir nota");
-      del.onclick = function(){
-        if(n.text.trim() && !confirm("Excluir esta nota?")) return;
+      del.onclick = async function(){
+        if(n.text.trim() && !(await askConfirm("Excluir esta nota?", { danger:true }))) return;
         S.notes = S.notes.filter(function(x){ return x.id !== n.id; });
         markDeleted(n.id);
         save(); renderNotes();
@@ -6232,8 +6262,8 @@
               $("dp-tried").value.trim() || $("dp-solution").value.trim());
   }
 
-  function closeDuckPad(){
-    if(duckPadIsDirty() && !confirm("Descartar o que você escreveu nesta sessão?")) return;
+  async function closeDuckPad(){
+    if(duckPadIsDirty() && !(await askConfirm("Descartar o que você escreveu nesta sessão?", { danger:true, confirmLabel:"Descartar" }))) return;
     editingDuckId = null;
     $("duckpad").close();
   }
@@ -6409,9 +6439,9 @@
     del.className = "kill";
     del.textContent = "×";
     del.setAttribute("aria-label", "Excluir");
-    del.onclick = function(ev){
+    del.onclick = async function(ev){
       ev.stopPropagation();
-      if(!confirm("Excluir esta sessão da biblioteca?")) return;
+      if(!(await askConfirm("Excluir esta sessão da biblioteca?", { danger:true }))) return;
       S.duckNotes = S.duckNotes.filter(function(x){ return x.id !== n.id; });
       markDeleted(n.id);
       save(); renderLibrary(); renderDuckSummary(); renderStats();
@@ -6466,8 +6496,8 @@
       $("lib-detail").close();
       openDuckPad(n);
     };
-    $("lib-detail-delete").onclick = function(){
-      if(!confirm("Excluir esta sessão da biblioteca?")) return;
+    $("lib-detail-delete").onclick = async function(){
+      if(!(await askConfirm("Excluir esta sessão da biblioteca?", { danger:true }))) return;
       S.duckNotes = S.duckNotes.filter(function(x){ return x.id !== n.id; });
       markDeleted(n.id);
       save(); renderDuckSummary(); renderStats();
@@ -6550,8 +6580,8 @@
     save(); renderStudyTopics();
   }
 
-  function deleteStudyTopic(id){
-    if(!confirm("Excluir este tópico de estudo?")) return;
+  async function deleteStudyTopic(id){
+    if(!(await askConfirm("Excluir este tópico de estudo?", { danger:true }))) return;
     S.studyTopics = S.studyTopics.filter(function(x){ return x.id !== id; });
     markDeleted(id);
     if(S.activeStudyTopicId === id) S.activeStudyTopicId = null;
@@ -7034,6 +7064,37 @@
     toastTimer = setTimeout(function(){ el.classList.remove("show"); }, 2600);
   }
 
+  // substitui o confirm() nativo do navegador — mesmo diálogo, mas com a cara
+  // do app. Retorna uma Promise<boolean>; ESC e o × contam como cancelar.
+  function askConfirm(message, opts){
+    opts = opts || {};
+    var dlg = $("confirm-dlg");
+    $("confirm-message").textContent = message;
+    $("confirm-title").textContent = opts.title || (opts.danger ? "Confirmar exclusão" : "Confirmar");
+    var ok = $("confirm-ok");
+    ok.textContent = opts.confirmLabel || (opts.danger ? "Excluir" : "Continuar");
+    ok.className = opts.danger ? "btn-ghost danger" : "btn-main";
+    $("confirm-cancel").textContent = opts.cancelLabel || "Cancelar";
+
+    return new Promise(function(resolve){
+      var settled = false;
+      function finish(v){
+        if(settled) return;
+        settled = true;
+        ok.onclick = null; $("confirm-cancel").onclick = null; $("confirm-close").onclick = null;
+        dlg.removeEventListener("cancel", onCancel);
+        dlg.close();
+        resolve(v);
+      }
+      function onCancel(e){ e.preventDefault(); finish(false); }
+      ok.onclick = function(){ finish(true); };
+      $("confirm-cancel").onclick = function(){ finish(false); };
+      $("confirm-close").onclick = function(){ finish(false); };
+      dlg.addEventListener("cancel", onCancel);
+      dlg.showModal();
+    });
+  }
+
   // mostrador pequeno do dev: 12 marcas, como um relógio de parede
   (function devTicks(){
     var out = [];
@@ -7051,9 +7112,9 @@
   $("btn-start").onclick = function(){ S.timer.running ? pause() : start(); };
   $("btn-partial").onclick = bankPartial;
   $("btn-reset").onclick = reset;
-  $("btn-skip").onclick = function(){
+  $("btn-skip").onclick = async function(){
     if(S.timer.mode === "foco"){
-      if(!confirm("Pular o bloco de foco? Ele não entra na contagem.")) return;
+      if(!(await askConfirm("Pular o bloco de foco? Ele não entra na contagem.", { confirmLabel:"Pular" }))) return;
       setMode(nextMode(), false);
     }else{
       setMode("foco", false);
@@ -7061,8 +7122,8 @@
   };
 
   document.querySelectorAll(".modes button").forEach(function(b){
-    b.onclick = function(){
-      if(S.timer.running && !confirm("Trocar de bloco agora descarta o tempo em andamento. Continuar?")) return;
+    b.onclick = async function(){
+      if(S.timer.running && !(await askConfirm("Trocar de bloco agora descarta o tempo em andamento.", { confirmLabel:"Trocar" }))) return;
       setMode(b.dataset.mode, false);
     };
   });
@@ -7149,9 +7210,12 @@
     applyDuckKindCopy(editingDuckKind);
   });
   $("duck-close").onclick = closeDuckPad;
+  // ESC não pode esperar uma confirmação assíncrona pra decidir se fecha —
+  // por isso sempre bloqueia o fechamento nativo aqui, e quem decide (e fecha
+  // de verdade, se for o caso) é a mesma closeDuckPad() do botão ×
   $("duckpad").addEventListener("cancel", function(e){
-    if(duckPadIsDirty() && !confirm("Descartar o que você escreveu nesta sessão?")){ e.preventDefault(); return; }
-    editingDuckId = null;
+    e.preventDefault();
+    closeDuckPad();
   });
   $("duck-library-open").onclick = openLibrary;
   $("glossary-open").onclick = openGlossary;
@@ -7385,10 +7449,11 @@
     save(); renderTasks();
   };
 
-  $("clear-done").onclick = function(){
+  $("clear-done").onclick = async function(){
     var n = S.tasks.filter(function(t){ return t.completed; }).length;
     if(!n){ toast("Nenhuma tarefa concluída para limpar"); return; }
-    if(!confirm("Remover " + n + " tarefa(s) concluída(s) da lista? O histórico de pomodoros continua no balanço.")) return;
+    var ok = await askConfirm("Remover " + n + " tarefa(s) concluída(s) da lista? O histórico de pomodoros continua no balanço.", { danger:true, confirmLabel:"Remover" });
+    if(!ok) return;
     markDeletedMany(S.tasks.filter(function(t){ return t.completed; }).map(function(t){ return t.id; }));
     S.tasks = S.tasks.filter(function(t){ return !t.completed; });
     save(); renderTasks();
@@ -7488,16 +7553,15 @@
     var file = this.files && this.files[0];
     if(!file) return;
     var fr = new FileReader();
-    fr.onload = function(){
+    fr.onload = async function(){
       try{
         var d = parseState(fr.result);
         if(!d || !Array.isArray(d.sessions)) throw new Error("formato inesperado");
 
         // mesclar é idempotente: o mesmo arquivo aplicado duas vezes não muda nada
-        var mesclar = confirm(
-          "Mesclar este backup com os dados atuais?\n\n" +
-          "OK = mesclar (nada é perdido, itens repetidos não duplicam)\n" +
-          "Cancelar = substituir tudo pelo backup"
+        var mesclar = await askConfirm(
+          "Mesclar este backup com os dados atuais? Nada se perde e itens repetidos não duplicam — ou, se preferir, dá pra substituir tudo pelo backup.",
+          { confirmLabel:"Mesclar", cancelLabel:"Substituir tudo" }
         );
 
         var atual = { tasks:S.tasks, sessions:S.sessions, habits:S.habits,
@@ -7541,8 +7605,8 @@
     this.value = "";
   };
 
-  $("btn-wipe").onclick = function(){
-    if(!confirm("Apagar todas as tarefas, sessões e ajustes? Isso não tem volta.")) return;
+  $("btn-wipe").onclick = async function(){
+    if(!(await askConfirm("Apagar todas as tarefas, sessões e ajustes? Isso não tem volta.", { danger:true, confirmLabel:"Apagar tudo" }))) return;
     localStorage.removeItem(KEY);
     S = clone(DEFAULTS);
     save(); render(); dlg.close();
