@@ -1067,7 +1067,7 @@
   .new-habit{display:flex;gap:var(--sp);flex-wrap:wrap;align-items:center;margin-top:calc(var(--sp)*2.5);padding-top:calc(var(--sp)*2);border-top:1px solid var(--line)}
   .new-habit input[type=text]{flex:1;min-width:200px}
   .new-habit input[type=number]{width:62px}
-  .wd{display:flex;border:1px solid var(--glass-border);border-radius:var(--r-pill);overflow:hidden;background:var(--panel);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
+  .wd{display:flex;flex-wrap:wrap;border:1px solid var(--glass-border);border-radius:var(--r-pill);overflow:hidden;background:var(--panel);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
   .wd[hidden]{display:none}
   .wd button{
     background:transparent;border:0;border-right:1px solid var(--line);color:var(--ink-3);
@@ -1075,6 +1075,14 @@
   }
   .wd button:last-child{border-right:0}
   .wd button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink)}
+  /* 7 dias não cabem numa pílula só em telas estreitas — sem quebra de linha
+     os últimos dias ficavam cortados e inclicáveis atrás do overflow:hidden
+     (mesmo problema que o #amb tinha antes, ver commit anterior) */
+  @media (max-width:400px){
+    .wd{border:0;border-radius:0;overflow:visible;background:transparent;gap:5px}
+    .wd button{border:1px solid var(--glass-border);border-radius:var(--r-pill)}
+    .wd button[aria-pressed="true"]{border-color:var(--ink)}
+  }
 
   /* ---------- prazos ---------- */
   .due{
@@ -1091,6 +1099,20 @@
   .due.vazio:hover{opacity:1;color:var(--ink-2)}
   .task.done .due{opacity:.45;background:transparent;color:var(--ink-3);border-color:transparent;font-weight:400}
   .due-input{font-family:var(--mono);font-size:11px;padding:2px 4px;border:1px solid var(--signal);border-radius:var(--r-md);background:var(--field);color:var(--ink)}
+
+  /* ---------- urgência ---------- */
+  .urgency{
+    font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+    border:1px solid transparent;border-radius:var(--r-md);padding:3px 6px;white-space:nowrap;flex:none;
+    background:transparent;color:var(--ink-3);cursor:pointer;
+  }
+  .urgency:hover{border-color:var(--line)}
+  .urgency.baixa{color:var(--ink-2);border-color:var(--grid-a)}
+  .urgency.media{color:var(--amber);border-color:var(--amber)}
+  .urgency.alta{background:var(--signal);color:var(--on-ink);border-color:var(--signal);font-weight:600}
+  .urgency.vazio{color:var(--ink-3);opacity:.6;letter-spacing:.12em}
+  .urgency.vazio:hover{opacity:1;color:var(--ink-2)}
+  .task.done .urgency{opacity:.45;background:transparent;color:var(--ink-3);border-color:transparent;font-weight:400}
   #task-due{width:148px;font-family:var(--mono);font-size:12px;color:var(--ink-2)}
   .warn{color:var(--signal);font-weight:600}
 
@@ -1104,6 +1126,14 @@
   }
   .seg button:last-child{border-right:0}
   .seg button[aria-pressed="true"]{background:var(--ink);color:var(--on-ink)}
+  /* com 6 opções, #amb quebra em duas linhas em telas estreitas — como pílula
+     única (borda só nos cantos extremos do bloco) isso deixava um corte reto
+     no meio do desenho; abaixo disso cada botão vira sua própria pílula */
+  @media (max-width:560px){
+    #amb{border:0;border-radius:0;overflow:visible;background:transparent;gap:6px}
+    #amb button{border:1px solid var(--glass-border);border-radius:var(--r-pill)}
+    #amb button[aria-pressed="true"]{border-color:var(--ink)}
+  }
   .ctl{display:flex;align-items:center;gap:8px;cursor:pointer}
   .ctl .k{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3)}
   input[type=range]{accent-color:var(--signal);width:118px;cursor:pointer}
@@ -2715,6 +2745,18 @@
     return a.toLowerCase() === b.toLowerCase();
   }
 
+  // nível de urgência é escolhido à mão, ao contrário do prazo (que a gente
+  // calcula sozinho a partir da data) — três níveis bastam pra separar
+  // "pode esperar" de "precisa entrar na fila hoje"
+  var URGENCY_LEVELS = ["baixa", "media", "alta"];
+  var URGENCY_LABEL = { baixa:"baixa", media:"média", alta:"alta" };
+
+  function cycleUrgency(task){
+    var at = URGENCY_LEVELS.indexOf(task.urgency);
+    task.urgency = at < 0 ? URGENCY_LEVELS[0] : (URGENCY_LEVELS[at + 1] || null);
+    save(); renderTasks();
+  }
+
   // traduz a data crua em urgência: é isso que a pessoa lê de relance
   function dueInfo(due){
     if(!due) return null;
@@ -2742,7 +2784,7 @@
     var tag = normTag($("task-tag").value);
     // prazo e estimativa de pomodoros não entram na criação — dá pra
     // definir depois no detalhamento da tarefa, sem sobrecarregar aqui
-    S.tasks.unshift({ id: uid(), title: title, tag: tag, due: null, est: 1, note: null,
+    S.tasks.unshift({ id: uid(), title: title, tag: tag, due: null, est: 1, note: null, urgency: null,
                       done: 0, completed: false, createdAt: Date.now(), completedAt: null });
     input.value = "";
     // a etiqueta permanece no campo: quem trabalha em lote costuma repetir o projeto
@@ -2945,6 +2987,13 @@
       chip.onclick = function(){ editTag(t, chip); };
     }
 
+    var urgEl = document.createElement("button");
+    urgEl.className = "urgency " + (t.urgency || "vazio");
+    urgEl.textContent = t.urgency ? URGENCY_LABEL[t.urgency] : "urgência";
+    urgEl.title = t.urgency ? "Urgência: " + URGENCY_LABEL[t.urgency] + " — clique para mudar" : "Definir a urgência";
+    urgEl.setAttribute("aria-label", "Urgência de " + t.title);
+    urgEl.onclick = function(){ cycleUrgency(t); };
+
     var info = dueInfo(t.due);
     var dueEl = document.createElement("button");
     dueEl.className = "due " + (info ? info.state : "vazio");
@@ -2991,6 +3040,7 @@
 
     li.appendChild(chk); li.appendChild(title);
     if(chip) li.appendChild(chip);
+    li.appendChild(urgEl);
     li.appendChild(toggle);
     li.appendChild(del);
 
@@ -5700,7 +5750,7 @@
         sb.textContent = st.title;
         sb.title = "Criar uma tarefa a partir deste passo";
         sb.onclick = function(){
-          S.tasks.unshift({ id: uid(), title: st.title, tag: item.title.slice(0, 24), due: null, est: 1, note: null,
+          S.tasks.unshift({ id: uid(), title: st.title, tag: item.title.slice(0, 24), due: null, est: 1, note: null, urgency: null,
                             done: 0, completed: false, createdAt: Date.now(), completedAt: null });
           save(); renderTasks(); renderStats();
           toast("Tarefa criada a partir do passo");
@@ -5879,7 +5929,7 @@
         sb.textContent = st.title;
         sb.title = "Criar uma tarefa a partir deste passo";
         sb.onclick = function(){
-          S.tasks.unshift({ id: uid(), title: st.title, tag: g.title.slice(0, 24), due: null, est: 1, note: null,
+          S.tasks.unshift({ id: uid(), title: st.title, tag: g.title.slice(0, 24), due: null, est: 1, note: null, urgency: null,
                             done: 0, completed: false, createdAt: Date.now(), completedAt: null });
           save(); renderTasks(); renderStats();
           toast("Tarefa criada a partir do passo");
