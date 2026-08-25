@@ -1103,6 +1103,7 @@
   .embed-wrap{margin-top:calc(var(--sp)*2.5);padding-top:calc(var(--sp)*2);border-top:1px dashed var(--line)}
   .embed-form{display:flex;gap:var(--sp);flex-wrap:wrap;align-items:center}
   .embed-form input[type=text]{flex:1;min-width:240px}
+  .embed-presets{display:flex;gap:var(--sp);flex-wrap:wrap;align-items:center;margin-top:8px}
   .embed-frame{margin-top:calc(var(--sp)*2);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden}
   .embed-frame iframe{display:block;width:100%;border:0}
 
@@ -1673,6 +1674,11 @@
           <input type="text" id="embed-url" placeholder="Cole um link de playlist do YouTube ou do Spotify" aria-label="Link da playlist">
           <button class="btn-ghost" id="embed-set">Carregar</button>
           <button class="btn-ghost" id="embed-clear">Remover</button>
+        </div>
+        <div class="embed-presets">
+          <button class="btn-ghost" id="embed-lofi-girl">Lofi Girl</button>
+          <button class="btn-ghost" id="embed-synthwave">Synthwave Radio</button>
+          <span class="hint" style="margin:0">rádios ao vivo de verdade — se uma parar de tocar, é a transmissão que mudou; cole o link novo acima</span>
         </div>
         <p class="hint" id="embed-hint"></p>
         <div class="embed-frame" id="embed-frame" hidden></div>
@@ -7085,7 +7091,7 @@
     f.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
     box.appendChild(f);
     box.hidden = false;
-    $("embed-hint").textContent = "Player do " + e.kind + " carregado. Ele fica salvo e volta sozinho na próxima vez que você abrir o app.";
+    $("embed-hint").textContent = "";
   }
 
   function exportHabitsCsv(){
@@ -7511,6 +7517,22 @@
     if(!S.sound.embed){ toast("Nenhum player carregado"); return; }
     S.sound.embed = null;
     save(); renderEmbed();
+  };
+
+  // atalhos pra rádio de verdade tocando. Os ids de vídeo são fixos — a Lofi Girl
+  // troca de stream de vez em quando (a "beats to relax/study to" original saiu
+  // do ar em maio/2026 por questão de direitos autorais), então se um dia um
+  // desses parar de tocar, é só colar o link da transmissão atual na caixa acima
+  $("embed-lofi-girl").onclick = function(){
+    S.sound.embed = { src:"https://www.youtube.com/embed/XVFUtEh9zrY?rel=0", h:220, kind:"YouTube" };
+    save(); renderEmbed();
+    toast("Lofi Girl carregada");
+  };
+
+  $("embed-synthwave").onclick = function(){
+    S.sound.embed = { src:"https://www.youtube.com/embed/4xDzrJKXOOY?rel=0", h:220, kind:"YouTube" };
+    save(); renderEmbed();
+    toast("Synthwave Radio carregada");
   };
 
   $("task-add").onclick = addTask;
