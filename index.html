@@ -259,11 +259,13 @@
   .top-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;min-width:0}
   /* telas estreitas: os botões do topo viram só ícone (o rótulo continua acessível via aria-label) */
   @media (max-width:760px){
-    .top-actions .btn-label{
+    /* o nome de usuário ao lado do patinho é o ponto do recurso — só esconde
+       o rótulo dos outros botões, não do de conta */
+    .top-actions .btn-ghost:not(#btn-account) .btn-label{
       position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
       clip:rect(0,0,0,0);white-space:nowrap;border:0;
     }
-    .top-actions .btn-ghost{padding:10px;width:40px;height:40px;justify-content:center}
+    .top-actions .btn-ghost:not(#btn-account){padding:10px;width:40px;height:40px;justify-content:center}
   }
 
   /* ---------- botões ---------- */
@@ -1940,6 +1942,11 @@
     meetings: [],
     devTab: "build",
     duckNotes: [],
+    // ids de itens apagados — sem isso, um item excluído aqui mas ainda
+    // presente numa cópia desatualizada (outra aba, outro aparelho, ou o
+    // servidor antes do push chegar) simplesmente volta na próxima fusão,
+    // porque mergeById só sabe unir listas, não sabe que algo foi removido
+    deletedIds: [],
     activeTaskId: null,
     timer: { mode:"foco", running:false, endsAt:null, remaining:25*MIN, streak:0, interruptions:0 },
     range: "semana",
@@ -1999,6 +2006,7 @@
     if(Array.isArray(d.meetings)) s.meetings = d.meetings;
     if(d.devTab) s.devTab = d.devTab;
     if(Array.isArray(d.duckNotes)) s.duckNotes = d.duckNotes;
+    if(Array.isArray(d.deletedIds)) s.deletedIds = d.deletedIds;
     if(d.timer) Object.assign(s.timer, d.timer);
     if(typeof d.activeTaskId !== "undefined") s.activeTaskId = d.activeTaskId;
     if(d.range) s.range = d.range;
@@ -2012,17 +2020,39 @@
     return s;
   }
 
-  // união por id: quem chega primeiro na lista vence, e nada duplica
-  function mergeById(primary, secondary){
+  // união por id: quem chega primeiro na lista vence, e nada duplica.
+  // "tumbas" (ids apagados) ficam de fora dos dois lados — sem isso, um item
+  // excluído aqui mas ainda presente numa cópia desatualizada simplesmente
+  // reaparece na próxima fusão
+  function mergeById(primary, secondary, tumbas){
+    var mortos = {};
+    (tumbas || []).forEach(function(id){ mortos[id] = true; });
     var seen = {}, out = [];
     (primary || []).forEach(function(x){
-      if(x && x.id && !seen[x.id]){ seen[x.id] = true; out.push(x); }
+      if(x && x.id && !seen[x.id] && !mortos[x.id]){ seen[x.id] = true; out.push(x); }
     });
     (secondary || []).forEach(function(x){
-      if(x && x.id && !seen[x.id]){ seen[x.id] = true; out.push(x); }
+      if(x && x.id && !seen[x.id] && !mortos[x.id]){ seen[x.id] = true; out.push(x); }
     });
     return out;
   }
+
+  // união simples de listas de ids (não de objetos) — usada só pelas tumbas.
+  // uma vez que um lado sabe que algo foi apagado, os dois devem saber para sempre
+  function unionIds(a, b){
+    var seen = {}, out = [];
+    (a || []).concat(b || []).forEach(function(id){
+      if(id && !seen[id]){ seen[id] = true; out.push(id); }
+    });
+    return out;
+  }
+
+  // registra que um id foi apagado, pra ele não voltar pela fusão da próxima
+  // sincronização — chamar sempre junto de tirar o item da lista de verdade
+  function markDeleted(id){
+    if(id && S.deletedIds.indexOf(id) < 0) S.deletedIds.push(id);
+  }
+  function markDeletedMany(ids){ ids.forEach(markDeleted); }
 
   var SYNCED_ARRAYS = ["tasks","sessions","habits","books","readLog","capsules",
     "media","watchLog","seasons","milestones","builds","duckNotes","goals","pdi","reviews","meetings"];
@@ -2033,7 +2063,9 @@
     var locais = {};
     SYNCED_ARRAYS.forEach(function(k){ locais[k] = S[k]; });
     var novo = adopt(clone(DEFAULTS), d);
-    SYNCED_ARRAYS.forEach(function(k){ novo[k] = mergeById(novo[k], locais[k]); });
+    var tumbas = unionIds(S.deletedIds, novo.deletedIds);
+    novo.deletedIds = tumbas;
+    SYNCED_ARRAYS.forEach(function(k){ novo[k] = mergeById(novo[k], locais[k], tumbas); });
     return novo;
   }
 
@@ -2582,6 +2614,7 @@
 
   function removeTask(id){
     S.tasks = S.tasks.filter(function(t){ return t.id !== id; });
+    markDeleted(id);
     if(S.activeTaskId === id) S.activeTaskId = null;
     save(); renderTasks(); renderTimer();
   }
@@ -3449,6 +3482,7 @@
       del.onclick = function(){
         if(!confirm("Excluir “" + h.name + "”? O histórico de marcações vai junto.")) return;
         S.habits = S.habits.filter(function(x){ return x.id !== h.id; });
+        markDeleted(h.id);
         save(); renderHabits();
       };
       tdX.appendChild(del);
@@ -3756,6 +3790,7 @@
     del.onclick = function(){
       if(!confirm("Excluir “" + b.title + "”? O histórico de páginas fica no balanço.")) return;
       S.books = S.books.filter(function(x){ return x.id !== b.id; });
+      markDeleted(b.id);
       save(); renderBooks();
     };
     acts.appendChild(del);
@@ -4770,6 +4805,7 @@
     del.onclick = function(){
       if(!confirm("Excluir “" + m.title + "”?")) return;
       S.media = S.media.filter(function(x){ return x.id !== m.id; });
+      markDeleted(m.id);
       save(); renderMedia();
     };
     acts.appendChild(del);
@@ -5059,6 +5095,7 @@
       del.onclick = function(){
         if(!confirm("Descartar esta cápsula sem ler?")) return;
         S.capsules = S.capsules.filter(function(x){ return x.id !== c.id; });
+        markDeleted(c.id);
         save(); renderCapsuleLists(); renderCapsuleBanner();
       };
       li.appendChild(del);
@@ -5369,6 +5406,7 @@
     del.onclick = function(){
       if(!confirm("Excluir “" + item.title + "” e seus passos?")) return;
       S.pdi = S.pdi.filter(function(x){ return x.id !== item.id; });
+      markDeleted(item.id);
       if(openPdi === item.id) openPdi = null;
       save(); renderPdi();
     };
@@ -5547,6 +5585,7 @@
     del.onclick = function(){
       if(!confirm("Excluir “" + g.title + "” e seus passos?")) return;
       S.goals = S.goals.filter(function(x){ return x.id !== g.id; });
+      markDeleted(g.id);
       if(openGoal === g.id) openGoal = null;
       save(); renderGoals();
     };
@@ -5857,6 +5896,7 @@
       ev.stopPropagation();
       if(!confirm("Excluir esta sessão da biblioteca?")) return;
       S.duckNotes = S.duckNotes.filter(function(x){ return x.id !== n.id; });
+      markDeleted(n.id);
       save(); renderLibrary(); renderDuckSummary(); renderStats();
     };
     acts.appendChild(del);
@@ -5904,6 +5944,7 @@
     $("lib-detail-delete").onclick = function(){
       if(!confirm("Excluir esta sessão da biblioteca?")) return;
       S.duckNotes = S.duckNotes.filter(function(x){ return x.id !== n.id; });
+      markDeleted(n.id);
       save(); renderDuckSummary(); renderStats();
       $("lib-detail").close();
       renderLibrary();
@@ -6699,6 +6740,7 @@
     var n = S.tasks.filter(function(t){ return t.completed; }).length;
     if(!n){ toast("Nenhuma tarefa concluída para limpar"); return; }
     if(!confirm("Remover " + n + " tarefa(s) concluída(s) da lista? O histórico de pomodoros continua no balanço.")) return;
+    markDeletedMany(S.tasks.filter(function(t){ return t.completed; }).map(function(t){ return t.id; }));
     S.tasks = S.tasks.filter(function(t){ return !t.completed; });
     save(); renderTasks();
   };
@@ -6813,24 +6855,27 @@
                       media:S.media, watchLog:S.watchLog,
                       seasons:S.seasons, milestones:S.milestones, builds:S.builds, duckNotes:S.duckNotes, goals:S.goals, pdi:S.pdi, reviews:S.reviews, meetings:S.meetings };
         var rev = S.rev || 0;
+        var tumbasAntes = S.deletedIds;
         S = adopt(clone(DEFAULTS), d);
         if(mesclar){
-          S.tasks    = mergeById(atual.tasks, S.tasks);
-          S.sessions = mergeById(atual.sessions, S.sessions);
-          S.habits   = mergeById(atual.habits, S.habits);
-          S.books    = mergeById(atual.books, S.books);
-          S.readLog  = mergeById(atual.readLog, S.readLog);
-          S.capsules = mergeById(atual.capsules, S.capsules);
-          S.media    = mergeById(atual.media, S.media);
-          S.watchLog = mergeById(atual.watchLog, S.watchLog);
-          S.seasons    = mergeById(atual.seasons, S.seasons);
-          S.milestones = mergeById(atual.milestones, S.milestones);
-          S.builds     = mergeById(atual.builds, S.builds);
-          S.duckNotes  = mergeById(atual.duckNotes, S.duckNotes);
-          S.goals      = mergeById(atual.goals, S.goals);
-          S.pdi        = mergeById(atual.pdi, S.pdi);
-          S.reviews    = mergeById(atual.reviews, S.reviews);
-          S.meetings   = mergeById(atual.meetings, S.meetings);
+          var tumbas = unionIds(tumbasAntes, S.deletedIds);
+          S.deletedIds = tumbas;
+          S.tasks    = mergeById(atual.tasks, S.tasks, tumbas);
+          S.sessions = mergeById(atual.sessions, S.sessions, tumbas);
+          S.habits   = mergeById(atual.habits, S.habits, tumbas);
+          S.books    = mergeById(atual.books, S.books, tumbas);
+          S.readLog  = mergeById(atual.readLog, S.readLog, tumbas);
+          S.capsules = mergeById(atual.capsules, S.capsules, tumbas);
+          S.media    = mergeById(atual.media, S.media, tumbas);
+          S.watchLog = mergeById(atual.watchLog, S.watchLog, tumbas);
+          S.seasons    = mergeById(atual.seasons, S.seasons, tumbas);
+          S.milestones = mergeById(atual.milestones, S.milestones, tumbas);
+          S.builds     = mergeById(atual.builds, S.builds, tumbas);
+          S.duckNotes  = mergeById(atual.duckNotes, S.duckNotes, tumbas);
+          S.goals      = mergeById(atual.goals, S.goals, tumbas);
+          S.pdi        = mergeById(atual.pdi, S.pdi, tumbas);
+          S.reviews    = mergeById(atual.reviews, S.reviews, tumbas);
+          S.meetings   = mergeById(atual.meetings, S.meetings, tumbas);
         }
         S.rev = rev;
         S.timer.running = false; S.timer.endsAt = null;
