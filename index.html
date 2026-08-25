@@ -231,8 +231,10 @@
   .app-footer{
     padding:calc(var(--sp)*3) 0 calc(var(--sp)*1);
     font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;
-    color:var(--ink-3);text-align:center;
+    color:var(--ink-3);text-align:right;
   }
+  .app-footer a{color:inherit;text-decoration:underline;text-underline-offset:2px}
+  .app-footer a:hover{color:var(--signal)}
 
   /* ---------- cabeçalho ---------- */
   .top{
@@ -340,11 +342,17 @@
   .float-nav .nav-item[hidden]{display:none}
   .float-nav *:focus-visible{outline-color:#fff}
   :root[data-theme="alto-contraste"] .float-nav{background:#000;border-width:2px}
-  @media (max-width:520px){ .float-nav{bottom:12px} }
+  @media (max-width:520px){
+    .float-nav{bottom:12px}
+    /* nesta largura o menu flutuante ocupa quase toda a largura útil —
+       sem essa folga extra o rodapé passa por baixo dele ao rolar até o fim */
+    .app-footer{margin-bottom:60px}
+  }
 
   /* ---------- painéis ---------- */
   .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:calc(var(--sp)*3)}
   .panel{
+    min-width:0;
     background:var(--panel);
     border:1px solid var(--glass-border);
     border-radius:var(--r-lg);
@@ -354,7 +362,7 @@
     box-shadow:var(--glass-shadow);
   }
   .panel-head{
-    display:flex;align-items:center;justify-content:space-between;gap:var(--sp);
+    display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--sp);
     margin:0 0 calc(var(--sp)*2.5);
   }
   .panel-title{
@@ -437,7 +445,7 @@
   .trace{fill:none;stroke:var(--signal);stroke-width:26;stroke-linecap:butt;transition:stroke-dashoffset .3s linear}
   body.mode-pausa .trace{stroke:var(--rest)}
 
-  .controls{display:flex;align-items:center;justify-content:center;gap:var(--sp);margin-top:calc(var(--sp)*3)}
+  .controls{display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:var(--sp);margin-top:calc(var(--sp)*3)}
 
   .now-task{
     margin-top:calc(var(--sp)*3);border-top:1px dashed var(--line);padding-top:calc(var(--sp)*2);
@@ -453,7 +461,7 @@
   .mark.pale{background:var(--grid-a)}
 
   /* ---------- tarefas ---------- */
-  .new-task{display:flex;gap:var(--sp);margin-top:calc(var(--sp)*1.5);margin-bottom:calc(var(--sp)*2)}
+  .new-task{display:flex;flex-wrap:wrap;gap:var(--sp);margin-top:calc(var(--sp)*1.5);margin-bottom:calc(var(--sp)*2)}
   input[type=text],input[type=number],input[type=email],input[type=password],select{
     font-family:var(--sans);font-size:14px;color:var(--ink);
     background:var(--field);border:1px solid var(--line);border-radius:var(--r-md);padding:9px 10px;
@@ -1144,7 +1152,7 @@
 
   @media (max-width:860px){
     .grid{grid-template-columns:1fr}
-    .figures{grid-template-columns:repeat(2,1fr)}
+    .figures,.figures.four,.figures.three{grid-template-columns:repeat(2,1fr)}
     .sheet{padding:calc(var(--sp)*3) calc(var(--sp)*2) calc(var(--sp)*6)}
   }
   @media (prefers-reduced-motion:reduce){
@@ -1256,7 +1264,6 @@
         <div class="dial-face">
           <div class="digits" id="digits" role="timer" aria-live="off">25:00</div>
           <div class="dial-label" id="dial-label">Foco</div>
-          <div class="dial-label" id="sprint-badge" hidden></div>
         </div>
       </div>
 
@@ -1390,47 +1397,6 @@
         <input type="text" id="pdi-title" placeholder="Competência ou área (ex.: liderança técnica)" maxlength="90" aria-label="Competência">
         <input type="text" id="pdi-target" placeholder="o que significa chegar lá (opcional)" maxlength="140" aria-label="Meta">
         <button class="btn-ghost" id="pdi-add">Adicionar</button>
-      </div>
-    </section>
-
-    <!-- SEMANA -->
-    <section class="panel week" id="panel-week">
-      <div class="panel-head">
-        <h2 class="panel-title"><span class="panel-icon amber" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5.5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg></span>Semana</h2>
-        <span class="panel-title" id="week-goals-state"></span>
-      </div>
-      <p class="hint" style="margin:0 0 14px">O que precisa ser verdade até domingo — mais curto e mais concreto que os objetivos do ano.</p>
-
-      <ul class="goal-list" id="week-goal-list"></ul>
-      <div class="empty-state" id="week-goal-empty" hidden>Nenhum objetivo para esta semana ainda.</div>
-
-      <div class="new-book">
-        <input type="text" id="week-goal-title" placeholder="Objetivo da semana" maxlength="90" aria-label="Objetivo da semana">
-        <button class="btn-ghost" id="week-goal-add">Adicionar</button>
-      </div>
-
-      <div class="sub-panel">
-        <div class="panel-head">
-          <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M13 3 5 14h6l-1 7 9-12h-6z"/></svg></span>Sprint de foco</h3>
-          <span class="panel-title" id="sprint-state"></span>
-        </div>
-        <p class="hint">Uma sequência de blocos de foco encadeados um atrás do outro — um clique começa tudo, sem reconfigurar o timer a cada bloco.</p>
-        <div class="new-book">
-          <input type="number" id="sprint-blocks" min="2" max="12" title="Quantos blocos de foco" aria-label="Blocos no sprint">
-          <button class="btn-main" id="sprint-start">Iniciar sprint</button>
-          <button class="btn-ghost" id="sprint-cancel" hidden>Cancelar sprint</button>
-        </div>
-      </div>
-
-      <div class="sub-panel">
-        <div class="panel-head">
-          <h3 class="panel-title"><span class="panel-icon clover" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></span>Padrões de produtividade</h3>
-        </div>
-        <p class="hint" id="pattern-note"></p>
-        <div class="empty-state" id="pattern-empty" hidden>Ainda sem sessões suficientes para ver um padrão — complete alguns pomodoros e volte aqui.</div>
-        <div id="pattern-hours"></div>
-        <p class="cap-meta" style="margin-top:14px" id="pattern-tags-title" hidden>Por etiqueta</p>
-        <div id="pattern-tags"></div>
       </div>
     </section>
 
@@ -1685,6 +1651,17 @@
       </div>
     </section>
 
+    <!-- PADRÕES DE PRODUTIVIDADE -->
+    <section class="panel" id="panel-patterns" hidden>
+      <div class="panel-head">
+        <h2 class="panel-title"><span class="panel-icon clover" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></span>Padrões de produtividade</h2>
+      </div>
+      <p class="hint" id="pattern-note"></p>
+      <div id="pattern-hours"></div>
+      <p class="cap-meta" style="margin-top:14px" id="pattern-tags-title" hidden>Por etiqueta</p>
+      <div id="pattern-tags"></div>
+    </section>
+
     <!-- BALANÇO -->
     <section class="panel stats">
       <div class="panel-head">
@@ -1722,7 +1699,7 @@
 
   </main>
 
-  <footer class="app-footer">Desenvolvido por VanSoares</footer>
+  <footer class="app-footer">Desenvolvido por <a href="https://github.com/vansoares" target="_blank" rel="noopener noreferrer">VanSoares</a></footer>
 </div>
 
 <nav class="float-nav" aria-label="Navegação principal">
@@ -1795,7 +1772,6 @@
     <div class="field"><label for="p-reading">Leitura</label><span class="switch"><input type="checkbox" id="p-reading"></span></div>
     <div class="field"><label for="p-screen">Filmes e séries</label><span class="switch"><input type="checkbox" id="p-screen"></span></div>
     <div class="field"><label for="p-goals">Objetivos do ano</label><span class="switch"><input type="checkbox" id="p-goals"></span></div>
-    <div class="field"><label for="p-week">Semana</label><span class="switch"><input type="checkbox" id="p-week"></span></div>
     <div class="field"><label for="p-notes">Notas soltas</label><span class="switch"><input type="checkbox" id="p-notes"></span></div>
     <div class="field"><label for="p-pdi">PDI</label><span class="switch"><input type="checkbox" id="p-pdi"></span></div>
     <div class="field"><label for="p-season">Temporada</label><span class="switch"><input type="checkbox" id="p-season"></span></div>
@@ -2082,7 +2058,7 @@
 
   var DEFAULTS = {
     version: 1,
-    settings: { focus:25, short:5, long:15, longEvery:4, auto:false, sound:true, notify:false, sprintBlocks:4 },
+    settings: { focus:25, short:5, long:15, longEvery:4, auto:false, sound:true, notify:false },
     tasks: [],
     sessions: [],
     habits: [],
@@ -2093,11 +2069,9 @@
     watchLog: [],
     seasons: [],
     milestones: [],
-    panels: { habitos:true, leitura:true, tela:true, objetivos:true, pdi:true, temporada:true, capsula:true, musica:true, semana:true, notas:true },
+    panels: { habitos:true, leitura:true, tela:true, objetivos:true, pdi:true, temporada:true, capsula:true, musica:true, notas:true },
     goals: [],
-    weekGoals: [],
     notes: [],
-    sprint: { active:false, total:4, done:0 },
     pdi: [],
     dev: false,
     build: { running:false, startedAt:null, label:"" },
@@ -2164,9 +2138,7 @@
     if(Array.isArray(d.milestones)) s.milestones = d.milestones;
     if(d.panels) Object.assign(s.panels, d.panels);
     if(Array.isArray(d.goals)) s.goals = d.goals;
-    if(Array.isArray(d.weekGoals)) s.weekGoals = d.weekGoals;
     if(Array.isArray(d.notes)) s.notes = d.notes;
-    if(d.sprint) Object.assign(s.sprint, d.sprint);
     if(Array.isArray(d.pdi)) s.pdi = d.pdi;
     if(typeof d.dev !== "undefined") s.dev = !!d.dev;
     if(d.build) Object.assign(s.build, d.build);
@@ -2228,7 +2200,7 @@
   function markDeletedMany(ids){ ids.forEach(markDeleted); }
 
   var SYNCED_ARRAYS = ["tasks","sessions","habits","books","readLog","capsules",
-    "media","watchLog","seasons","milestones","builds","duckNotes","goals","weekGoals","notes","pdi","reviews","meetings","studyTopics"];
+    "media","watchLog","seasons","milestones","builds","duckNotes","goals","notes","pdi","reviews","meetings","studyTopics"];
 
   // funde um estado recebido (de outra aba ou do servidor) com o que só existe aqui,
   // sem perder nada dos dois lados — a mesma regra vale local ou remotamente
@@ -2646,9 +2618,7 @@
     S.timer.remaining = duration(mode);
     S.timer.interruptions = 0;
     save(); render(); syncAmbient();
-    // um sprint força o encadeamento mesmo com "continuar automaticamente" desligado —
-    // é a diferença entre configurar o timer uma vez e ficar clicando a cada bloco
-    if(autoRun && (S.settings.auto || (S.sprint && S.sprint.active))) start();
+    if(autoRun && S.settings.auto) start();
   }
 
   function nextMode(){
@@ -2682,13 +2652,6 @@
         });
         if(t){ t.done = (t.done || 0) + 1; }
         checkMilestones(!silent);
-        if(S.sprint && S.sprint.active){
-          S.sprint.done++;
-          if(S.sprint.done >= S.sprint.total){
-            S.sprint.active = false;
-            toast("Sprint concluído — " + S.sprint.total + " blocos de foco seguidos");
-          }
-        }
       }
     }
     if(!silent){
@@ -2697,43 +2660,6 @@
              mode === "foco" ? "Hora de pausar." : "De volta ao foco.");
     }
     setMode(nextMode(), !silent);
-  }
-
-  /* ---------- sprint de foco ---------- */
-  // uma sequência curta e agressiva de blocos de foco, disparada com um clique —
-  // sem precisar mexer em "continuar automaticamente" nas configurações toda vez
-  function startSprint(){
-    if(S.timer.running){ toast("Pare o timer atual antes de iniciar um sprint"); return; }
-    var n = parseInt($("sprint-blocks").value, 10);
-    if(isNaN(n)) n = S.settings.sprintBlocks || 4;
-    n = Math.min(12, Math.max(2, n));
-    S.settings.sprintBlocks = n;
-    S.sprint = { active:true, total:n, done:0 };
-    setMode("foco", false);
-    start();
-    toast("Sprint iniciado — " + n + " blocos de foco seguidos");
-  }
-
-  function cancelSprint(){
-    if(!confirm("Cancelar o sprint em andamento?")) return;
-    S.sprint.active = false;
-    save(); renderSprint();
-    toast("Sprint cancelado");
-  }
-
-  function renderSprint(){
-    $("sprint-blocks").value = S.settings.sprintBlocks || 4;
-    $("sprint-blocks").disabled = !!S.sprint.active;
-    $("sprint-start").hidden = !!S.sprint.active;
-    $("sprint-cancel").hidden = !S.sprint.active;
-    $("sprint-state").textContent = S.sprint.active
-      ? "Bloco " + (S.sprint.done + 1) + " de " + S.sprint.total
-      : "";
-    var badge = $("sprint-badge");
-    if(badge){
-      badge.hidden = !S.sprint.active;
-      if(S.sprint.active) badge.textContent = "Sprint " + (S.sprint.done + 1) + "/" + S.sprint.total;
-    }
   }
 
   var rafId = null;
@@ -2853,7 +2779,7 @@
     renderHabits(); renderBooks(); renderMedia(); renderCapsuleBanner();
     renderEyebrow(); applyPanels();
     renderGoals(); renderPdi(); renderDevWatch(); renderDuckSummary(); renderStudyTopics();
-    renderWeekGoals(); renderSprint(); renderPatterns(); renderNotes();
+    renderPatterns(); renderNotes();
   }
 
   function paintClock(){
@@ -6035,177 +5961,6 @@
     input.focus();
   }
 
-  /* ---------- objetivos da semana ---------- */
-  // mesma mecânica de "objetivos do ano" (goalPct/checkGoalDone são genéricas e
-  // servem pros dois), só troca o rótulo de ano por um intervalo de semana
-  // calculado sozinho — não tem por que pedir pra digitar a semana
-  var openWeekGoal = null;
-
-  function weekLabel(ms){
-    var start = new Date(ms), end = addDays(start, 6);
-    var opts = { day:"numeric", month:"short" };
-    return start.toLocaleDateString("pt-BR", opts) + " – " + end.toLocaleDateString("pt-BR", opts);
-  }
-
-  function weekGoalRow(g){
-    var li = document.createElement("li");
-    li.className = "goal" + (g.doneAt ? " done" : "");
-
-    var top = document.createElement("div");
-    top.className = "goal-top";
-
-    var tt = document.createElement("button");
-    tt.className = "goal-title";
-    tt.textContent = g.title;
-    tt.title = "Clique para ver os passos";
-    tt.onclick = function(){ openWeekGoal = (openWeekGoal === g.id) ? null : g.id; renderWeekGoals(); };
-
-    var yr = document.createElement("span");
-    yr.className = "goal-year";
-    yr.textContent = weekLabel(g.weekStart);
-
-    var acts = document.createElement("div");
-    acts.className = "goal-actions";
-    var toggle = document.createElement("button");
-    toggle.className = "mini";
-    toggle.textContent = openWeekGoal === g.id ? "Ocultar passos" : "Passos (" + ((g.steps || []).length) + ")";
-    toggle.onclick = function(){ openWeekGoal = (openWeekGoal === g.id) ? null : g.id; renderWeekGoals(); };
-    var del = document.createElement("button");
-    del.className = "kill";
-    del.textContent = "×";
-    del.setAttribute("aria-label", "Excluir objetivo");
-    del.onclick = function(){
-      if(!confirm("Excluir “" + g.title + "” e seus passos?")) return;
-      S.weekGoals = S.weekGoals.filter(function(x){ return x.id !== g.id; });
-      markDeleted(g.id);
-      if(openWeekGoal === g.id) openWeekGoal = null;
-      save(); renderWeekGoals();
-    };
-    acts.appendChild(toggle); acts.appendChild(del);
-    top.appendChild(tt); top.appendChild(yr); top.appendChild(acts);
-    li.appendChild(top);
-
-    var bar = document.createElement("div");
-    bar.className = "goal-bar";
-    var track = document.createElement("div");
-    track.className = "bar-track";
-    var fill = document.createElement("div");
-    fill.className = "bar-fill";
-    var pct = goalPct(g);
-    fill.style.width = pct + "%";
-    track.appendChild(fill);
-    var lab = document.createElement("span");
-    lab.className = "goal-pct";
-    var feitos = (g.steps || []).filter(function(x){ return x.done; }).length;
-    lab.innerHTML = (g.steps || []).length
-      ? "<b>" + feitos + "</b>/" + g.steps.length + " passos · " + pct + "%"
-      : "sem passos ainda";
-    bar.appendChild(track); bar.appendChild(lab);
-    li.appendChild(bar);
-
-    if(openWeekGoal === g.id){
-      var ul = document.createElement("ul");
-      ul.className = "steps";
-      (g.steps || []).forEach(function(st){
-        var sl = document.createElement("li");
-        sl.className = "step" + (st.done ? " done" : "");
-        var chk = document.createElement("button");
-        chk.className = "check";
-        chk.textContent = "✓";
-        chk.setAttribute("aria-label", st.done ? "Reabrir passo" : "Concluir passo");
-        chk.onclick = function(){
-          st.done = !st.done;
-          st.doneAt = st.done ? Date.now() : null;
-          checkGoalDone(g);
-          save(); renderWeekGoals();
-        };
-        if(st.done) chk.style.cssText = "background:var(--rest);border-color:var(--rest);color:var(--on-ink)";
-        var sb = document.createElement("button");
-        sb.className = "step-title";
-        sb.textContent = st.title;
-        sb.title = "Criar uma tarefa a partir deste passo";
-        sb.onclick = function(){
-          S.tasks.unshift({ id: uid(), title: st.title, tag: g.title.slice(0, 24), due: null, est: 1, note: null,
-                            done: 0, completed: false, createdAt: Date.now(), completedAt: null });
-          save(); renderTasks(); renderStats();
-          toast("Tarefa criada a partir do passo");
-        };
-        var sd = document.createElement("button");
-        sd.className = "kill";
-        sd.textContent = "×";
-        sd.setAttribute("aria-label", "Excluir passo");
-        sd.onclick = function(){
-          g.steps = g.steps.filter(function(x){ return x.id !== st.id; });
-          checkGoalDone(g);
-          save(); renderWeekGoals();
-        };
-        sl.appendChild(chk); sl.appendChild(sb); sl.appendChild(sd);
-        ul.appendChild(sl);
-      });
-      li.appendChild(ul);
-
-      var add = document.createElement("div");
-      add.className = "step-add";
-      var inp = document.createElement("input");
-      inp.type = "text";
-      inp.placeholder = "Novo passo — pequeno o suficiente para caber num dia";
-      inp.maxLength = 120;
-      inp.setAttribute("aria-label", "Novo passo");
-      function criar(){
-        var v = inp.value.trim();
-        if(!v) return;
-        if(!g.steps) g.steps = [];
-        g.steps.push({ id: uid(), title: v, done: false, doneAt: null });
-        inp.value = "";
-        checkGoalDone(g);
-        save(); renderWeekGoals();
-        setTimeout(function(){
-          var campos = document.querySelectorAll(".step-add input");
-          if(campos.length) campos[campos.length-1].focus();
-        }, 0);
-      }
-      inp.addEventListener("keydown", function(e){ if(e.key === "Enter") criar(); });
-      var bt = document.createElement("button");
-      bt.className = "btn-ghost";
-      bt.textContent = "Somar";
-      bt.onclick = criar;
-      add.appendChild(inp); add.appendChild(bt);
-      li.appendChild(add);
-    }
-
-    return li;
-  }
-
-  function renderWeekGoals(){
-    var list = $("week-goal-list");
-    list.innerHTML = "";
-    var ordenados = S.weekGoals.slice().sort(function(a, b){
-      if(!!a.doneAt !== !!b.doneAt) return a.doneAt ? 1 : -1;
-      return (b.weekStart - a.weekStart) || (a.createdAt - b.createdAt);
-    });
-    ordenados.forEach(function(g){ list.appendChild(weekGoalRow(g)); });
-    $("week-goal-empty").hidden = S.weekGoals.length > 0;
-
-    var inicio = startOfWeek(Date.now()).getTime();
-    var daSemana = S.weekGoals.filter(function(g){ return g.weekStart === inicio; });
-    var cumpridos = daSemana.filter(function(g){ return g.doneAt; }).length;
-    $("week-goals-state").textContent = daSemana.length
-      ? cumpridos + " de " + daSemana.length + " cumpridos esta semana"
-      : "";
-  }
-
-  function addWeekGoal(){
-    var input = $("week-goal-title");
-    var t = input.value.trim();
-    if(!t){ input.focus(); return; }
-    var g = { id: uid(), title: t, weekStart: startOfWeek(Date.now()).getTime(), steps: [], createdAt: Date.now(), doneAt: null };
-    S.weekGoals.push(g);
-    input.value = "";
-    openWeekGoal = g.id;
-    save(); renderWeekGoals();
-    input.focus();
-  }
-
   /* ---------- padrões de produtividade ---------- */
   // dois recortes sobre S.sessions: em que horário do dia o foco de fato
   // acontece, e quais etiquetas concentram mais tempo — sem inventar métrica
@@ -6214,16 +5969,17 @@
 
   function renderPatterns(){
     var sess = S.sessions;
+    var panel = $("panel-patterns");
     var box = $("pattern-hours"), tagBox = $("pattern-tags");
     box.innerHTML = ""; tagBox.innerHTML = "";
     $("pattern-tags-title").hidden = true;
 
     if(!sess.length){
-      $("pattern-empty").hidden = false;
+      panel.hidden = true;
       $("pattern-note").textContent = "";
       return;
     }
-    $("pattern-empty").hidden = true;
+    panel.hidden = false;
 
     var buckets = new Array(24);
     for(var i=0;i<24;i++) buckets[i] = 0;
@@ -7019,7 +6775,6 @@
     $("panel-screen").hidden = !S.panels.tela;
     $("panel-goals").hidden = !S.panels.objetivos;
     $("panel-pdi").hidden = !S.panels.pdi;
-    $("panel-week").hidden = !S.panels.semana;
     $("panel-notes").hidden = !S.panels.notas;
     $("btn-season").hidden = !S.panels.temporada;
     $("btn-capsule").hidden = !S.panels.capsula;
@@ -7222,8 +6977,6 @@
   $("btn-start").onclick = function(){ S.timer.running ? pause() : start(); };
   $("btn-partial").onclick = bankPartial;
   $("btn-reset").onclick = reset;
-  $("sprint-start").onclick = startSprint;
-  $("sprint-cancel").onclick = cancelSprint;
   $("btn-skip").onclick = function(){
     if(S.timer.mode === "foco"){
       if(!confirm("Pular o bloco de foco? Ele não entra na contagem.")) return;
@@ -7291,8 +7044,6 @@
   $("goal-year").value = new Date().getFullYear();
 
   // objetivos da semana
-  $("week-goal-add").onclick = addWeekGoal;
-  $("week-goal-title").addEventListener("keydown", function(e){ if(e.key === "Enter") addWeekGoal(); });
 
   // notas soltas
   $("note-add").onclick = addNote;
@@ -7590,7 +7341,6 @@
     $("p-screen").checked = !!S.panels.tela;
     $("p-goals").checked = !!S.panels.objetivos;
     $("p-pdi").checked = !!S.panels.pdi;
-    $("p-week").checked = !!S.panels.semana;
     $("p-notes").checked = !!S.panels.notas;
     $("p-season").checked = !!S.panels.temporada;
     $("p-capsule").checked = !!S.panels.capsula;
@@ -7637,7 +7387,7 @@
     save(); applyPanels(); renderTasks(); renderTimer();   // o botão de branch aparece nas tarefas; "Estudando" some/aparece junto
   };
 
-  [["p-habits","habitos"], ["p-reading","leitura"], ["p-screen","tela"], ["p-goals","objetivos"], ["p-pdi","pdi"], ["p-season","temporada"], ["p-capsule","capsula"], ["p-music","musica"], ["p-week","semana"], ["p-notes","notas"]].forEach(function(par){
+  [["p-habits","habitos"], ["p-reading","leitura"], ["p-screen","tela"], ["p-goals","objetivos"], ["p-pdi","pdi"], ["p-season","temporada"], ["p-capsule","capsula"], ["p-music","musica"], ["p-notes","notas"]].forEach(function(par){
     $(par[0]).onchange = function(){
       S.panels[par[1]] = this.checked;
       save(); applyPanels();
