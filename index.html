@@ -1096,6 +1096,9 @@
   .foot-row button[disabled]:hover{border-color:var(--line);color:var(--ink-2)}
   .foot-row .n{font-variant-numeric:tabular-nums;color:var(--signal);font-weight:600}
   .new-task{flex-wrap:wrap}
+  /* sem um piso, o campo de título encolhia até virar uma fresta em vez de
+     quebrar linha — a quebra já existia, só nunca era acionada */
+  #task-input{min-width:200px}
   #task-tag{width:108px;font-family:var(--mono);font-size:12px}
   .dlg-body .field input[type=text],
   .dlg-body .field input[type=date],
