@@ -2158,6 +2158,13 @@
 
   var KEY = "foco.v1";
   var MIN = 60000;
+  // id fixo (não uid()) pro perfil criado ao migrar uma cópia antiga (local
+  // ou do servidor) pro formato com perfis — local e servidor normalizam
+  // pro MESMO id assim, e a fusão reconhece os dois como o mesmo perfil
+  // "Pessoal" em vez de criar dois perfis duplicados. Precisa estar definido
+  // aqui em cima porque loadProfiles() já roda na inicialização do estado,
+  // antes de qualquer função declarada mais abaixo no arquivo ser chamada.
+  var LEGACY_PROFILE_ID = "default";
 
   var DEFAULTS = {
     version: 1,
@@ -2303,7 +2310,7 @@
         }
       }
     }catch(e){}
-    var meta = newProfileMeta("Pessoal");
+    var meta = { id: LEGACY_PROFILE_ID, name: "Pessoal", createdAt: Date.now() };
     return { activeProfileId: meta.id, profiles: [meta], archive: {} };
   }
 
@@ -2316,7 +2323,7 @@
   // conceito de perfil — vira um perfil "Pessoal" único antes de fundir
   function normalizeProfilesContainer(raw){
     if(raw && Array.isArray(raw.profiles) && raw.archive && raw.activeProfileId) return raw;
-    var meta = newProfileMeta("Pessoal");
+    var meta = { id: LEGACY_PROFILE_ID, name: "Pessoal", createdAt: Date.now() };
     var archive = {};
     archive[meta.id] = raw || {};
     return { activeProfileId: meta.id, profiles: [meta], archive: archive };
