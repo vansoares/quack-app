@@ -1204,10 +1204,70 @@
   .dlg-body .field input[type=number]{width:78px}
   .hint{font-size:12px;color:var(--ink-3);line-height:1.5;margin:0}
 
+  /* ---------- página de notas (markdown, pastas) ---------- */
+  .notes-page{padding:calc(var(--sp)*3) calc(var(--sp)*3) calc(var(--sp)*6);max-width:1100px;margin:0 auto}
+  .notes-page-head{display:flex;align-items:center;gap:calc(var(--sp)*2);margin-bottom:calc(var(--sp)*3)}
+  .notes-page-title{font-size:20px;font-weight:700;color:var(--ink);margin:0}
+  .notes-page-body{display:flex;gap:calc(var(--sp)*3);align-items:flex-start}
+  .notes-sidebar{
+    flex:0 0 220px;min-width:0;background:var(--panel);border:1px solid var(--glass-border);
+    border-radius:var(--r-lg);padding:calc(var(--sp)*2);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);
+  }
+  .notes-folder-list{list-style:none;margin:0 0 calc(var(--sp)*2);padding:0;display:flex;flex-direction:column;gap:2px}
+  .notes-folder-row{display:flex;align-items:center;gap:4px}
+  .notes-folder-btn{
+    flex:1;min-width:0;text-align:left;background:none;border:0;border-radius:var(--r-sm);
+    padding:7px 9px;font-size:13.5px;color:var(--ink-2);cursor:pointer;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .notes-folder-btn:hover{background:var(--grid-b);color:var(--ink)}
+  .notes-folder-btn[aria-current="true"]{background:var(--signal-soft);color:var(--ink);font-weight:600}
+  .notes-folder-row .kill{opacity:.5}
+  .notes-folder-row .kill:hover{opacity:1}
+  .notes-folder-add{display:flex;gap:6px;border-top:1px solid var(--line);padding-top:calc(var(--sp)*2)}
+  .notes-folder-add input{flex:1;min-width:0;font-size:13px}
+  .notes-main{flex:1;min-width:0}
+  .notes-main-head{display:flex;align-items:center;justify-content:space-between;gap:var(--sp);margin-bottom:calc(var(--sp)*2)}
+  .notes-current-folder{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+  .notes-page-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+  .notes-page-row{
+    display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--grid-a);
+    border-radius:var(--r-md);padding:11px 14px;cursor:pointer;text-align:left;width:100%;
+  }
+  .notes-page-row:hover{border-color:var(--ink-3)}
+  .notes-page-row-title{flex:1;min-width:0;font-size:14px;color:var(--ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .notes-page-row-date{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);flex:none}
+  .notes-editor{background:var(--panel);border:1px solid var(--glass-border);border-radius:var(--r-lg);padding:calc(var(--sp)*2);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
+  .notes-editor-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:calc(var(--sp)*2)}
+  .notes-editor-title{flex:1;min-width:160px;font-size:15px;font-weight:600;font-family:var(--sans)}
+  .notes-editor-body{
+    width:100%;min-height:min(50vh,420px);font-family:var(--mono);font-size:13.5px;line-height:1.65;
+    resize:vertical;background:var(--card);border:1px solid var(--grid-a);border-radius:var(--r-md);
+    padding:calc(var(--sp)*2);color:var(--ink)
+  }
+  .notes-editor-preview{
+    min-height:min(50vh,420px);font-size:14px;line-height:1.7;color:var(--ink);
+    background:var(--card);border:1px solid var(--grid-a);border-radius:var(--r-md);
+    padding:calc(var(--sp)*2) calc(var(--sp)*3);overflow-wrap:anywhere;
+  }
+  .notes-editor-preview h1,.notes-editor-preview h2,.notes-editor-preview h3{margin:.7em 0 .35em;line-height:1.3}
+  .notes-editor-preview h1:first-child,.notes-editor-preview h2:first-child,.notes-editor-preview h3:first-child{margin-top:0}
+  .notes-editor-preview p{margin:.6em 0}
+  .notes-editor-preview ul,.notes-editor-preview ol{margin:.6em 0;padding-left:1.4em}
+  .notes-editor-preview blockquote{margin:.6em 0;padding:2px 0 2px 12px;border-left:3px solid var(--signal-soft,var(--grid-a));color:var(--ink-2)}
+  .notes-editor-preview code{font-family:var(--mono);background:var(--grid-b);border-radius:4px;padding:1px 5px;font-size:.92em}
+  .notes-editor-preview pre{background:var(--grid-b);border-radius:var(--r-sm);padding:calc(var(--sp)*1.5);overflow-x:auto;margin:.6em 0}
+  .notes-editor-preview pre code{background:none;padding:0}
+  .notes-editor-preview hr{border:0;border-top:1px solid var(--line);margin:1em 0}
+  .notes-editor-preview a{color:var(--signal)}
+
   @media (max-width:860px){
     .grid{grid-template-columns:1fr}
     .figures,.figures.four,.figures.three{grid-template-columns:repeat(2,1fr)}
     .sheet{padding:calc(var(--sp)*3) calc(var(--sp)*2) calc(var(--sp)*6)}
+    .notes-page{padding:calc(var(--sp)*2) calc(var(--sp)*1.5) calc(var(--sp)*6)}
+    .notes-page-body{flex-direction:column}
+    .notes-sidebar{flex:none;width:100%;box-sizing:border-box}
   }
   @media (prefers-reduced-motion:reduce){
     *{transition:none !important;animation:none !important}
@@ -1268,6 +1328,10 @@
         <button class="btn-ghost" id="btn-account" aria-label="Entrar">
           <svg id="btn-account-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
           <span class="btn-label">Entrar</span>
+        </button>
+        <button class="btn-ghost" id="btn-notes-page" aria-label="Notas" hidden>
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M15 3v5h5"/><path d="M8 13h8M8 17h5"/></svg>
+          <span class="btn-label">Notas</span>
         </button>
         <button class="btn-ghost" id="btn-settings" aria-label="Ajustes">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -1748,6 +1812,45 @@
 
   </main>
 
+  <section class="notes-page" id="page-notes" hidden>
+    <div class="notes-page-head">
+      <button class="btn-ghost" id="notes-back">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+        <span>Voltar</span>
+      </button>
+      <h1 class="notes-page-title">Notas</h1>
+    </div>
+    <div class="notes-page-body">
+      <aside class="notes-sidebar">
+        <ul class="notes-folder-list" id="notes-folder-list"></ul>
+        <div class="notes-folder-add">
+          <input type="text" id="notes-folder-name" placeholder="Nova pasta" maxlength="40" aria-label="Nome da nova pasta">
+          <button class="btn-ghost" id="notes-folder-add-btn">Criar</button>
+        </div>
+      </aside>
+      <div class="notes-main">
+        <div class="notes-main-head">
+          <span class="notes-current-folder" id="notes-current-folder"></span>
+          <button class="btn-main" id="notes-page-add">Nova nota</button>
+        </div>
+        <ul class="notes-page-list" id="notes-page-list"></ul>
+        <div class="empty-state" id="notes-page-empty" hidden>Nenhuma nota aqui ainda. Clique em "Nova nota" para começar.</div>
+        <div class="notes-editor" id="notes-editor" hidden>
+          <div class="notes-editor-head">
+            <button class="btn-ghost" id="notes-editor-back">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+            </button>
+            <input type="text" id="notes-editor-title" class="notes-editor-title" placeholder="Título da nota" maxlength="140" aria-label="Título da nota">
+            <button class="btn-ghost" id="notes-editor-toggle">Visualizar</button>
+            <button class="kill" id="notes-editor-delete" aria-label="Excluir nota">×</button>
+          </div>
+          <textarea id="notes-editor-body" class="notes-editor-body" placeholder="Escreva em Markdown…" aria-label="Corpo da nota"></textarea>
+          <div class="notes-editor-preview markdown-body" id="notes-editor-preview" hidden></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
   <footer class="app-footer">Desenvolvido por <a href="https://github.com/vansoares" target="_blank" rel="noopener noreferrer">VanSoares</a></footer>
 </div>
 
@@ -2163,6 +2266,8 @@
     panels: { habitos:true, leitura:true, tela:true, objetivos:true, pdi:true, temporada:true, capsula:true, musica:true, notas:true },
     goals: [],
     notes: [],
+    noteFolders: [],
+    notePages: [],
     pdi: [],
     dev: false,
     build: { running:false, startedAt:null, label:"" },
@@ -2237,6 +2342,8 @@
     if(d.panels) Object.assign(s.panels, d.panels);
     if(Array.isArray(d.goals)) s.goals = d.goals;
     if(Array.isArray(d.notes)) s.notes = d.notes;
+    if(Array.isArray(d.noteFolders)) s.noteFolders = d.noteFolders;
+    if(Array.isArray(d.notePages)) s.notePages = d.notePages;
     if(Array.isArray(d.pdi)) s.pdi = d.pdi;
     if(typeof d.dev !== "undefined") s.dev = !!d.dev;
     if(d.build) Object.assign(s.build, d.build);
@@ -2418,7 +2525,7 @@
   function markDeletedMany(ids){ ids.forEach(markDeleted); }
 
   var SYNCED_ARRAYS = ["tasks","sessions","habits","books","readLog","capsules",
-    "media","watchLog","seasons","milestones","builds","duckNotes","goals","notes","pdi","reviews","meetings","studyTopics"];
+    "media","watchLog","seasons","milestones","builds","duckNotes","goals","notes","noteFolders","notePages","pdi","reviews","meetings","studyTopics"];
 
   // funde um blob de perfil recebido (de outra aba, do servidor, ou de outro
   // perfil na fusão do container inteiro) com um blob local, sem perder nada
@@ -2722,6 +2829,11 @@
 
     if(logged) $("account-username").value = AUTH.username || "";
     renderProfileTag();
+
+    // notas em markdown/pastas só faz sentido pra quem está logado (sincroniza
+    // entre aparelhos como o resto) — sem conta, o botão nem aparece
+    $("btn-notes-page").hidden = !logged;
+    if(!logged && !$("page-notes").hidden) closeNotesPage();
   }
 
   function onAuthSuccess(res){
@@ -3121,6 +3233,9 @@
     renderEyebrow(); applyPanels();
     renderGoals(); renderPdi(); renderDevWatch(); renderDuckSummary(); renderStudyTopics();
     renderPatterns(); renderNotes();
+    // só atualiza a página de notas se ela for a tela ativa agora — mais
+    // barato, e renderNoteEditor() já protege o que estiver sendo digitado
+    if(!$("page-notes").hidden) renderNotesPage();
   }
 
   function paintClock(){
@@ -6498,6 +6613,318 @@
     });
   }
 
+  /* ---------- página de notas em markdown (pastas) ---------- */
+  var notesSelectedFolder = "all";  // "all" | "none" | id de uma pasta
+  var notesOpenPageId = null;       // nota aberta no editor, ou null (mostra a lista)
+  var notesPreviewMode = false;
+  var notesEditorLoadedId = null;   // id da nota cujo título/corpo estão carregados nos campos agora
+
+  function findNoteFolder(id){ return S.noteFolders.filter(function(f){ return f.id === id; })[0] || null; }
+  function findNotePage(id){ return S.notePages.filter(function(p){ return p.id === id; })[0] || null; }
+
+  function escapeHtml(s){
+    return String(s).replace(/[&<>"]/g, function(c){
+      return c === "&" ? "&amp;" : c === "<" ? "&lt;" : c === ">" ? "&gt;" : "&quot;";
+    });
+  }
+
+  // só http/https — mesma ideia do parseEmbed pros players, mas aqui pra
+  // links dentro de uma nota: sem isso um link "javascript:..." colado na
+  // nota executaria ao clicar
+  function safeHref(href){
+    try{
+      var u = new URL(String(href).trim(), location.href);
+      if(u.protocol !== "http:" && u.protocol !== "https:") return null;
+      return u.href.replace(/"/g, "&quot;");
+    }catch(e){ return null; }
+  }
+
+  function mdInline(raw){
+    // links primeiro, sobre o texto ainda cru — precisa da URL de verdade
+    // pra validar o protocolo antes de qualquer escape. Cada link vira um
+    // marcador delimitado por U+2063 (separador invisível — não dá pra
+    // digitar sem querer, então não colide com texto de verdade) que
+    // sobrevive ao escapeHtml logo abaixo, e é trocado pelo HTML pronto
+    // (já escapado) no final
+    var links = [];
+    var withPlaceholders = raw.replace(/\[([^\]]+)\]\(([^)]+)\)/g, function(_, label, href){
+      var safe = safeHref(href);
+      var html = safe
+        ? '<a href="' + safe + '" target="_blank" rel="noopener noreferrer">' + escapeHtml(label) + "</a>"
+        : escapeHtml(label);
+      links.push(html);
+      return "⁣" + (links.length - 1) + "⁣";
+    });
+
+    var out = escapeHtml(withPlaceholders);
+    out = out.replace(/`([^`]+)`/g, function(_, code){ return "<code>" + code + "</code>"; });
+    out = out.replace(/\*\*([^*]+)\*\*/g, "<strong>$1</strong>");
+    out = out.replace(/(^|[^*])\*([^*]+)\*(?!\*)/g, "$1<em>$2</em>");
+    out = out.replace(/⁣(\d+)⁣/g, function(_, idx){ return links[idx]; });
+    return out;
+  }
+
+  // conversor Markdown -> HTML feito à mão (sem lib externa, CSP não libera
+  // CDN): cobre o essencial pra uma anotação pessoal — títulos, negrito,
+  // itálico, código, listas, citação, linha horizontal, link. Não tenta ser
+  // CommonMark completo (ex.: código com * dentro pode confundir o regex de
+  // itálico) — suficiente pro uso pretendido aqui
+  function mdToHtml(src){
+    var lines = String(src || "").replace(/\r\n/g, "\n").split("\n");
+    var out = [];
+    var i = 0;
+    var paragraph = [];
+    var listType = null;
+
+    function flushParagraph(){
+      if(!paragraph.length) return;
+      out.push("<p>" + mdInline(paragraph.join(" ")) + "</p>");
+      paragraph = [];
+    }
+    function closeList(){
+      if(listType){ out.push("</" + listType + ">"); listType = null; }
+    }
+
+    while(i < lines.length){
+      var line = lines[i];
+
+      var fence = line.match(/^```/);
+      if(fence){
+        flushParagraph(); closeList();
+        var codeLines = [];
+        i++;
+        while(i < lines.length && !/^```\s*$/.test(lines[i])){ codeLines.push(lines[i]); i++; }
+        i++;
+        out.push("<pre><code>" + escapeHtml(codeLines.join("\n")) + "</code></pre>");
+        continue;
+      }
+
+      if(!line.trim()){ flushParagraph(); closeList(); i++; continue; }
+
+      var h = line.match(/^(#{1,3})\s+(.*)$/);
+      if(h){
+        flushParagraph(); closeList();
+        var level = h[1].length;
+        out.push("<h" + level + ">" + mdInline(h[2]) + "</h" + level + ">");
+        i++; continue;
+      }
+
+      if(/^(-{3,}|\*{3,}|_{3,})\s*$/.test(line)){
+        flushParagraph(); closeList();
+        out.push("<hr>");
+        i++; continue;
+      }
+
+      var quote = line.match(/^>\s?(.*)$/);
+      if(quote){
+        flushParagraph(); closeList();
+        var quoteLines = [quote[1]];
+        i++;
+        while(i < lines.length && /^>\s?/.test(lines[i])){ quoteLines.push(lines[i].replace(/^>\s?/, "")); i++; }
+        out.push("<blockquote><p>" + mdInline(quoteLines.join(" ")) + "</p></blockquote>");
+        continue;
+      }
+
+      var ol = line.match(/^\s*\d+\.\s+(.*)$/);
+      var ul = line.match(/^\s*[-*]\s+(.*)$/);
+      if(ol || ul){
+        flushParagraph();
+        var wantType = ol ? "ol" : "ul";
+        if(listType !== wantType){ closeList(); out.push("<" + wantType + ">"); listType = wantType; }
+        out.push("<li>" + mdInline((ol || ul)[1]) + "</li>");
+        i++; continue;
+      }
+
+      closeList();
+      paragraph.push(line.trim());
+      i++;
+    }
+    flushParagraph(); closeList();
+    return out.join("\n");
+  }
+
+  function openNotesPage(){
+    $("main").hidden = true;
+    $("page-notes").hidden = false;
+    renderNotesPage();
+  }
+  function closeNotesPage(){
+    $("page-notes").hidden = true;
+    $("main").hidden = false;
+  }
+
+  function currentFolderNotes(){
+    if(notesSelectedFolder === "all") return S.notePages;
+    if(notesSelectedFolder === "none") return S.notePages.filter(function(p){ return !p.folderId; });
+    return S.notePages.filter(function(p){ return p.folderId === notesSelectedFolder; });
+  }
+
+  function renderNotesPage(){
+    renderNoteFolderList();
+    renderNotePageList();
+    renderNoteEditor();
+  }
+
+  function renderNoteFolderList(){
+    var list = $("notes-folder-list");
+    list.innerHTML = "";
+
+    function addRow(id, label, count, deletable){
+      var li = document.createElement("li");
+      li.className = "notes-folder-row";
+      var btn = document.createElement("button");
+      btn.className = "notes-folder-btn";
+      btn.textContent = label + (count ? " (" + count + ")" : "");
+      btn.setAttribute("aria-current", String(notesSelectedFolder === id));
+      btn.onclick = function(){
+        notesSelectedFolder = id;
+        notesOpenPageId = null;
+        notesEditorLoadedId = null;
+        renderNotesPage();
+      };
+      li.appendChild(btn);
+      if(deletable){
+        var del = document.createElement("button");
+        del.className = "kill";
+        del.textContent = "×";
+        del.setAttribute("aria-label", "Excluir pasta " + label);
+        del.onclick = function(ev){ ev.stopPropagation(); deleteNoteFolder(id); };
+        li.appendChild(del);
+      }
+      list.appendChild(li);
+    }
+
+    addRow("all", "Todas", S.notePages.length, false);
+    addRow("none", "Sem pasta", S.notePages.filter(function(p){ return !p.folderId; }).length, false);
+    S.noteFolders.slice().sort(function(a, b){ return a.name.localeCompare(b.name, "pt-BR"); }).forEach(function(f){
+      addRow(f.id, f.name, S.notePages.filter(function(p){ return p.folderId === f.id; }).length, true);
+    });
+  }
+
+  function renderNotePageList(){
+    var list = $("notes-page-list");
+    var empty = $("notes-page-empty");
+    var head = $("notes-current-folder");
+
+    if(notesOpenPageId){ list.hidden = true; empty.hidden = true; return; }
+
+    var folder = notesSelectedFolder !== "all" && notesSelectedFolder !== "none" ? findNoteFolder(notesSelectedFolder) : null;
+    head.textContent = notesSelectedFolder === "all" ? "todas as notas"
+      : notesSelectedFolder === "none" ? "sem pasta"
+      : (folder ? folder.name : "pasta");
+
+    var pages = currentFolderNotes().slice().sort(function(a, b){
+      return (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt);
+    });
+    list.hidden = false;
+    list.innerHTML = "";
+    empty.hidden = pages.length > 0;
+
+    pages.forEach(function(p){
+      var li = document.createElement("li");
+      var row = document.createElement("button");
+      row.type = "button";
+      row.className = "notes-page-row";
+      var title = document.createElement("span");
+      title.className = "notes-page-row-title";
+      title.textContent = p.title || "Sem título";
+      var date = document.createElement("span");
+      date.className = "notes-page-row-date";
+      date.textContent = new Date(p.updatedAt || p.createdAt).toLocaleDateString("pt-BR", { day:"numeric", month:"short" });
+      row.appendChild(title); row.appendChild(date);
+      row.onclick = function(){ notesOpenPageId = p.id; notesPreviewMode = false; renderNotesPage(); };
+      li.appendChild(row);
+      list.appendChild(li);
+    });
+  }
+
+  function renderNoteEditor(){
+    var box = $("notes-editor");
+    if(!notesOpenPageId){ box.hidden = true; notesEditorLoadedId = null; return; }
+
+    var p = findNotePage(notesOpenPageId);
+    if(!p){ notesOpenPageId = null; notesEditorLoadedId = null; box.hidden = true; return; }
+
+    box.hidden = false;
+    var titleInp = $("notes-editor-title");
+    var bodyTa = $("notes-editor-body");
+    var isFocused = document.activeElement === titleInp || document.activeElement === bodyTa;
+
+    // recarrega os campos quando é uma nota diferente da que já estava
+    // carregada, OU quando é a mesma mas ninguém está digitando agora — só
+    // NÃO recarrega se a pessoa está no meio de digitar nesta mesma nota
+    // (mesmo cuidado do renderNotes()/renderTasks(): render() roda por ações
+    // sem relação nenhuma com isso e não pode apagar o que está sendo escrito)
+    if(notesEditorLoadedId !== p.id || !isFocused){
+      titleInp.value = p.title || "";
+      bodyTa.value = p.body || "";
+      notesEditorLoadedId = p.id;
+    }
+
+    $("notes-editor-toggle").textContent = notesPreviewMode ? "Editar" : "Visualizar";
+    bodyTa.hidden = notesPreviewMode;
+    var preview = $("notes-editor-preview");
+    preview.hidden = !notesPreviewMode;
+    if(notesPreviewMode) preview.innerHTML = mdToHtml(bodyTa.value);
+  }
+
+  function commitNoteEditor(){
+    if(!notesOpenPageId) return;
+    var p = findNotePage(notesOpenPageId);
+    if(!p) return;
+    var title = $("notes-editor-title").value.trim().slice(0, 140);
+    var body = $("notes-editor-body").value.slice(0, 50000);
+    if(title === (p.title || "") && body === (p.body || "")) return;
+    p.title = title;
+    p.body = body;
+    p.updatedAt = Date.now();
+    save();
+  }
+
+  function createNoteFolder(name){
+    var trimmed = (name || "").trim().slice(0, 40);
+    if(!trimmed){ toast("Dê um nome à pasta"); return; }
+    S.noteFolders.push({ id: uid(), name: trimmed, createdAt: Date.now() });
+    save(); renderNoteFolderList();
+  }
+
+  async function deleteNoteFolder(id){
+    var f = findNoteFolder(id);
+    if(!f) return;
+    var ok = await askConfirm(
+      "Excluir a pasta “" + f.name + "”? As notas dentro dela vão para “Sem pasta” — nada é apagado.",
+      { danger:true, confirmLabel:"Excluir pasta" }
+    );
+    if(!ok) return;
+    S.notePages.forEach(function(p){ if(p.folderId === id) p.folderId = null; });
+    S.noteFolders = S.noteFolders.filter(function(x){ return x.id !== id; });
+    markDeleted(id);
+    if(notesSelectedFolder === id) notesSelectedFolder = "all";
+    save(); renderNotesPage();
+  }
+
+  function createNotePage(){
+    var folderId = (notesSelectedFolder === "all" || notesSelectedFolder === "none") ? null : notesSelectedFolder;
+    var p = { id: uid(), folderId: folderId, title: "", body: "", createdAt: Date.now(), updatedAt: Date.now() };
+    S.notePages.unshift(p);
+    notesOpenPageId = p.id;
+    notesPreviewMode = false;
+    notesEditorLoadedId = null;
+    save(); renderNotesPage();
+    setTimeout(function(){ $("notes-editor-title").focus(); }, 0);
+  }
+
+  async function deleteNotePage(id){
+    var p = findNotePage(id);
+    if(!p) return;
+    var ok = await askConfirm("Excluir esta nota? Não tem volta.", { danger:true, confirmLabel:"Excluir" });
+    if(!ok) return;
+    S.notePages = S.notePages.filter(function(x){ return x.id !== id; });
+    markDeleted(id);
+    if(notesOpenPageId === id){ notesOpenPageId = null; notesEditorLoadedId = null; }
+    save(); renderNotesPage();
+  }
+
   /* ---------- explicar ao patinho ---------- */
   var editingDuckId = null;   // quando definido, "Guardar" atualiza em vez de criar
   var editingDuckKind = "debug";
@@ -7669,6 +8096,27 @@
     inp.value = "";
   };
   $("profile-new-name").addEventListener("keydown", function(e){ if(e.key === "Enter") $("profile-new-add").click(); });
+
+  // página de notas em markdown
+  $("btn-notes-page").onclick = function(){ openNotesPage(); };
+  $("notes-back").onclick = function(){ closeNotesPage(); };
+  $("notes-folder-add-btn").onclick = function(){
+    createNoteFolder($("notes-folder-name").value);
+    $("notes-folder-name").value = "";
+  };
+  $("notes-folder-name").addEventListener("keydown", function(e){ if(e.key === "Enter") $("notes-folder-add-btn").click(); });
+  $("notes-page-add").onclick = function(){ createNotePage(); };
+  $("notes-editor-back").onclick = function(){
+    notesOpenPageId = null; notesEditorLoadedId = null;
+    renderNotesPage();
+  };
+  $("notes-editor-toggle").onclick = function(){
+    notesPreviewMode = !notesPreviewMode;
+    renderNoteEditor();
+  };
+  $("notes-editor-delete").onclick = function(){ if(notesOpenPageId) deleteNotePage(notesOpenPageId); };
+  $("notes-editor-title").addEventListener("blur", commitNoteEditor);
+  $("notes-editor-body").addEventListener("blur", commitNoteEditor);
 
   $("account-change-pw").onclick = function(){
     $("pw-current").value = ""; $("pw-new").value = ""; $("changepw-error").textContent = "";
