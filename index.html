@@ -488,7 +488,12 @@
      bater o dedo num alvo de 17px */
   .check::before{content:"";position:absolute;inset:-10px}
   .task.done .check{background:var(--rest);border-color:var(--rest);color:var(--on-ink)}
-  .task .title{flex:1;min-width:0;font-size:14.5px;overflow-wrap:anywhere;background:none;border:0;text-align:left;font-family:var(--sans);color:var(--ink);padding:0;cursor:pointer}
+  /* min-width:0 deixava o título encolher até quase sumir pra caber junto
+     dos botões (etiqueta/urgência/seta/×) sempre na mesma linha — em telas
+     estreitas isso fazia o título quebrar em 3-4 linhas de largura mínima
+     enquanto os botões ficavam confortáveis do lado. Com um piso de largura,
+     o flex-wrap do .task manda os botões pra linha de baixo em vez disso */
+  .task .title{flex:1;min-width:200px;font-size:14.5px;overflow-wrap:anywhere;background:none;border:0;text-align:left;font-family:var(--sans);color:var(--ink);padding:0;cursor:pointer}
   .kill{background:none;border:0;color:var(--ink-3);font-size:15px;line-height:1;padding:2px 4px}
   .kill:hover{color:var(--signal)}
   /* excluir tarefa é o botão mais arriscado da fileira — mais respiro em
@@ -2158,12 +2163,18 @@
 
   var KEY = "foco.v1";
   var MIN = 60000;
+  // TODAS as constantes usadas por loadProfiles()/sanitizeProfiles() têm que
+  // estar aqui em cima, atribuídas ANTES de "var PROFILES = loadProfiles();"
+  // rodar logo abaixo — "var" só iça a declaração, não o valor, então uma
+  // constante declarada mais adiante no arquivo (mesmo que antes de ser lida
+  // na ordem de execução normal) ainda vale undefined nesse ponto. Foi
+  // exatamente esse engano que quebrou LEGACY_PROFILE_ID antes, e de novo
+  // com PKEY — daí as duas viverem juntas aqui, pra não repetir
+  var PKEY = "foco.profiles.v1";
   // id fixo (não uid()) pro perfil criado ao migrar uma cópia antiga (local
   // ou do servidor) pro formato com perfis — local e servidor normalizam
   // pro MESMO id assim, e a fusão reconhece os dois como o mesmo perfil
-  // "Pessoal" em vez de criar dois perfis duplicados. Precisa estar definido
-  // aqui em cima porque loadProfiles() já roda na inicialização do estado,
-  // antes de qualquer função declarada mais abaixo no arquivo ser chamada.
+  // "Pessoal" em vez de criar dois perfis duplicados.
   var LEGACY_PROFILE_ID = "default";
 
   var DEFAULTS = {
@@ -2287,7 +2298,6 @@
   // cada perfil é um blob independente, do mesmo formato de DEFAULTS/S —
   // trocar de perfil é trocar qual blob a variável S aponta, nunca misturar
   // campos de dois perfis dentro do mesmo objeto
-  var PKEY = "foco.profiles.v1";
 
   function newProfileMeta(name){
     return { id: uid(), name: name, createdAt: Date.now() };
@@ -2295,6 +2305,39 @@
 
   function findProfileMeta(id){
     return PROFILES.profiles.filter(function(p){ return p.id === id; })[0] || null;
+  }
+
+  // conserta um container sem apagar nada: perfil sem id válido (ou com id
+  // repetido) ganha um id novo em vez de ser descartado — é o jeito seguro
+  // de reparar dados que ficaram quebrados por um bug já corrigido (um
+  // perfil sem id de verdade não tem como ser aberto nem excluído direito)
+  function sanitizeProfiles(container){
+    var profiles = Array.isArray(container.profiles) ? container.profiles : [];
+    var archive = container.archive || {};
+    var oldActiveId = container.activeProfileId;
+    var seenIds = {}, cleanProfiles = [], cleanArchive = {}, newActiveId = null;
+
+    profiles.forEach(function(p){
+      if(!p) return;
+      var origId = p.id;
+      var blob = archive[origId];       // funciona mesmo com origId undefined (vira "undefined")
+      var id = origId;
+      if(!id || typeof id !== "string" || seenIds[id]) id = uid();
+      if(origId === oldActiveId) newActiveId = id;
+      seenIds[id] = true;
+      cleanProfiles.push({ id:id, name:p.name || "Perfil", createdAt: p.createdAt || Date.now() });
+      cleanArchive[id] = blob || clone(DEFAULTS);
+    });
+
+    if(!cleanProfiles.length){
+      var meta = { id: LEGACY_PROFILE_ID, name:"Pessoal", createdAt: Date.now() };
+      cleanProfiles.push(meta);
+      cleanArchive[meta.id] = clone(DEFAULTS);
+      newActiveId = meta.id;
+    }
+    if(!newActiveId || !seenIds[newActiveId]) newActiveId = cleanProfiles[0].id;
+
+    return { activeProfileId: newActiveId, profiles: cleanProfiles, archive: cleanArchive };
   }
 
   // na primeira vez que uma cópia antiga (sem esse conceito) roda este
@@ -2306,7 +2349,7 @@
       if(raw){
         var d = JSON.parse(raw);
         if(d && Array.isArray(d.profiles) && d.profiles.length && d.archive && d.activeProfileId){
-          return d;
+          return sanitizeProfiles(d);
         }
       }
     }catch(e){}
@@ -2350,7 +2393,9 @@
       else archive[id] = remoteBlob || localBlob || clone(DEFAULTS);
     });
     var activeId = (local.activeProfileId && byId[local.activeProfileId]) ? local.activeProfileId : order[0];
-    return { activeProfileId: activeId, profiles: order.map(function(id){ return byId[id]; }), archive: archive };
+    // sanitiza no final também: se um dos dois lados ainda tinha um perfil
+    // quebrado de antes desse reparo existir, é aqui que ele é corrigido
+    return sanitizeProfiles({ activeProfileId: activeId, profiles: order.map(function(id){ return byId[id]; }), archive: archive });
   }
 
   // união por id: quem chega primeiro na lista vence, e nada duplica.
