@@ -690,6 +690,9 @@
 
   /* ---------- padrões de produtividade ---------- */
   .patterns{grid-column:1 / -1}
+  .patterns-body{display:grid;grid-template-columns:1.4fr 1fr;gap:calc(var(--sp)*4);align-items:start;margin-top:calc(var(--sp)*2)}
+  .patterns-col{min-width:0}
+  @media (max-width:640px){ .patterns-body{grid-template-columns:1fr;gap:calc(var(--sp)*3)} }
   .pattern-row{display:flex;align-items:center;gap:10px;padding:5px 0}
   .pattern-row .lbl{
     font-family:var(--mono);font-size:11px;color:var(--ink-2);min-width:64px;max-width:110px;
@@ -1238,7 +1241,7 @@
      nada — a caixa "nenhuma nota aqui" ficava visível junto com o editor */
   .notes-page-empty[hidden]{display:none}
   .notes-page-empty p{margin:0}
-  .notes-empty-duck{width:56px;height:56px;opacity:.85}
+  .notes-empty-duck{width:100px;height:auto;opacity:.85}
   .notes-page-row{
     display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--grid-a);
     border-radius:var(--r-md);padding:11px 14px;cursor:pointer;text-align:left;width:100%;
@@ -1475,9 +1478,16 @@
         <h2 class="panel-title"><span class="panel-icon clover" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></span>Padrões de produtividade</h2>
       </div>
       <p class="hint" id="pattern-note"></p>
-      <div id="pattern-hours"></div>
-      <p class="cap-meta" style="margin-top:14px" id="pattern-tags-title" hidden>Por etiqueta</p>
-      <div id="pattern-tags"></div>
+      <div class="patterns-body">
+        <div class="patterns-col">
+          <p class="cap-meta">Por horário</p>
+          <svg class="chart" id="pattern-chart" viewBox="0 0 900 200" role="img" aria-label="Pomodoros por horário do dia"></svg>
+        </div>
+        <div class="patterns-col">
+          <p class="cap-meta" id="pattern-tags-title" hidden>Por etiqueta</p>
+          <div id="pattern-tags"></div>
+        </div>
+      </div>
     </section>
 
     <!-- OBJETIVOS DO ANO -->
@@ -1814,9 +1824,8 @@
         <span>Voltar</span>
       </button>
       <svg class="notes-page-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <rect x="5" y="3" width="15" height="18" rx="2"/>
-        <path d="M5 7h2M5 11h2M5 15h2"/>
-        <path d="M9 8h7M9 12h7M9 16h4"/>
+        <path d="M12 20h9"/>
+        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/>
       </svg>
       <h1 class="notes-page-title">Quacknotes</h1>
     </div>
@@ -1835,18 +1844,25 @@
         </div>
         <ul class="notes-page-list" id="notes-page-list"></ul>
         <div class="empty-state notes-page-empty" id="notes-page-empty" hidden>
-          <svg class="notes-empty-duck" viewBox="0 0 32 32" role="img" aria-hidden="true">
-            <ellipse cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>
-            <circle cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>
-            <path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>
-            <circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>
-            <circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>
-            <circle cx="18.4" cy="14.6" r="1.5" fill="#fff" opacity=".18"/>
-            <g stroke="var(--ink-3)" stroke-width="1.7" stroke-linecap="round">
-              <line x1="2" y1="28" x2="10" y2="28"/>
-              <line x1="13" y1="28" x2="22" y2="28"/>
-              <line x1="25" y1="28" x2="30" y2="28"/>
+          <svg class="notes-empty-duck" viewBox="0 0 46 32" role="img" aria-hidden="true">
+            <!-- bloco de notas, com o lápis que o patinho acabou de largar -->
+            <rect x="1" y="13" width="15" height="15" rx="2" fill="var(--card)" stroke="var(--ink-3)" stroke-width="1.4"/>
+            <g stroke="var(--ink-3)" stroke-width="1.2" stroke-linecap="round">
+              <line x1="4" y1="18" x2="13" y2="18"/>
+              <line x1="4" y1="21.5" x2="13" y2="21.5"/>
+              <line x1="4" y1="25" x2="10" y2="25"/>
             </g>
+            <g transform="rotate(-38 9 13)">
+              <rect x="5" y="11.7" width="11" height="2.6" rx="1" fill="var(--amber)"/>
+              <path d="M16 11.7 L18.4 13 L16 14.3 Z" fill="var(--ink)"/>
+            </g>
+            <!-- patinho -->
+            <ellipse cx="28" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>
+            <circle cx="34.5" cy="12.5" r="7" fill="var(--signal)"/>
+            <path d="M40.6 12.2 L45 13.6 L40.6 15.2 Z" fill="var(--ink)"/>
+            <circle cx="36.4" cy="10.8" r="1.7" fill="var(--paper)"/>
+            <circle cx="37" cy="10.2" r=".6" fill="#fff" opacity=".85"/>
+            <circle cx="32.4" cy="14.6" r="1.5" fill="#fff" opacity=".18"/>
           </svg>
           <p>Nenhuma nota aqui ainda. Clique em "Nova nota" para começar.</p>
         </div>
@@ -6475,8 +6491,8 @@
   function renderPatterns(){
     var sess = S.sessions;
     var panel = $("panel-patterns");
-    var box = $("pattern-hours"), tagBox = $("pattern-tags");
-    box.innerHTML = ""; tagBox.innerHTML = "";
+    var tagBox = $("pattern-tags");
+    tagBox.innerHTML = "";
     $("pattern-tags-title").hidden = true;
 
     if(!sess.length){
@@ -6489,31 +6505,26 @@
     var buckets = new Array(24);
     for(var i=0;i<24;i++) buckets[i] = 0;
     sess.forEach(function(s){ buckets[new Date(s.end).getHours()]++; });
-    var maxB = Math.max.apply(null, buckets);
 
     var idxs = [];
     for(i=0;i<24;i++) idxs.push(i);
     idxs.sort(function(a,b){ return buckets[b] - buckets[a]; });
     var top = idxs.filter(function(i){ return buckets[i] > 0; }).slice(0, 5);
+    var melhorHora = top[0];
 
-    top.forEach(function(h){
-      var row = document.createElement("div");
-      row.className = "pattern-row";
-      var lbl = document.createElement("span");
-      lbl.className = "lbl";
-      lbl.textContent = hourLabel(h) + "–" + hourLabel((h+1) % 24);
-      var track = document.createElement("div");
-      track.className = "bar-track";
-      var fill = document.createElement("div");
-      fill.className = "bar-fill";
-      fill.style.width = Math.round(buckets[h] / maxB * 100) + "%";
-      track.appendChild(fill);
-      var val = document.createElement("span");
-      val.className = "val";
-      val.textContent = buckets[h] + (buckets[h] === 1 ? " pomodoro" : " pomodoros");
-      row.appendChild(lbl); row.appendChild(track); row.appendChild(val);
-      box.appendChild(row);
-    });
+    // as 24 horas viram um gráfico de barras (mesmo drawChart() usado no
+    // balanço geral), em vez da lista "top 5" de antes — mostra o dia
+    // inteiro de uma vez, não só os picos, e usa o espaço do painel largo
+    // bem melhor do que aquelas barrinhas finas esticadas de ponta a ponta
+    var series = [];
+    for(i=0;i<24;i++){
+      series.push({
+        value: buckets[i],
+        label: (i % 3 === 0) ? hourLabel(i) : null,
+        today: i === melhorHora
+      });
+    }
+    drawChart($("pattern-chart"), series, { unit:["pomodoro","pomodoros"] });
 
     var melhores = top.slice(0, 3).map(function(h){ return hourLabel(h) + "–" + hourLabel((h+1) % 24); });
     $("pattern-note").textContent = "Você concentra mais pomodoros entre " +
