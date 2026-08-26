@@ -2307,10 +2307,14 @@
     return PROFILES.profiles.filter(function(p){ return p.id === id; })[0] || null;
   }
 
-  // conserta um container sem apagar nada: perfil sem id válido (ou com id
-  // repetido) ganha um id novo em vez de ser descartado — é o jeito seguro
-  // de reparar dados que ficaram quebrados por um bug já corrigido (um
-  // perfil sem id de verdade não tem como ser aberto nem excluído direito)
+  // conserta um container sem apagar nada: perfil sem id válido ganha um id
+  // novo em vez de ser descartado — é o jeito seguro de reparar dados que
+  // ficaram quebrados por um bug já corrigido (um perfil sem id de verdade
+  // não tem como ser aberto nem excluído direito). Já um id REPETIDO é só
+  // ignorado na segunda ocorrência (não ganha id novo) — dar um id novo pra
+  // ele criava um "perfil fantasma" com uma cópia do mesmo arquivo (mesmas
+  // tarefas) por baixo de um nome duplicado, que foi exatamente o bug
+  // reportado depois da funcionalidade de perfis ir pro ar
   function sanitizeProfiles(container){
     var profiles = Array.isArray(container.profiles) ? container.profiles : [];
     var archive = container.archive || {};
@@ -2320,9 +2324,13 @@
     profiles.forEach(function(p){
       if(!p) return;
       var origId = p.id;
+      if(origId && typeof origId === "string" && seenIds[origId]){
+        if(origId === oldActiveId) newActiveId = origId;
+        return;
+      }
       var blob = archive[origId];       // funciona mesmo com origId undefined (vira "undefined")
       var id = origId;
-      if(!id || typeof id !== "string" || seenIds[id]) id = uid();
+      if(!id || typeof id !== "string") id = uid();
       if(origId === oldActiveId) newActiveId = id;
       seenIds[id] = true;
       cleanProfiles.push({ id:id, name:p.name || "Perfil", createdAt: p.createdAt || Date.now() });
@@ -2377,7 +2385,14 @@
   // funde os dados de cada perfil presente em qualquer um dos dois lados
   function mergeProfilesContainer(local, remote){
     var byId = {}, order = [];
+    // se algum dos dois lados já chegou com um id repetido dentro da própria
+    // lista (dado corrompido de antes desse reparo existir), o "if(byId[p.id])"
+    // evita empurrar o mesmo id de novo pro "order" — sem essa guarda o id
+    // aparecia duas vezes em "order", e o sanitizeProfiles (mais abaixo) achava
+    // que era um perfil NOVO duplicado e criava um id extra com uma cópia do
+    // mesmo arquivo — daí o "perfil fantasma" com as mesmas tarefas
     (local.profiles || []).forEach(function(p){
+      if(byId[p.id]) return;
       byId[p.id] = { id:p.id, name:p.name, createdAt:p.createdAt };
       order.push(p.id);
     });
@@ -3389,12 +3404,12 @@
       renderTasks();
     };
 
-    // prazo e nota ficam num painel à parte — perto da tarefa só o essencial
-    // (etiqueta), o resto é detalhe que você abre quando precisa
+    // tópico, urgência, prazo e nota ficam num painel à parte — perto da
+    // tarefa só o essencial, o resto é detalhe que você abre quando precisa
     var expanded = !!expandedTasks[t.id] || editingNote === t.id;
     var toggle = document.createElement("button");
     toggle.className = "task-toggle";
-    toggle.setAttribute("aria-label", expanded ? "Ocultar detalhes" : "Mostrar prazo e nota");
+    toggle.setAttribute("aria-label", expanded ? "Ocultar detalhes" : "Mostrar tópico, urgência, prazo e nota");
     toggle.setAttribute("aria-expanded", String(expanded));
     toggle.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
     toggle.onclick = function(){
@@ -3403,14 +3418,14 @@
     };
 
     li.appendChild(chk); li.appendChild(title);
-    if(chip) li.appendChild(chip);
-    li.appendChild(urgEl);
     li.appendChild(toggle);
     li.appendChild(del);
 
     if(expanded){
       var detail = document.createElement("div");
       detail.className = "task-detail";
+      if(chip) detail.appendChild(chip);
+      detail.appendChild(urgEl);
       detail.appendChild(dueEl);
       detail.appendChild(estEl);
       detail.appendChild(nota);
