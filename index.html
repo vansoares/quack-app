@@ -1203,6 +1203,7 @@
   /* ---------- página de notas (markdown, pastas) ---------- */
   .notes-page{padding:calc(var(--sp)*3) calc(var(--sp)*3) calc(var(--sp)*6);max-width:1100px;margin:0 auto}
   .notes-page-head{display:flex;align-items:center;gap:calc(var(--sp)*2);margin-bottom:calc(var(--sp)*3)}
+  .notes-page-icon{flex:none;color:var(--ink-3);margin-left:calc(var(--sp)*2)}
   .notes-page-title{font-size:20px;font-weight:700;color:var(--ink);margin:0}
   .notes-page-body{display:flex;gap:calc(var(--sp)*3);align-items:flex-start}
   .notes-sidebar{
@@ -1229,7 +1230,13 @@
   .notes-main-head{display:flex;align-items:center;justify-content:space-between;gap:var(--sp);margin-bottom:calc(var(--sp)*2)}
   .notes-current-folder{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
   .notes-page-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+  .notes-page-list[hidden]{display:none}
   .notes-page-empty{display:flex;flex-direction:column;align-items:center;gap:10px}
+  /* mesmo problema do #main.grid: display:flex tem a mesma especificidade de
+     [hidden], e como regra de autor sempre vence a regra padrão do navegador
+     (independente de especificidade), esconder via hidden=true não escondia
+     nada — a caixa "nenhuma nota aqui" ficava visível junto com o editor */
+  .notes-page-empty[hidden]{display:none}
   .notes-page-empty p{margin:0}
   .notes-empty-duck{width:56px;height:56px;opacity:.85}
   .notes-page-row{
@@ -1806,18 +1813,10 @@
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
         <span>Voltar</span>
       </button>
-      <svg class="duck" viewBox="0 0 32 32" role="img" aria-label="Patinho de borracha">
-        <ellipse cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>
-        <circle cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>
-        <path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>
-        <circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>
-        <circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>
-        <circle cx="18.4" cy="14.6" r="1.5" fill="#fff" opacity=".18"/>
-        <g stroke="var(--ink-3)" stroke-width="1.7" stroke-linecap="round">
-          <line x1="2" y1="28" x2="10" y2="28"/>
-          <line x1="13" y1="28" x2="22" y2="28"/>
-          <line x1="25" y1="28" x2="30" y2="28"/>
-        </g>
+      <svg class="notes-page-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <rect x="5" y="3" width="15" height="18" rx="2"/>
+        <path d="M5 7h2M5 11h2M5 15h2"/>
+        <path d="M9 8h7M9 12h7M9 16h4"/>
       </svg>
       <h1 class="notes-page-title">Quacknotes</h1>
     </div>
@@ -6808,7 +6807,9 @@
       date.className = "notes-page-row-date";
       date.textContent = new Date(p.updatedAt || p.createdAt).toLocaleDateString("pt-BR", { day:"numeric", month:"short" });
       row.appendChild(title); row.appendChild(date);
-      row.onclick = function(){ notesOpenPageId = p.id; notesPreviewMode = false; renderNotesPage(); };
+      // abre em modo de visualização — a pessoa clicou pra LER a nota, não
+      // necessariamente pra editar; "Editar" fica a um clique de distância
+      row.onclick = function(){ notesOpenPageId = p.id; notesPreviewMode = true; renderNotesPage(); };
       li.appendChild(row);
       list.appendChild(li);
     });
