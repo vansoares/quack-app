@@ -3359,12 +3359,20 @@
         ta.value = t.note || "";
         ta.placeholder = "Onde parei, links, próximo passo…";
         ta.setAttribute("aria-label", "Nota de " + t.title);
+        var taskId = t.id;
         var settled = false;
         function commit(){
           if(settled) return;
           settled = true;
-          var v = ta.value.trim();
-          t.note = v || null;      // nota vazia é removida
+          // busca a tarefa vida por id em vez de reusar "t" fechado no escopo:
+          // se S foi trocado por inteiro enquanto essa textarea ficou aberta
+          // (pull do servidor, sincronia entre abas, troca de perfil), "t"
+          // vira uma cópia órfã e escrever nela não salva nada de verdade
+          var atual = findTask(taskId);
+          if(atual){
+            var v = ta.value.trim();
+            atual.note = v || null;      // nota vazia é removida
+          }
           editingNote = null;
           save(); renderTasks();
         }
@@ -3463,6 +3471,10 @@
 
   function renderTasks(){
     var list = $("task-list");
+    // mesmo risco do renderNotes(): render() roda por ações sem relação com
+    // tarefas, e recriar a lista destruía a nota da tarefa que estava sendo
+    // digitada antes de perder o foco (e por tanto, antes de salvar)
+    if(document.activeElement && document.activeElement.tagName === "TEXTAREA" && list.contains(document.activeElement)) return;
     list.innerHTML = "";
     var pending = S.tasks.filter(function(t){ return !t.completed; });
     var doneList = S.tasks.filter(function(t){ return t.completed; });
@@ -6430,6 +6442,14 @@
 
   function renderNotes(){
     var list = $("notes-list");
+    // render() é chamado por uma porção de ações sem relação nenhuma com notas
+    // (completar tarefa, marcar hábito, o pull automático a cada 25s de quem
+    // está logado...). Recriar a lista do zero destruía o <textarea> que a
+    // pessoa estava digitando — a nota "salva sozinho ao sair do campo", mas
+    // se o campo nunca chegou a perder o foco o texto digitado nunca tinha
+    // sido salvo, e sumia junto com o elemento recriado. Enquanto o foco
+    // estiver numa nota, pula o rerender inteiro; o blur já salva sozinho
+    if(document.activeElement && document.activeElement.tagName === "TEXTAREA" && list.contains(document.activeElement)) return;
     list.innerHTML = "";
     $("notes-empty").hidden = S.notes.length > 0;
     $("notes-state").textContent = S.notes.length ? S.notes.length + (S.notes.length === 1 ? " nota" : " notas") : "";
@@ -6459,10 +6479,17 @@
       ta.value = n.text;
       ta.placeholder = "Escreva qualquer coisa…";
       ta.setAttribute("aria-label", "Nota");
+      var noteId = n.id;
       ta.addEventListener("blur", function(){
-        if(ta.value === n.text) return;
-        n.text = ta.value;
-        n.updatedAt = Date.now();
+        // busca a nota viva por id em vez de reusar "n" fechado no escopo:
+        // se S foi trocado por inteiro enquanto essa textarea ficou aberta
+        // (pull do servidor, sincronia entre abas, troca de perfil — todos
+        // trocam a referência de S), "n" vira uma cópia órfã e escrever nela
+        // não salva nada de verdade
+        var atual = S.notes.filter(function(x){ return x.id === noteId; })[0];
+        if(!atual || ta.value === atual.text) return;
+        atual.text = ta.value;
+        atual.updatedAt = Date.now();
         save(); renderNotes();
       });
 
