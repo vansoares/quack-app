@@ -689,6 +689,7 @@
   .book.lido .bar-fill{background:var(--ink-3)}
 
   /* ---------- padrões de produtividade ---------- */
+  .patterns{grid-column:1 / -1}
   .pattern-row{display:flex;align-items:center;gap:10px;padding:5px 0}
   .pattern-row .lbl{
     font-family:var(--mono);font-size:11px;color:var(--ink-2);min-width:64px;max-width:110px;
@@ -696,16 +697,6 @@
   }
   .pattern-row .val{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);white-space:nowrap;font-variant-numeric:tabular-nums}
 
-  /* ---------- notas soltas ---------- */
-  .loose-notes{list-style:none;margin:14px 0 0;padding:0;display:grid;gap:10px}
-  .loose-note{border:1px solid var(--grid-a);border-radius:var(--r-md);background:var(--card);padding:9px 12px}
-  .loose-note-head{display:flex;align-items:center;gap:8px;margin-bottom:5px}
-  .loose-note-date{font-family:var(--mono);font-size:9px;letter-spacing:.1em;color:var(--ink-3);text-transform:uppercase;flex:1}
-  .loose-note textarea{
-    min-height:64px;border:0;background:none;padding:0;width:100%;
-    font-size:13.5px;line-height:1.6;color:var(--ink);resize:vertical;
-  }
-  .loose-note textarea:focus{outline:none}
   .page-btn{
     font-family:var(--mono);font-size:10.5px;color:var(--ink-2);background:none;
     border:1px solid transparent;border-radius:var(--r-md);padding:2px 5px;white-space:nowrap;font-variant-numeric:tabular-nums;
@@ -1318,9 +1309,9 @@
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18"/></svg>
         <span class="btn-label">Cartão da semana</span>
       </button>
-      <button class="btn-ghost" id="btn-notes-page" aria-label="Notas" hidden>
+      <button class="btn-ghost" id="btn-notes-page" aria-label="Quacknotes" hidden>
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M15 3v5h5"/><path d="M8 13h8M8 17h5"/></svg>
-        <span class="btn-label">Notas</span>
+        <span class="btn-label">Quacknotes</span>
       </button>
       <button class="btn-ghost" id="btn-capsule" aria-label="Cápsula do tempo">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="5"/><path d="M7 12h10"/></svg>
@@ -1468,24 +1459,8 @@
       </div>
     </section>
 
-    <!-- QUACK NOTES -->
-    <section class="panel" id="panel-notes">
-      <div class="panel-head">
-        <h2 class="panel-title"><span class="panel-icon clover" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M15 3v5h5"/><path d="M8 13h8M8 17h5"/></svg></span>Quack Notes</h2>
-        <span class="panel-title" id="notes-state"></span>
-      </div>
-      <p class="hint" style="margin:0 0 14px">Rascunho rápido, sem estrutura — o que não cabe numa tarefa nem num objetivo. Salva sozinho ao sair do campo.</p>
-
-      <div class="new-book">
-        <button class="btn-ghost" id="note-add">Nova nota</button>
-      </div>
-
-      <ul class="loose-notes" id="notes-list"></ul>
-      <div class="empty-state" id="notes-empty" hidden>Nenhuma nota ainda. Clique em "Nova nota" para começar um rascunho.</div>
-    </section>
-
     <!-- PADRÕES DE PRODUTIVIDADE -->
-    <section class="panel" id="panel-patterns" hidden>
+    <section class="panel patterns" id="panel-patterns" hidden>
       <div class="panel-head">
         <h2 class="panel-title"><span class="panel-icon clover" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg></span>Padrões de produtividade</h2>
       </div>
@@ -1828,7 +1803,7 @@
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
         <span>Voltar</span>
       </button>
-      <h1 class="notes-page-title">Notas</h1>
+      <h1 class="notes-page-title">Quacknotes</h1>
     </div>
     <div class="notes-page-body">
       <aside class="notes-sidebar">
@@ -1932,7 +1907,6 @@
     <div class="field"><label for="p-reading">Leitura</label><span class="switch"><input type="checkbox" id="p-reading"></span></div>
     <div class="field"><label for="p-screen">Filmes e séries</label><span class="switch"><input type="checkbox" id="p-screen"></span></div>
     <div class="field"><label for="p-goals">Objetivos do ano</label><span class="switch"><input type="checkbox" id="p-goals"></span></div>
-    <div class="field"><label for="p-notes">Notas soltas</label><span class="switch"><input type="checkbox" id="p-notes"></span></div>
     <div class="field"><label for="p-pdi">PDI</label><span class="switch"><input type="checkbox" id="p-pdi"></span></div>
     <div class="field"><label for="p-season">Temporada</label><span class="switch"><input type="checkbox" id="p-season"></span></div>
     <div class="field"><label for="p-capsule">Cápsula do tempo</label><span class="switch"><input type="checkbox" id="p-capsule"></span></div>
@@ -2273,9 +2247,8 @@
     watchLog: [],
     seasons: [],
     milestones: [],
-    panels: { habitos:true, leitura:true, tela:true, objetivos:true, pdi:true, temporada:true, capsula:true, musica:true, notas:true },
+    panels: { habitos:true, leitura:true, tela:true, objetivos:true, pdi:true, temporada:true, capsula:true, musica:true },
     goals: [],
-    notes: [],
     noteFolders: [],
     notePages: [],
     pdi: [],
@@ -2351,7 +2324,6 @@
     if(Array.isArray(d.milestones)) s.milestones = d.milestones;
     if(d.panels) Object.assign(s.panels, d.panels);
     if(Array.isArray(d.goals)) s.goals = d.goals;
-    if(Array.isArray(d.notes)) s.notes = d.notes;
     if(Array.isArray(d.noteFolders)) s.noteFolders = d.noteFolders;
     if(Array.isArray(d.notePages)) s.notePages = d.notePages;
     if(Array.isArray(d.pdi)) s.pdi = d.pdi;
@@ -2535,7 +2507,7 @@
   function markDeletedMany(ids){ ids.forEach(markDeleted); }
 
   var SYNCED_ARRAYS = ["tasks","sessions","habits","books","readLog","capsules",
-    "media","watchLog","seasons","milestones","builds","duckNotes","goals","notes","noteFolders","notePages","pdi","reviews","meetings","studyTopics"];
+    "media","watchLog","seasons","milestones","builds","duckNotes","goals","noteFolders","notePages","pdi","reviews","meetings","studyTopics"];
 
   // funde um blob de perfil recebido (de outra aba, do servidor, ou de outro
   // perfil na fusão do container inteiro) com um blob local, sem perder nada
@@ -3242,7 +3214,7 @@
     renderHabits(); renderBooks(); renderMedia(); renderCapsuleBanner();
     renderEyebrow(); applyPanels();
     renderGoals(); renderPdi(); renderDevWatch(); renderDuckSummary(); renderStudyTopics();
-    renderPatterns(); renderNotes();
+    renderPatterns();
     // só atualiza a página de notas se ela for a tela ativa agora — mais
     // barato, e renderNoteEditor() já protege o que estiver sendo digitado
     if(!$("page-notes").hidden) renderNotesPage();
@@ -3596,9 +3568,9 @@
 
   function renderTasks(){
     var list = $("task-list");
-    // mesmo risco do renderNotes(): render() roda por ações sem relação com
-    // tarefas, e recriar a lista destruía a nota da tarefa que estava sendo
-    // digitada antes de perder o foco (e por tanto, antes de salvar)
+    // render() roda por ações sem relação nenhuma com tarefas, e recriar a
+    // lista destruía a nota da tarefa que estava sendo digitada antes de
+    // perder o foco (e por tanto, antes de salvar)
     if(document.activeElement && document.activeElement.tagName === "TEXTAREA" && list.contains(document.activeElement)) return;
     list.innerHTML = "";
     var pending = S.tasks.filter(function(t){ return !t.completed; });
@@ -6552,77 +6524,6 @@
     }
   }
 
-  /* ---------- notas soltas ---------- */
-  // rascunho sem estrutura: sem título, sem tag, sem categoria — o textarea
-  // já é a nota inteira, e salva sozinho ao perder o foco
-  function addNote(){
-    var n = { id: uid(), text: "", createdAt: Date.now(), updatedAt: Date.now() };
-    S.notes.unshift(n);
-    save(); renderNotes();
-    setTimeout(function(){
-      var tas = document.querySelectorAll("#notes-list textarea");
-      if(tas.length) tas[0].focus();
-    }, 0);
-  }
-
-  function renderNotes(){
-    var list = $("notes-list");
-    // render() é chamado por uma porção de ações sem relação nenhuma com notas
-    // (completar tarefa, marcar hábito, o pull automático a cada 25s de quem
-    // está logado...). Recriar a lista do zero destruía o <textarea> que a
-    // pessoa estava digitando — a nota "salva sozinho ao sair do campo", mas
-    // se o campo nunca chegou a perder o foco o texto digitado nunca tinha
-    // sido salvo, e sumia junto com o elemento recriado. Enquanto o foco
-    // estiver numa nota, pula o rerender inteiro; o blur já salva sozinho
-    if(document.activeElement && document.activeElement.tagName === "TEXTAREA" && list.contains(document.activeElement)) return;
-    list.innerHTML = "";
-    $("notes-empty").hidden = S.notes.length > 0;
-    $("notes-state").textContent = S.notes.length ? S.notes.length + (S.notes.length === 1 ? " nota" : " notas") : "";
-
-    S.notes.forEach(function(n){
-      var li = document.createElement("li");
-      li.className = "loose-note";
-
-      var head = document.createElement("div");
-      head.className = "loose-note-head";
-      var date = document.createElement("span");
-      date.className = "loose-note-date";
-      date.textContent = new Date(n.updatedAt || n.createdAt).toLocaleDateString("pt-BR", { day:"numeric", month:"short", hour:"2-digit", minute:"2-digit" });
-      var del = document.createElement("button");
-      del.className = "kill";
-      del.textContent = "×";
-      del.setAttribute("aria-label", "Excluir nota");
-      del.onclick = async function(){
-        if(n.text.trim() && !(await askConfirm("Excluir esta nota?", { danger:true }))) return;
-        S.notes = S.notes.filter(function(x){ return x.id !== n.id; });
-        markDeleted(n.id);
-        save(); renderNotes();
-      };
-      head.appendChild(date); head.appendChild(del);
-
-      var ta = document.createElement("textarea");
-      ta.value = n.text;
-      ta.placeholder = "Escreva qualquer coisa…";
-      ta.setAttribute("aria-label", "Nota");
-      var noteId = n.id;
-      ta.addEventListener("blur", function(){
-        // busca a nota viva por id em vez de reusar "n" fechado no escopo:
-        // se S foi trocado por inteiro enquanto essa textarea ficou aberta
-        // (pull do servidor, sincronia entre abas, troca de perfil — todos
-        // trocam a referência de S), "n" vira uma cópia órfã e escrever nela
-        // não salva nada de verdade
-        var atual = S.notes.filter(function(x){ return x.id === noteId; })[0];
-        if(!atual || ta.value === atual.text) return;
-        atual.text = ta.value;
-        atual.updatedAt = Date.now();
-        save(); renderNotes();
-      });
-
-      li.appendChild(head); li.appendChild(ta);
-      list.appendChild(li);
-    });
-  }
-
   /* ---------- página de notas em markdown (pastas) ---------- */
   var notesSelectedFolder = "all";  // "all" | "none" | id de uma pasta
   var notesOpenPageId = null;       // nota aberta no editor, ou null (mostra a lista)
@@ -6897,8 +6798,8 @@
     // recarrega os campos quando é uma nota diferente da que já estava
     // carregada, OU quando é a mesma mas ninguém está digitando agora — só
     // NÃO recarrega se a pessoa está no meio de digitar nesta mesma nota
-    // (mesmo cuidado do renderNotes()/renderTasks(): render() roda por ações
-    // sem relação nenhuma com isso e não pode apagar o que está sendo escrito)
+    // (mesmo cuidado do renderTasks(): render() roda por ações sem relação
+    // nenhuma com isso e não pode apagar o que está sendo escrito)
     if(notesEditorLoadedId !== p.id || !isFocused){
       titleInp.value = p.title || "";
       bodyTa.value = p.body || "";
@@ -7654,7 +7555,6 @@
     $("panel-screen").hidden = !S.panels.tela;
     $("panel-goals").hidden = !S.panels.objetivos;
     $("panel-pdi").hidden = !S.panels.pdi;
-    $("panel-notes").hidden = !S.panels.notas;
     $("btn-season").hidden = !S.panels.temporada;
     $("btn-capsule").hidden = !S.panels.capsula;
     $("panel-sound").hidden = !S.panels.musica;
@@ -7969,9 +7869,6 @@
   $("goal-year").value = new Date().getFullYear();
 
   // objetivos da semana
-
-  // notas soltas
-  $("note-add").onclick = addNote;
 
   // ferramentas de dev
   document.querySelectorAll("#dev-tabs button").forEach(function(b){
@@ -8306,7 +8203,6 @@
     $("p-screen").checked = !!S.panels.tela;
     $("p-goals").checked = !!S.panels.objetivos;
     $("p-pdi").checked = !!S.panels.pdi;
-    $("p-notes").checked = !!S.panels.notas;
     $("p-season").checked = !!S.panels.temporada;
     $("p-capsule").checked = !!S.panels.capsula;
     $("p-music").checked = !!S.panels.musica;
@@ -8352,7 +8248,7 @@
     save(); applyPanels(); renderTasks(); renderTimer();   // o botão de branch aparece nas tarefas; "Estudando" some/aparece junto
   };
 
-  [["p-habits","habitos"], ["p-reading","leitura"], ["p-screen","tela"], ["p-goals","objetivos"], ["p-pdi","pdi"], ["p-season","temporada"], ["p-capsule","capsula"], ["p-music","musica"], ["p-notes","notas"]].forEach(function(par){
+  [["p-habits","habitos"], ["p-reading","leitura"], ["p-screen","tela"], ["p-goals","objetivos"], ["p-pdi","pdi"], ["p-season","temporada"], ["p-capsule","capsula"], ["p-music","musica"]].forEach(function(par){
     $(par[0]).onchange = function(){
       S.panels[par[1]] = this.checked;
       save(); applyPanels();
