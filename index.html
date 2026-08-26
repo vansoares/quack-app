@@ -919,18 +919,6 @@
   .profile-block .k:not(:first-child){margin-top:14px}
   .profile-username-row{display:flex;gap:var(--sp)}
   .profile-username-row input{flex:1;min-width:0}
-  .avatar-picker{display:flex;gap:8px;flex-wrap:wrap}
-  /* reset pontual, não all:unset — mesmo motivo do .theme-toggle button:
-     all:unset apaga o outline do :focus-visible */
-  .avatar-swatch{
-    background:var(--field);border:2px solid var(--line);padding:0;margin:0;font:inherit;
-    box-sizing:border-box;cursor:pointer;min-height:0;
-    width:36px;height:36px;border-radius:50%;
-    display:flex;align-items:center;justify-content:center;
-  }
-  .avatar-swatch svg{width:18px;height:18px}
-  .avatar-swatch:hover{border-color:var(--ink-3)}
-  .avatar-swatch[aria-pressed="true"]{border-color:var(--ink);background:var(--panel)}
   #auth, #changepw, #deleteaccount, #profiles{width:min(420px,92vw)}
   .prof-list{list-style:none;margin:calc(var(--sp)*2) 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
   .prof-row{
@@ -956,14 +944,6 @@
   #btn-account:hover{background:var(--signal);border-color:var(--signal);opacity:.88}
   #btn-account.logged-in{background:transparent;border-color:var(--rest);color:var(--rest);opacity:1}
   #btn-account.logged-in:hover{border-color:var(--rest);color:var(--rest);opacity:.85}
-  .mini-duck{display:block;filter:drop-shadow(0 1px 1px rgba(0,0,0,.15))}
-  .mini-duck[hidden]{display:none}
-  .mini-duck.c-signal{color:var(--signal)}
-  .mini-duck.c-rest{color:var(--rest)}
-  .mini-duck.c-amber{color:var(--amber)}
-  .mini-duck.c-teal{color:var(--teal)}
-  .mini-duck.c-clover{color:var(--clover)}
-  .mini-duck.c-clay{color:var(--clay)}
   #auth-title{font-size:19px;color:var(--ink);font-weight:600}
   #auth-error:not(:empty){
     background:var(--signal-soft);border-radius:var(--r-sm);padding:8px 10px;margin:0;
@@ -1287,13 +1267,6 @@
         <button class="profile-tag" id="btn-profile-tag" hidden></button>
         <button class="btn-ghost" id="btn-account" aria-label="Entrar">
           <svg id="btn-account-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
-          <svg id="btn-account-duck" class="mini-duck" viewBox="0 0 24 24" width="15" height="15" aria-hidden="true" hidden>
-            <ellipse cx="10.3" cy="15.6" rx="7.1" ry="4.5" fill="currentColor"/>
-            <circle cx="15.1" cy="9.4" r="4.9" fill="currentColor"/>
-            <path d="M19.4 9.1 L23 10.3 L19.4 11.4 Z" fill="var(--ink)"/>
-            <circle cx="16.7" cy="7.9" r="1.1" fill="var(--paper)"/>
-            <circle cx="17.1" cy="7.55" r=".4" fill="#fff" opacity=".9"/>
-          </svg>
           <span class="btn-label">Entrar</span>
         </button>
         <button class="btn-ghost" id="btn-settings" aria-label="Ajustes">
@@ -1823,9 +1796,6 @@
             <button class="btn-ghost" id="account-username-save">Salvar</button>
           </div>
           <p class="hint" id="account-username-error" style="color:var(--signal);min-height:16px;margin:2px 0 0"></p>
-
-          <label class="k">Patinho</label>
-          <div class="avatar-picker" id="avatar-picker" role="group" aria-label="Escolher patinho"></div>
         </div>
 
         <button class="btn-ghost" id="btn-manage-profiles">Gerenciar perfis</button>
@@ -2504,7 +2474,7 @@
   // Em file:// não existe servidor para conversar: o módulo inteiro fica inerte,
   // e o app se comporta exatamente como antes, só com localStorage.
   var SERVER_OK = (location.protocol === "http:" || location.protocol === "https:");
-  var AUTH = { email: null, username: null, avatar: null };
+  var AUTH = { email: null, username: null };
   var pushTimer = null;
   var pulling = false;
   var LAST_ACCOUNT_KEY = "quack.lastAccount"; // fora do blob sincronizado, de propósito
@@ -2739,38 +2709,6 @@
     });
   }
 
-  var AVATARS = ["signal", "rest", "amber", "teal", "clover", "clay"];
-
-  function miniDuckSvg(){
-    return '<ellipse cx="10.3" cy="15.6" rx="7.1" ry="4.5" fill="currentColor"/>' +
-      '<circle cx="15.1" cy="9.4" r="4.9" fill="currentColor"/>' +
-      '<path d="M19.4 9.1 L23 10.3 L19.4 11.4 Z" fill="var(--ink)"/>' +
-      '<circle cx="16.7" cy="7.9" r="1.1" fill="var(--paper)"/>' +
-      '<circle cx="17.1" cy="7.55" r=".4" fill="#fff" opacity=".9"/>';
-  }
-
-  function renderAvatarPicker(){
-    var box = $("avatar-picker");
-    box.innerHTML = "";
-    AVATARS.forEach(function(a){
-      var b = document.createElement("button");
-      b.type = "button";
-      b.className = "avatar-swatch";
-      b.setAttribute("aria-label", "Patinho " + a);
-      b.setAttribute("aria-pressed", String(AUTH.avatar === a));
-      b.innerHTML = '<svg viewBox="0 0 24 24" width="18" height="18" class="mini-duck c-' + a + '" aria-hidden="true">' + miniDuckSvg() + '</svg>';
-      b.onclick = function(){ saveAvatar(a); };
-      box.appendChild(b);
-    });
-  }
-
-  function saveAvatar(avatar){
-    api("/api/auth/avatar", { method:"POST", body:{ avatar:avatar } }).then(function(res){
-      AUTH.avatar = res.avatar;
-      applyAccountUI();
-    }).catch(function(err){ toast(err.message || "Não foi possível salvar o patinho."); });
-  }
-
   function applyAccountUI(){
     var logged = !!AUTH.email;
     var label = AUTH.username || "Conta";
@@ -2782,27 +2720,13 @@
     $("account-logged-in").hidden = !logged;
     if(logged) $("account-email").textContent = AUTH.email;
 
-    var icon = $("btn-account-icon"), duck = $("btn-account-duck");
-    if(logged && AUTH.avatar){
-      icon.hidden = true;
-      duck.hidden = false;
-      duck.setAttribute("class", "mini-duck c-" + AUTH.avatar);
-    }else{
-      icon.hidden = false;
-      duck.hidden = true;
-    }
-
-    if(logged){
-      $("account-username").value = AUTH.username || "";
-      renderAvatarPicker();
-    }
+    if(logged) $("account-username").value = AUTH.username || "";
     renderProfileTag();
   }
 
   function onAuthSuccess(res){
     AUTH.email = res.email;
     AUTH.username = res.username || null;
-    AUTH.avatar = res.avatar || null;
     applyAccountUI();
     pullFromServer(true);
     startAutoPull();
@@ -2815,7 +2739,6 @@
     }).catch(function(){
       AUTH.email = null;
       AUTH.username = null;
-      AUTH.avatar = null;
       applyAccountUI();
     });
   }
@@ -7029,6 +6952,7 @@
   };
 
   var devTimer = null;
+  var devLastTick = Date.now();
 
   function trackElapsed(key){
     var st = TRACKS[key].state();
@@ -7038,12 +6962,26 @@
 
   function devTick(){
     if(devTimer) clearTimeout(devTimer);
+    devLastTick = Date.now();
     renderDevWatch();
     var algumRodando = S.build.running || S.review.running || S.meeting.running;
     if(algumRodando) devTimer = setTimeout(devTick, 250);
   }
 
+  // com a tela travada ou a aba em segundo plano, o navegador para de chamar
+  // devTick() — o relógio parece congelado, mas o tempo real continua passando.
+  // Ao voltar, o próximo devTick() calcula certo (Date.now() - startedAt), só
+  // que o número pula de uma vez sem aviso, e parecia "contando infinito" —
+  // ver visibilitychange logo abaixo, que avisa quando isso acontece
+  function otherRunningTrack(key){
+    return Object.keys(TRACKS).filter(function(k){ return k !== key && TRACKS[k].state().running; });
+  }
+
   function startTrack(key){
+    var outros = otherRunningTrack(key);
+    if(outros.length){
+      toast(TRACKS[outros[0]].noun[0] + " ainda está rodando por baixo — os dois vão contar ao mesmo tempo");
+    }
     var st = TRACKS[key].state();
     st.running = true;
     st.startedAt = Date.now();
@@ -7670,7 +7608,7 @@
 
   $("account-logout").onclick = function(){
     api("/api/auth/logout", { method:"POST" }).then(function(){
-      AUTH.email = null; AUTH.username = null; AUTH.avatar = null;
+      AUTH.email = null; AUTH.username = null;
       applyAccountUI();
       toast("Você saiu — os dados continuam salvos neste navegador");
     });
@@ -7982,7 +7920,23 @@
 
   // mantém a contagem correta ao voltar para a aba
   document.addEventListener("visibilitychange", function(){
-    if(!document.hidden){ resume(); }
+    if(!document.hidden){
+      resume();
+      // tela travada ou app em segundo plano por um tempo: devTick() para de
+      // ser chamado (o relógio de dev parece congelado), e ao voltar o número
+      // pula de uma vez — sem aviso, parecia um cronômetro contando sozinho
+      // fora de controle. Um toast avisando o que aconteceu já resolve a
+      // confusão, sem precisar descartar tempo que pode ser real (reunião que
+      // continuou com a tela travada, por exemplo)
+      if(Date.now() - devLastTick > 90000){
+        var rodando = Object.keys(TRACKS).filter(function(k){ return TRACKS[k].state().running; });
+        if(rodando.length){
+          var nomes = rodando.map(function(k){ return TRACKS[k].noun[0]; }).join(" e ");
+          toast("O cronômetro de " + nomes + " continuou contando enquanto a tela estava travada ou em segundo plano");
+        }
+      }
+      devTick();
+    }
   });
 
   /* ---------- retomada ---------- */
