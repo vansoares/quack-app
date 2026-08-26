@@ -1229,6 +1229,9 @@
   .notes-main-head{display:flex;align-items:center;justify-content:space-between;gap:var(--sp);margin-bottom:calc(var(--sp)*2)}
   .notes-current-folder{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
   .notes-page-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+  .notes-page-empty{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .notes-page-empty p{margin:0}
+  .notes-empty-duck{width:56px;height:56px;opacity:.85}
   .notes-page-row{
     display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--grid-a);
     border-radius:var(--r-md);padding:11px 14px;cursor:pointer;text-align:left;width:100%;
@@ -1803,6 +1806,19 @@
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
         <span>Voltar</span>
       </button>
+      <svg class="duck" viewBox="0 0 32 32" role="img" aria-label="Patinho de borracha">
+        <ellipse cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>
+        <circle cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>
+        <path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>
+        <circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>
+        <circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>
+        <circle cx="18.4" cy="14.6" r="1.5" fill="#fff" opacity=".18"/>
+        <g stroke="var(--ink-3)" stroke-width="1.7" stroke-linecap="round">
+          <line x1="2" y1="28" x2="10" y2="28"/>
+          <line x1="13" y1="28" x2="22" y2="28"/>
+          <line x1="25" y1="28" x2="30" y2="28"/>
+        </g>
+      </svg>
       <h1 class="notes-page-title">Quacknotes</h1>
     </div>
     <div class="notes-page-body">
@@ -1819,7 +1835,22 @@
           <button class="btn-main" id="notes-page-add">Nova nota</button>
         </div>
         <ul class="notes-page-list" id="notes-page-list"></ul>
-        <div class="empty-state" id="notes-page-empty" hidden>Nenhuma nota aqui ainda. Clique em "Nova nota" para começar.</div>
+        <div class="empty-state notes-page-empty" id="notes-page-empty" hidden>
+          <svg class="notes-empty-duck" viewBox="0 0 32 32" role="img" aria-hidden="true">
+            <ellipse cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>
+            <circle cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>
+            <path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>
+            <circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>
+            <circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>
+            <circle cx="18.4" cy="14.6" r="1.5" fill="#fff" opacity=".18"/>
+            <g stroke="var(--ink-3)" stroke-width="1.7" stroke-linecap="round">
+              <line x1="2" y1="28" x2="10" y2="28"/>
+              <line x1="13" y1="28" x2="22" y2="28"/>
+              <line x1="25" y1="28" x2="30" y2="28"/>
+            </g>
+          </svg>
+          <p>Nenhuma nota aqui ainda. Clique em "Nova nota" para começar.</p>
+        </div>
         <div class="notes-editor" id="notes-editor" hidden>
           <div class="notes-editor-head">
             <button class="btn-ghost" id="notes-editor-back">
