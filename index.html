@@ -7256,15 +7256,29 @@
     return null;
   }
 
+  // guarda o src do iframe atualmente montado — renderEmbed() é chamado a cada
+  // pullFromServer (a cada 25s pra quem está logado, ver startAutoPull) e em
+  // vários outros lugares que re-renderizam o estado inteiro. Se recriasse o
+  // <iframe> toda vez mesmo sem o embed ter mudado, o player do YouTube reiniciava
+  // do zero (ou nem voltava a tocar, já que o novo load não tem gesto do usuário)
+  // a cada poucos segundos — era exatamente o "toca uns segundos e já para"
+  var lastEmbedSrc = null;
   function renderEmbed(){
     var box = $("embed-frame");
     var e = S.sound.embed;
-    box.innerHTML = "";
     if(!e){
+      box.innerHTML = "";
+      lastEmbedSrc = null;
       box.hidden = true;
       $("embed-hint").textContent = "O player abre aqui dentro e continua tocando enquanto você usa o app. Precisa de internet, e o controle de play fica no próprio player.";
       return;
     }
+    if(e.src === lastEmbedSrc){
+      box.hidden = false;
+      $("embed-hint").textContent = "";
+      return;
+    }
+    box.innerHTML = "";
     var f = document.createElement("iframe");
     f.src = e.src;
     f.height = e.h;
@@ -7274,6 +7288,7 @@
     f.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
     box.appendChild(f);
     box.hidden = false;
+    lastEmbedSrc = e.src;
     $("embed-hint").textContent = "";
   }
 
