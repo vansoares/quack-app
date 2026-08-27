@@ -7777,7 +7777,20 @@
     }
     $("dev-ticks").innerHTML = out.join("");
   })();
-  $("dev-duck-wrap").innerHTML = duckSvg("");
+  // patinho de sempre (rosto intacto), com uma janelinha de terminal na
+  // frente — o toque "modo dev" escolhido entre as opções mostradas
+  $("dev-duck-wrap").innerHTML =
+    '<svg viewBox="0 0 32 32" aria-hidden="true">' +
+    '<ellipse class="body" cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>' +
+    '<circle class="body" cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>' +
+    '<path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>' +
+    '<circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>' +
+    '<circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>' +
+    '<rect x="0.5" y="17.5" width="11.5" height="8" rx="1.1" fill="var(--ink)"/>' +
+    '<circle cx="2.3" cy="19.1" r=".5" fill="var(--paper)" opacity=".6"/>' +
+    '<circle cx="3.7" cy="19.1" r=".5" fill="var(--paper)" opacity=".4"/>' +
+    '<text x="2" y="24" font-size="3.6" fill="var(--clover)" font-family="var(--mono)">&gt;_</text>' +
+    '</svg>';
 
   /* ---------- eventos ---------- */
   $("btn-start").onclick = function(){ S.timer.running ? pause() : start(); };
