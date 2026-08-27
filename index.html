@@ -7777,20 +7777,7 @@
     }
     $("dev-ticks").innerHTML = out.join("");
   })();
-  // o patinho das Ferramentas de dev é o mesmo patinho de sempre (rosto
-  // intacto), só com um notebook na frente — o toque "modo dev" fica no
-  // acessório, não em mexer na cara dele
-  $("dev-duck-wrap").innerHTML =
-    '<svg viewBox="0 0 32 32" aria-hidden="true">' +
-    '<ellipse class="body" cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>' +
-    '<circle class="body" cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>' +
-    '<path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>' +
-    '<circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>' +
-    '<circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>' +
-    '<rect x="2" y="16" width="11.5" height="8.6" rx="1.2" fill="var(--ink-3)"/>' +
-    '<rect x="3.3" y="17.2" width="8.9" height="6.2" rx="0.5" fill="var(--card)"/>' +
-    '<path d="M0.5 24.6 L14 24.6 L15.8 27.4 L-1 27.4 Z" fill="var(--ink-3)"/>' +
-    '</svg>';
+  $("dev-duck-wrap").innerHTML = duckSvg("");
 
   /* ---------- eventos ---------- */
   $("btn-start").onclick = function(){ S.timer.running ? pause() : start(); };
