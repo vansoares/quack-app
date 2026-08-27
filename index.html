@@ -259,15 +259,14 @@
     color:var(--rest);margin:0 0 4px;
   }
   .top-actions{display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end;min-width:0}
-  /* telas estreitas: os botões do topo viram só ícone (o rótulo continua acessível via aria-label) */
+  /* telas estreitas: os botões do topo viram só ícone (o rótulo continua acessível via aria-label) —
+     conta e ajustes já são icon-only sempre, então só falta tratar os demais */
   @media (max-width:760px){
-    /* o nome de usuário ao lado do patinho é o ponto do recurso — só esconde
-       o rótulo dos outros botões, não do de conta */
-    .top-actions .btn-ghost:not(#btn-account) .btn-label{
+    .top-actions .btn-ghost .btn-label{
       position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;
       clip:rect(0,0,0,0);white-space:nowrap;border:0;
     }
-    .top-actions .btn-ghost:not(#btn-account){padding:10px;width:40px;height:40px;justify-content:center}
+    .top-actions .btn-ghost{padding:10px;width:40px;height:40px;justify-content:center}
   }
 
   /* ---------- botões ---------- */
@@ -930,11 +929,15 @@
   @media (max-width:400px){
     .account-group{border-left:0;padding-left:0}
   }
-  /* "Entrar" precisa se destacar dos outros botões ghost — é a única chamada para ação da barra */
-  #btn-account{background:var(--signal);border-color:var(--signal);color:var(--on-ink)}
-  #btn-account:hover{background:var(--signal);border-color:var(--signal);opacity:.88}
-  #btn-account.logged-in{background:transparent;border-color:var(--rest);color:var(--rest);opacity:1}
-  #btn-account.logged-in:hover{border-color:var(--rest);color:var(--rest);opacity:.85}
+  /* avatar do patinho: um anel de cor sorteada uma vez por sessão (ver
+     initAccountHue no script) — mesma receita de cor por tópico usada nos
+     swatches de pasta, só que aqui é decorativa, não carrega significado */
+  #btn-account{
+    border-radius:50%;
+    background:hsl(var(--h, 30) var(--topic-bg-s) var(--topic-bg-l));
+    border-color:hsl(var(--h, 30) var(--topic-s) var(--topic-l));
+  }
+  #btn-account:hover{filter:brightness(1.06)}
   #auth-title{font-size:19px;color:var(--ink);font-weight:600}
   #auth-error:not(:empty){
     background:var(--signal-soft);border-radius:var(--r-sm);padding:8px 10px;margin:0;
@@ -1264,12 +1267,12 @@
   #notes-editor-pin.active{color:var(--amber-ink);border-color:var(--amber)}
   #notes-editor-link{font-size:12.5px;min-width:0;max-width:100%}
   .notes-editor-body{
-    width:100%;min-height:min(50vh,420px);font-family:var(--mono);font-size:13.5px;line-height:1.65;
+    width:100%;min-height:min(70vh,620px);font-family:var(--mono);font-size:13.5px;line-height:1.65;
     resize:vertical;background:var(--card);border:1px solid var(--grid-a);border-radius:var(--r-md);
     padding:calc(var(--sp)*2);color:var(--ink)
   }
   .notes-editor-preview{
-    min-height:min(50vh,420px);font-size:14px;line-height:1.7;color:var(--ink);
+    min-height:min(70vh,620px);font-size:14px;line-height:1.7;color:var(--ink);
     background:var(--card);border:1px solid var(--grid-a);border-radius:var(--r-md);
     padding:calc(var(--sp)*2) calc(var(--sp)*3);overflow-wrap:anywhere;
   }
@@ -1339,13 +1342,17 @@
         </button>
       </div>
       <div class="account-group">
-        <button class="btn-ghost" id="btn-account" aria-label="Entrar">
-          <svg id="btn-account-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
-          <span class="btn-label">Entrar</span>
+        <button class="btn-ghost icon-only" id="btn-account" aria-label="Entrar" title="Entrar">
+          <svg id="btn-account-icon" viewBox="0 0 32 32" width="20" height="20" aria-hidden="true">
+            <ellipse cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>
+            <circle cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>
+            <path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>
+            <circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>
+            <circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>
+          </svg>
         </button>
-        <button class="btn-ghost" id="btn-settings" aria-label="Ajustes">
+        <button class="btn-ghost icon-only" id="btn-settings" aria-label="Ajustes" title="Ajustes">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
-          <span class="btn-label">Ajustes</span>
         </button>
       </div>
     </div>
@@ -1874,7 +1881,7 @@
 
   <section class="notes-page panel" id="page-notes">
     <div class="notes-page-body">
-      <aside class="notes-sidebar">
+      <aside class="notes-sidebar" id="notes-sidebar">
         <div class="notes-sidebar-head">
           <svg class="notes-sidebar-duck" viewBox="0 0 32 32" aria-hidden="true">
             <ellipse cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>
@@ -1894,6 +1901,9 @@
       </aside>
       <div class="notes-main">
         <div class="notes-search-row" id="notes-search-row">
+          <button class="btn-ghost icon-only" id="notes-sidebar-toggle" aria-label="Mostrar ou ocultar as pastas" title="Mostrar ou ocultar as pastas">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><line x1="9" y1="4" x2="9" y2="20"/></svg>
+          </button>
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
           <input type="text" id="notes-search" placeholder="Buscar em todas as notas…" aria-label="Buscar notas">
         </div>
@@ -1934,7 +1944,9 @@
             </button>
             <input type="text" id="notes-editor-title" class="notes-editor-title" placeholder="Título da nota" maxlength="140" aria-label="Título da nota">
             <button class="btn-ghost" id="notes-editor-toggle">Visualizar</button>
-            <button class="kill" id="notes-editor-delete" aria-label="Excluir nota">×</button>
+            <button class="btn-ghost icon-only danger" id="notes-editor-delete" aria-label="Excluir nota" title="Excluir nota">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            </button>
           </div>
           <div class="notes-editor-meta">
             <button type="button" class="btn-ghost" id="notes-editor-pin" aria-label="Fixar nota">
@@ -2598,9 +2610,11 @@
   function applyAccountUI(){
     var logged = !!AUTH.email;
     var label = AUTH.username || "Conta";
-    var btnAccountLabel = $("btn-account").querySelector(".btn-label");
-    if(btnAccountLabel) btnAccountLabel.textContent = logged ? label : "Entrar";
-    else $("btn-account").textContent = logged ? label : "Entrar";
+    // botão virou só o patinho — o nome/estado de login continua acessível
+    // por leitor de tela e por hover, só não aparece mais escrito ao lado
+    var accountLabel = logged ? label : "Entrar";
+    $("btn-account").setAttribute("aria-label", accountLabel);
+    $("btn-account").title = accountLabel;
     $("btn-account").classList.toggle("logged-in", logged);
     $("account-logged-out").hidden = logged;
     $("account-logged-in").hidden = !logged;
@@ -6332,6 +6346,7 @@
   var notesPreviewMode = false;
   var notesEditorLoadedId = null;   // id da nota cujo título/corpo estão carregados nos campos agora
   var notesSearch = "";             // busca ativa: quando preenchida, ignora a pasta selecionada e olha pra tudo
+  var notesSidebarCollapsed = false; // esconde a coluna de pastas pra sobrar mais espaço pra nota
 
   function findNoteFolder(id){ return S.noteFolders.filter(function(f){ return f.id === id; })[0] || null; }
   function findNotePage(id){ return S.notePages.filter(function(p){ return p.id === id; })[0] || null; }
@@ -8051,6 +8066,10 @@
     notesSearch = this.value;
     renderNotePageList();
   });
+  $("notes-sidebar-toggle").onclick = function(){
+    notesSidebarCollapsed = !notesSidebarCollapsed;
+    $("notes-sidebar").hidden = notesSidebarCollapsed;
+  };
 
   $("account-change-pw").onclick = function(){
     $("pw-current").value = ""; $("pw-new").value = ""; $("changepw-error").textContent = "";
@@ -8358,6 +8377,10 @@
     }
     render();
   }
+
+  // cor do anel do avatar sorteada uma vez por sessão — puramente decorativo,
+  // não precisa ser estável entre recarregamentos
+  $("btn-account").style.setProperty("--h", HUES[Math.floor(Math.random() * HUES.length)]);
 
   applyTheme();
   initTabs();   // move os painéis pra dentro da aba certa antes do primeiro render()
