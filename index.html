@@ -922,6 +922,13 @@
   }
   /* agrupa conta+ajustes visualmente à parte dos botões de navegação */
   .account-group{display:flex;gap:var(--sp);padding-left:var(--sp);border-left:1px solid var(--line)}
+  /* em telas bem estreitas o grupo de conta não cabe mais na mesma linha dos
+     outros ícones do topo e quebra pra linha de baixo sozinho — sem isso, o
+     traço à esquerda (pensado pra separar dois grupos lado a lado) ficava
+     boiando sozinho no início da linha nova, sem nada à esquerda dele */
+  @media (max-width:400px){
+    .account-group{border-left:0;padding-left:0}
+  }
   /* "Entrar" precisa se destacar dos outros botões ghost — é a única chamada para ação da barra */
   #btn-account{background:var(--signal);border-color:var(--signal);color:var(--on-ink)}
   #btn-account:hover{background:var(--signal);border-color:var(--signal);opacity:.88}
@@ -1846,7 +1853,10 @@
       <div class="notes-main">
         <div class="notes-main-head">
           <span class="notes-current-folder" id="notes-current-folder"></span>
-          <button class="btn-main" id="notes-page-add">Nova nota</button>
+          <button class="btn-main" id="notes-page-add">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            Nova nota
+          </button>
         </div>
         <ul class="notes-page-list" id="notes-page-list"></ul>
         <div class="empty-state notes-page-empty" id="notes-page-empty" hidden>
