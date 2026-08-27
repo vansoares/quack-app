@@ -592,27 +592,27 @@
   /* ---------- mini-player flutuante ---------- */
   /* fica fora de #main de propósito — assim continua visível trocando de
      aba, já que o player externo (YouTube/Spotify) segue tocando escondido
-     mesmo quando a aba do Som não está em foco */
+     mesmo quando a aba do Som não está em foco. Pastilha flutuante com
+     margem da borda (não uma barra grudada no rodapé) — mais discreta e não
+     cobre conteúdo por baixo */
   .mini-player{
-    position:fixed;left:0;right:0;bottom:0;z-index:55;
-    display:flex;align-items:center;gap:calc(var(--sp)*2);
-    padding:10px calc(var(--sp)*3);padding-bottom:calc(10px + env(safe-area-inset-bottom));
-    background:var(--panel);border-top:1px solid var(--glass-border);
+    position:fixed;right:calc(var(--sp)*3);bottom:calc(var(--sp)*3 + env(safe-area-inset-bottom));z-index:55;
+    display:flex;align-items:center;gap:8px;padding:6px;border-radius:var(--r-pill);
+    background:var(--panel);border:1px solid var(--glass-border);
     backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);
+    box-shadow:0 10px 30px rgba(0,0,0,0.25);
   }
   .mini-player[hidden]{display:none}
   .mini-player-label{
-    flex:1;min-width:0;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
-    text-transform:uppercase;color:var(--ink-3);
+    padding-left:10px;font-family:var(--mono);font-size:10px;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--ink-3);white-space:nowrap;
   }
   #mini-player-toggle{
-    flex:none;width:38px;height:38px;border-radius:50%;padding:0;
+    flex:none;width:36px;height:36px;border-radius:50%;padding:0;
     background:var(--ink);color:var(--on-ink);border:0;
     display:flex;align-items:center;justify-content:center;
   }
-  #mini-player-close{flex:none;color:var(--ink-3)}
-  body.has-mini-player #main{padding-bottom:76px}
-  body.has-mini-player .toast{bottom:calc(24px + 58px + env(safe-area-inset-bottom))}
+  #mini-player-close{flex:none;width:30px;height:30px;color:var(--ink-3)}
 
   /* ---------- estante ---------- */
   .shelf{
@@ -1581,6 +1581,7 @@
           <div class="seg small" id="task-view" role="group" aria-label="Organização da lista">
             <button data-view="lista" aria-pressed="true">Lista</button>
             <button data-view="grupos" aria-pressed="false">Tópicos</button>
+            <button data-view="dias" aria-pressed="false">Dias</button>
           </div>
         </div>
       </div>
@@ -2511,7 +2512,7 @@
     timer: { mode:"foco", running:false, endsAt:null, remaining:25*MIN, streak:0, interruptions:0 },
     range: "semana",
     filterTag: null,
-    groupTasks: false,
+    taskView: "lista",
     hideCompleted: false,
     collapsed: [],
     topicColors: {},
@@ -2581,7 +2582,11 @@
     if(typeof d.activeTaskId !== "undefined") s.activeTaskId = d.activeTaskId;
     if(d.range) s.range = d.range;
     if(typeof d.filterTag !== "undefined") s.filterTag = d.filterTag;
-    if(typeof d.groupTasks !== "undefined") s.groupTasks = !!d.groupTasks;
+    // taskView substitui o antigo groupTasks (booleano) por três modos —
+    // quem só tinha o campo antigo salvo (versão anterior do app) migra pra
+    // "topicos" automaticamente em vez de voltar pra "lista"
+    if(d.taskView) s.taskView = d.taskView;
+    else if(d.groupTasks) s.taskView = "topicos";
     if(typeof d.hideCompleted !== "undefined") s.hideCompleted = !!d.hideCompleted;
     if(Array.isArray(d.collapsed)) s.collapsed = d.collapsed;
     if(d.topicColors) s.topicColors = d.topicColors;
@@ -3364,7 +3369,7 @@
 
     // agrupado, o tópico já está no cabeçalho: repetir em cada linha é ruído
     var chip = null;
-    if(!S.groupTasks){
+    if(S.taskView !== "topicos"){
       chip = document.createElement("button");
       chip.className = t.tag ? "tag editable" : "tag vazio";
       chip.textContent = t.tag || "tópico";
@@ -3436,7 +3441,9 @@
       detail.className = "task-detail";
       if(chip) detail.appendChild(chip);
       detail.appendChild(urgEl);
-      detail.appendChild(dueEl);
+      // agrupado por dia, o prazo já está no cabeçalho do grupo — repetir
+      // aqui é o mesmo ruído que o tópico é quando agrupado por tópico
+      if(S.taskView !== "dias") detail.appendChild(dueEl);
       detail.appendChild(estEl);
       detail.appendChild(nota);
 
@@ -3492,6 +3499,24 @@
     if(a.due) return -1;
     if(b.due) return 1;
     return 0;
+  }
+
+  // sentinelas da visão "Dias" — texto simples basta, já que devidos de
+  // verdade são sempre "AAAA-MM-DD" e nunca colidem com isto
+  var SEM_PRAZO = "sem-prazo";
+  var DIAS_FEITAS = "dias-feitas";
+
+  // rótulo do cabeçalho de cada grupo de dia: relativo quando é hoje/amanhã/
+  // atrasado (mais rápido de escanear), data por extenso nos outros casos
+  function dayGroupLabel(dueStr){
+    var info = dueInfo(dueStr);
+    var d = new Date(dueStr + "T00:00");
+    var formatted = d.toLocaleDateString("pt-BR", { weekday:"long", day:"2-digit", month:"short" }).replace(".", "");
+    if(!info) return formatted;
+    if(info.state === "hoje") return "Hoje · " + formatted;
+    if(info.state === "atrasada") return formatted + " · atrasada";
+    if(info.days === 1) return "Amanhã · " + formatted;
+    return formatted;
   }
 
   var SEM_TOPICO = "\u0000sem";
@@ -3594,16 +3619,46 @@
 
     var modeBtns = document.querySelectorAll("#task-view button");
     for(var m = 0; m < modeBtns.length; m++){
-      modeBtns[m].setAttribute("aria-pressed", String((modeBtns[m].dataset.view === "grupos") === !!S.groupTasks));
+      modeBtns[m].setAttribute("aria-pressed", String(modeBtns[m].dataset.view === S.taskView));
     }
 
-    if(!S.groupTasks){
+    if(S.taskView === "lista"){
       // quem tem prazo sobe, em ordem de vencimento; sem prazo mantém a ordem de entrada
       var visible = pending.slice().sort(byDue);
       if(showDone) visible = visible.concat(doneList);
       visible.forEach(function(t){
         list.appendChild(taskRow(t));
       });
+    }else if(S.taskView === "dias"){
+      // cada dia com prazo vira um grupo — "objetivos do dia" na prática,
+      // já que devidos hoje e devidos amanhã ficam em blocos separados
+      var diaGroups = {}, diaOrder = [];
+      pending.forEach(function(t){
+        var k = t.due || SEM_PRAZO;
+        if(!diaGroups[k]){ diaGroups[k] = { key:k, items: [] }; diaOrder.push(k); }
+        diaGroups[k].items.push(t);
+      });
+
+      diaOrder.sort(function(a, b){
+        if(a === SEM_PRAZO) return 1;
+        if(b === SEM_PRAZO) return -1;
+        return a < b ? -1 : (a > b ? 1 : 0);
+      });
+
+      diaOrder.forEach(function(k){
+        var g = diaGroups[k];
+        var label = k === SEM_PRAZO ? "Sem prazo" : dayGroupLabel(k);
+        list.appendChild(groupHeader(k, label, g.items, null));
+        if(isCollapsed(k)) return;
+        g.items.forEach(function(t){ list.appendChild(taskRow(t)); });
+      });
+
+      if(doneList.length && showDone){
+        list.appendChild(groupHeader(DIAS_FEITAS, "Concluídas", doneList, null));
+        if(!isCollapsed(DIAS_FEITAS)){
+          doneList.forEach(function(t){ list.appendChild(taskRow(t)); });
+        }
+      }
     }else{
       var groups = {}, order = [];
       pending.forEach(function(t){
@@ -8054,17 +8109,13 @@
   }
 
   /* ---------- player externo ---------- */
-  // enablejsapi+origin é o que permite ao mini-player mandar play/pause de
-  // verdade pro iframe do YouTube depois (ver YT.Player em renderEmbed) —
-  // sem isso o botão flutuante não teria como controlar um player que já
-  // está tocando numa aba diferente
-  function youtubeSrc(kind, id){
-    var base = kind === "list"
-      ? "https://www.youtube.com/embed/videoseries?list=" + id
-      : "https://www.youtube.com/embed/" + id + "?rel=0";
-    return base + "&enablejsapi=1&origin=" + encodeURIComponent(location.origin);
-  }
-
+  // "src" aqui não é mais uma URL de verdade pra nenhum dos dois — é só uma
+  // chave de identidade pra saber se o embed mudou (ver "expectedSrc" em
+  // renderEmbed). Tanto o YouTube quanto o Spotify agora criam o iframe
+  // deles mesmos pela API oficial (em vez da gente montar um <iframe src=…>
+  // na mão), porque é esse caminho que garante o postMessage de play/pause
+  // funcionando — anexar a API a um iframe criado por fora é o modo "não
+  // documentado" e foi exatamente o que não funcionava de verdade
   function parseEmbed(url){
     var u;
     try{ u = new URL(String(url).trim()); }catch(e){ return null; }
@@ -8076,20 +8127,20 @@
     if(host === "youtu.be"){
       var short = u.pathname.slice(1);
       if(!ID.test(short)) return null;
-      return { src:youtubeSrc("video", short), h:220, kind:"YouTube" };
+      return { kind:"YouTube", videoId:short, h:220, src:"youtube:video:" + short };
     }
     if(host === "youtube.com" || host === "m.youtube.com" || host === "music.youtube.com"){
       var list = u.searchParams.get("list");
       var v = u.searchParams.get("v");
-      if(list && ID.test(list)) return { src:youtubeSrc("list", list), h:220, kind:"YouTube" };
-      if(v && ID.test(v)) return { src:youtubeSrc("video", v), h:220, kind:"YouTube" };
+      if(list && ID.test(list)) return { kind:"YouTube", listId:list, h:220, src:"youtube:list:" + list };
+      if(v && ID.test(v)) return { kind:"YouTube", videoId:v, h:220, src:"youtube:video:" + v };
       return null;
     }
     if(host === "open.spotify.com"){
       var m = u.pathname.match(/^\/(?:intl-[a-z]{2}\/)?(playlist|album|track|episode|show)\/([A-Za-z0-9]+)/);
       if(!m) return null;
-      return { src:"https://open.spotify.com/embed/" + m[1] + "/" + m[2], uri:"spotify:" + m[1] + ":" + m[2],
-               h: m[1] === "track" ? 152 : 232, kind:"Spotify" };
+      return { kind:"Spotify", uri:"spotify:" + m[1] + ":" + m[2],
+               h: m[1] === "track" ? 152 : 232, src:"spotify:" + m[1] + ":" + m[2] };
     }
     return null;
   }
@@ -8101,7 +8152,7 @@
   function loadYouTubeApi(){
     if(window.YT && window.YT.Player) return Promise.resolve(window.YT);
     if(ytApiPromise) return ytApiPromise;
-    ytApiPromise = new Promise(function(resolve){
+    ytApiPromise = new Promise(function(resolve, reject){
       var prev = window.onYouTubeIframeAPIReady;
       window.onYouTubeIframeAPIReady = function(){
         if(prev) prev();
@@ -8109,6 +8160,10 @@
       };
       var s = document.createElement("script");
       s.src = "https://www.youtube.com/iframe_api";
+      // um bloqueador de anúncios/scripts pode barrar esse domínio — sem
+      // onerror, o clique no mini-player ficava esperando pra sempre e
+      // parecia simplesmente quebrado, sem nenhum aviso do porquê
+      s.onerror = function(){ ytApiPromise = null; reject(new Error("youtube iframe api blocked")); };
       document.head.appendChild(s);
     });
     return ytApiPromise;
@@ -8117,7 +8172,7 @@
   var spotifyApiPromise = null;
   function loadSpotifyApi(){
     if(spotifyApiPromise) return spotifyApiPromise;
-    spotifyApiPromise = new Promise(function(resolve){
+    spotifyApiPromise = new Promise(function(resolve, reject){
       var prev = window.onSpotifyIframeApiReady;
       window.onSpotifyIframeApiReady = function(IFrameAPI){
         if(prev) prev(IFrameAPI);
@@ -8126,6 +8181,7 @@
       var s = document.createElement("script");
       s.src = "https://open.spotify.com/embed/iframe-api/v1";
       s.async = true;
+      s.onerror = function(){ spotifyApiPromise = null; reject(new Error("spotify iframe api blocked")); };
       document.head.appendChild(s);
     });
     return spotifyApiPromise;
@@ -8145,6 +8201,11 @@
       if(ytPlayer.getPlayerState() === 1) ytPlayer.pauseVideo(); else ytPlayer.playVideo();
     }else if(e.kind === "Spotify" && spotifyController){
       spotifyController.togglePlay();
+    }else{
+      // a API ainda não carregou (rede lenta, ou algo bloqueando o script do
+      // YouTube/Spotify, ex.: bloqueador de anúncios) — sem isso o clique
+      // simplesmente não fazia nada e parecia um botão quebrado
+      toast("Player ainda carregando — se demorar, dá pra pausar direto na aba Foco");
     }
   }
 
@@ -8158,11 +8219,9 @@
     var e = S.sound.embed;
     if(!e){
       bar.hidden = true;
-      document.body.classList.remove("has-mini-player");
       return;
     }
     bar.hidden = false;
-    document.body.classList.add("has-mini-player");
     $("mini-player-label").textContent = e.kind;
     var playing = miniPlayerState === "playing";
     var toggle = $("mini-player-toggle");
@@ -8209,9 +8268,10 @@
                                 // comparar pelo src (não pelo objeto) evita que
                                 // isso deixe o player anexado sem controle
 
+    var holder = document.createElement("div");
+    box.appendChild(holder);
+
     if(e.kind === "Spotify"){
-      var holder = document.createElement("div");
-      box.appendChild(holder);
       loadSpotifyApi().then(function(IFrameAPI){
         if(!S.sound.embed || S.sound.embed.src !== expectedSrc) return;
         IFrameAPI.createController(holder, { uri:e.uri, width:"100%", height:e.h }, function(EmbedController){
@@ -8221,29 +8281,31 @@
             renderMiniPlayer();
           });
         });
+      }).catch(function(){
+        $("embed-hint").textContent = "Não consegui carregar o player do Spotify — confira a conexão ou um bloqueador de scripts.";
       });
     }else{
-      var f = document.createElement("iframe");
-      f.src = e.src;
-      f.height = e.h;
-      f.loading = "lazy";
-      f.title = "Player " + e.kind;
-      f.setAttribute("allow", "autoplay; encrypted-media; clipboard-write; picture-in-picture");
-      f.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
-      box.appendChild(f);
-      if(e.kind === "YouTube"){
-        loadYouTubeApi().then(function(YT){
-          if(!S.sound.embed || S.sound.embed.src !== expectedSrc) return;
-          ytPlayer = new YT.Player(f, {
-            events: {
-              onStateChange: function(ev){
-                miniPlayerState = ev.data === YT.PlayerState.PLAYING ? "playing" : "paused";
-                renderMiniPlayer();
-              }
-            }
-          });
-        });
-      }
+      // deixa a própria API do YouTube criar o iframe (em vez de criar um
+      // <iframe src=…> na mão e "anexar" a API depois) — é o único caminho
+      // com suporte garantido pro play/pause funcionar via postMessage
+      var playerVars = { rel:0 };
+      var opts = { height:e.h, width:"100%", playerVars:playerVars,
+        events: {
+          onStateChange: function(ev){
+            miniPlayerState = ev.data === YT.PlayerState.PLAYING ? "playing" : "paused";
+            renderMiniPlayer();
+          },
+          onError: function(){ toast("Não consegui carregar esse vídeo do YouTube"); }
+        }
+      };
+      if(e.listId){ playerVars.listType = "playlist"; playerVars.list = e.listId; }
+      else{ opts.videoId = e.videoId; }
+      loadYouTubeApi().then(function(YT){
+        if(!S.sound.embed || S.sound.embed.src !== expectedSrc) return;
+        ytPlayer = new YT.Player(holder, opts);
+      }).catch(function(){
+        $("embed-hint").textContent = "Não consegui carregar o player do YouTube — confira a conexão ou um bloqueador de scripts.";
+      });
     }
 
     box.hidden = false;
@@ -8480,7 +8542,7 @@
   document.querySelectorAll("#task-view button").forEach(function(b){
     b.onclick = function(){
       editingNote = null;
-      S.groupTasks = b.dataset.view === "grupos";
+      S.taskView = b.dataset.view;
       save(); renderTasks();
     };
   });
@@ -8801,13 +8863,13 @@
   // do ar em maio/2026 por questão de direitos autorais), então se um dia um
   // desses parar de tocar, é só colar o link da transmissão atual na caixa acima
   $("embed-lofi-girl").onclick = function(){
-    S.sound.embed = { src:youtubeSrc("video", "XVFUtEh9zrY"), h:220, kind:"YouTube" };
+    S.sound.embed = { kind:"YouTube", videoId:"XVFUtEh9zrY", h:220, src:"youtube:video:XVFUtEh9zrY" };
     save(); renderEmbed();
     toast("Lofi Girl carregada");
   };
 
   $("embed-synthwave").onclick = function(){
-    S.sound.embed = { src:youtubeSrc("video", "4xDzrJKXOOY"), h:220, kind:"YouTube" };
+    S.sound.embed = { kind:"YouTube", videoId:"4xDzrJKXOOY", h:220, src:"youtube:video:4xDzrJKXOOY" };
     save(); renderEmbed();
     toast("Synthwave Radio carregada");
   };
