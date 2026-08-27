@@ -1179,10 +1179,6 @@
   .hint{font-size:12px;color:var(--ink-3);line-height:1.5;margin:0}
 
   /* ---------- página de notas (markdown, pastas) ---------- */
-  .notes-page{padding:calc(var(--sp)*3) calc(var(--sp)*3) calc(var(--sp)*6);max-width:1100px;margin:0 auto}
-  .notes-page-head{display:flex;align-items:center;gap:calc(var(--sp)*2);margin-bottom:calc(var(--sp)*3)}
-  .notes-page-icon{flex:none;color:var(--ink-3);margin-left:calc(var(--sp)*2)}
-  .notes-page-title{font-size:20px;font-weight:700;color:var(--ink);margin:0}
   .notes-page-body{display:flex;gap:calc(var(--sp)*3);align-items:flex-start}
   .notes-sidebar{
     flex:0 0 220px;min-width:0;background:var(--panel);border:1px solid var(--glass-border);
@@ -1339,13 +1335,8 @@
       Leitura &amp; séries
     </button>
     <button type="button" role="tab" class="tab-btn" data-tab="ferramentas" id="tab-btn-ferramentas" aria-selected="false">
-      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <circle cx="10" cy="14.5" r="6"/>
-        <circle cx="15.6" cy="8.6" r="3.4"/>
-        <path d="M18.7 8.1c1.2-.2 2.2.3 2.2 1s-1 1.2-2.2 1c-.5-.1-.9-.5-.9-1s.4-.9.9-1z"/>
-        <circle cx="16.5" cy="7.7" r=".5" fill="currentColor" stroke="none"/>
-      </svg>
-      Ferramentas
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 9l3 3-3 3M13 15h4"/></svg>
+      Ferramentas de dev
     </button>
     <button type="button" role="tab" class="tab-btn" data-tab="notas" id="tab-btn-notas" aria-selected="false" hidden>
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M15 3v5h5"/><path d="M8 13h8M8 17h5"/></svg>
@@ -1357,20 +1348,25 @@
     <div class="grid tab-panel" data-tab="foco" id="tab-foco"></div>
     <div class="grid tab-panel" data-tab="produtividade" id="tab-produtividade" hidden></div>
     <div class="grid tab-panel" data-tab="metas" id="tab-metas" hidden>
-      <section class="panel" id="section-marcos" style="grid-column:1 / -1">
+      <section class="panel" id="section-season">
         <div class="panel-head">
-          <h2 class="panel-title"><span class="panel-icon amber" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 8-8M20 12a8 8 0 0 1-8 8"/><path d="M4 12l3-3M4 12l3 3M20 12l-3-3M20 12l-3 3"/></svg></span>Temporada &amp; cápsula</h2>
+          <h2 class="panel-title"><span class="panel-icon amber" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 8-8M20 12a8 8 0 0 1-8 8"/><path d="M4 12l3-3M4 12l3 3M20 12l-3-3M20 12l-3 3"/></svg></span>Temporada</h2>
         </div>
-        <div style="display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn-ghost" id="btn-season" aria-label="Temporada">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 0 1 8-8M20 12a8 8 0 0 1-8 8"/><path d="M4 12l3-3M4 12l3 3M20 12l-3-3M20 12l-3 3"/></svg>
-            <span class="btn-label">Temporada</span>
-          </button>
-          <button class="btn-ghost" id="btn-capsule" aria-label="Cápsula do tempo">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="5"/><path d="M7 12h10"/></svg>
-            <span class="btn-label">Cápsula</span><span class="tab-dot" id="capsule-dot" hidden></span>
-          </button>
+        <p class="hint" style="margin:0 0 14px">Nomeie um período da sua vida — “defesa”, “entrevistas”, “férias”.</p>
+        <button class="btn-ghost" id="btn-season" aria-label="Temporada">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 0 1 8-8M20 12a8 8 0 0 1-8 8"/><path d="M4 12l3-3M4 12l3 3M20 12l-3-3M20 12l-3 3"/></svg>
+          <span class="btn-label">Ver temporada</span>
+        </button>
+      </section>
+      <section class="panel" id="section-capsule">
+        <div class="panel-head">
+          <h2 class="panel-title"><span class="panel-icon amber" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="7" y="2" width="10" height="20" rx="5"/><path d="M7 12h10"/></svg></span>Cápsula do tempo</h2>
         </div>
+        <p class="hint" style="margin:0 0 14px">Escreva algo para você mesma no futuro, lacrado até a data escolhida.</p>
+        <button class="btn-ghost" id="btn-capsule" aria-label="Cápsula do tempo">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="5"/><path d="M7 12h10"/></svg>
+          <span class="btn-label">Ver cápsula</span><span class="tab-dot" id="capsule-dot" hidden></span>
+        </button>
       </section>
     </div>
     <div class="grid tab-panel" data-tab="habitos" id="tab-habitos" hidden></div>
@@ -1838,18 +1834,7 @@
 
   </main>
 
-  <section class="notes-page" id="page-notes">
-    <div class="notes-page-head">
-      <button class="btn-ghost" id="notes-back">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
-        <span>Voltar</span>
-      </button>
-      <svg class="notes-page-icon" viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M12 20h9"/>
-        <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4Z"/>
-      </svg>
-      <h1 class="notes-page-title">Quacknotes</h1>
-    </div>
+  <section class="notes-page panel" id="page-notes">
     <div class="notes-page-body">
       <aside class="notes-sidebar">
         <ul class="notes-folder-list" id="notes-folder-list"></ul>
@@ -1924,7 +1909,7 @@
         <div class="profile-block">
           <label class="k" for="account-username">Nome de usuário</label>
           <div class="profile-username-row">
-            <input type="text" id="account-username" maxlength="20" placeholder="ex.: van_soares" aria-label="Nome de usuário">
+            <input type="text" id="account-username" maxlength="20" placeholder="ex.: fulano_tal" aria-label="Nome de usuário">
             <button class="btn-ghost" id="account-username-save">Salvar</button>
           </div>
           <p class="hint" id="account-username-error" style="color:var(--signal);min-height:16px;margin:2px 0 0"></p>
@@ -7290,9 +7275,8 @@
     $("panel-screen").hidden = !S.panels.tela;
     $("panel-goals").hidden = !S.panels.objetivos;
     $("panel-pdi").hidden = !S.panels.pdi;
-    $("btn-season").hidden = !S.panels.temporada;
-    $("btn-capsule").hidden = !S.panels.capsula;
-    $("section-marcos").hidden = !S.panels.temporada && !S.panels.capsula;
+    $("section-season").hidden = !S.panels.temporada;
+    $("section-capsule").hidden = !S.panels.capsula;
     $("panel-sound").hidden = !S.panels.musica;
     $("panel-dev").hidden = !S.dev;
     applyTabs();
@@ -7829,7 +7813,6 @@
   });
 
   // página de notas em markdown
-  $("notes-back").onclick = function(){ selectTab("foco"); };
   $("notes-folder-add-btn").onclick = function(){
     createNoteFolder($("notes-folder-name").value);
     $("notes-folder-name").value = "";
