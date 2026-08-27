@@ -2897,6 +2897,16 @@
     return t ? t : null;
   }
 
+  // etiqueta "de verdade" de uma sessão de foco, com uma exceção: um bloco
+  // sem etiqueta mas vinculado a um tópico de estudo (Ferramentas de dev >
+  // Estudando) conta como "estudo" — sem isso, todo aquele tempo caía
+  // silenciosamente em "sem etiqueta" nos padrões de produtividade e no
+  // balanço, como se não tivesse contexto nenhum. A etiqueta real de uma
+  // tarefa (quando existe) continua tendo prioridade sobre isso.
+  function sessionTag(s){
+    return s.tag || (s.studyTopicId ? "estudo" : null);
+  }
+
   // etiquetas conhecidas: das tarefas vivas e do histórico, sem repetir
   function allTags(){
     var seen = {}, out = [];
@@ -2906,7 +2916,7 @@
       if(!seen[k]){ seen[k] = true; out.push(t); }
     }
     S.tasks.forEach(function(t){ push(t.tag); });
-    S.sessions.forEach(function(s){ push(s.tag); });
+    S.sessions.forEach(function(s){ push(sessionTag(s)); });
     out.sort(function(a,b){ return a.localeCompare(b, "pt-BR"); });
     return out;
   }
@@ -3622,15 +3632,15 @@
 
   function filteredSessions(){
     if(S.filterTag === null) return S.sessions;
-    if(S.filterTag === "__sem__") return S.sessions.filter(function(s){ return !s.tag; });
+    if(S.filterTag === "__sem__") return S.sessions.filter(function(s){ return !sessionTag(s); });
     var f = S.filterTag;
-    return S.sessions.filter(function(s){ return sameTag(s.tag, f); });
+    return S.sessions.filter(function(s){ return sameTag(sessionTag(s), f); });
   }
 
   function renderFilters(){
     var box = $("filters");
     var tags = allTags();
-    var hasUntagged = S.sessions.some(function(s){ return !s.tag; }) ||
+    var hasUntagged = S.sessions.some(function(s){ return !sessionTag(s); }) ||
                       S.tasks.some(function(t){ return !t.tag; });
 
     // sem nenhuma etiqueta em uso, a barra de filtro só ocuparia espaço
@@ -4557,7 +4567,7 @@
     var porTopico = {};
     S.sessions.forEach(function(s){
       if(s.end >= from && s.end < to){
-        var k = s.tag || "";
+        var k = sessionTag(s) || "";
         if(k) porTopico[k] = (porTopico[k] || 0) + 1;
       }
     });
@@ -4836,7 +4846,7 @@
     sess.forEach(function(x){ dias[dayKey(x.end)] = true; });
 
     var porTopico = {};
-    sess.forEach(function(x){ if(x.tag) porTopico[x.tag] = (porTopico[x.tag]||0) + 1; });
+    sess.forEach(function(x){ var k = sessionTag(x); if(k) porTopico[k] = (porTopico[k]||0) + 1; });
     var topicos = Object.keys(porTopico).map(function(k){ return { tag:k, n:porTopico[k] }; })
                         .sort(function(a,b){ return b.n - a.n; }).slice(0, 3);
 
@@ -6265,7 +6275,7 @@
 
     var byTag = {};
     sess.forEach(function(s){
-      var k = s.tag || "sem etiqueta";
+      var k = sessionTag(s) || "sem etiqueta";
       if(!byTag[k]) byTag[k] = { count:0, min:0 };
       byTag[k].count++; byTag[k].min += s.min;
     });
