@@ -1928,6 +1928,8 @@
           <button class="btn-ghost" id="embed-lofi-girl">Lofi Girl</button>
           <button class="btn-ghost" id="embed-synthwave">Synthwave Radio</button>
           <button class="btn-ghost" id="embed-chillhop">Chillhop Radio</button>
+          <button class="btn-ghost" id="embed-lofi-playlist">Lofi</button>
+          <button class="btn-ghost" id="embed-chuva">Chuva</button>
           <span class="hint" style="margin:0">rádios ao vivo de verdade — se uma parar de tocar, é a transmissão que mudou; cole o link novo acima</span>
         </div>
         <p class="hint" id="embed-hint"></p>
@@ -8707,6 +8709,18 @@
     S.sound.embed = { src:"https://www.youtube.com/embed/5yx6BWlEVcY?rel=0", h:220, kind:"YouTube" };
     save(); renderEmbed();
     toast("Chillhop Radio carregada");
+  };
+
+  $("embed-lofi-playlist").onclick = function(){
+    S.sound.embed = { src:"https://www.youtube.com/embed/videoseries?list=PLW0OjBxVIag0", h:220, kind:"YouTube" };
+    save(); renderEmbed();
+    toast("Playlist Lofi carregada");
+  };
+
+  $("embed-chuva").onclick = function(){
+    S.sound.embed = { src:"https://www.youtube.com/embed/yYJ5WgqKLaM?rel=0", h:220, kind:"YouTube" };
+    save(); renderEmbed();
+    toast("Chuva carregada");
   };
 
   $("task-add").onclick = addTask;
