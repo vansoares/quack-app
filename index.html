@@ -294,6 +294,7 @@
   }
   .btn-main:hover{filter:brightness(1.05)}
   .btn-main:active{transform:scale(.97)}
+  .btn-main.icon-only{padding:0;width:40px;height:40px;flex:none;justify-content:center}
   .btn-main.running{background:var(--signal);box-shadow:0 6px 18px rgba(156,74,43,0.35)}
   .btn-main.running:hover{filter:brightness(1.08)}
   :root[data-theme="alto-contraste"] .btn-main{background:#000;color:#fff;box-shadow:none}
@@ -1191,6 +1192,11 @@
     flex:0 0 220px;min-width:0;background:var(--panel);border:1px solid var(--glass-border);
     border-radius:var(--r-lg);padding:calc(var(--sp)*2);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);
   }
+  .notes-sidebar-head{
+    display:flex;align-items:center;gap:8px;margin:0 0 calc(var(--sp)*2);padding-bottom:calc(var(--sp)*2);
+    border-bottom:1px solid var(--line);font-weight:700;font-size:14.5px;color:var(--ink);
+  }
+  .notes-sidebar-duck{width:22px;height:22px;flex:none}
   .notes-folder-list{list-style:none;margin:0 0 calc(var(--sp)*2);padding:0;display:flex;flex-direction:column;gap:2px}
   .notes-folder-row{display:flex;align-items:center;gap:4px}
   .notes-folder-btn{
@@ -1216,6 +1222,8 @@
   .notes-search-row svg{flex:none}
   .notes-search-row input{flex:1;min-width:0;background:none;border:0;padding:0;font-size:13.5px;color:var(--ink)}
   .notes-main-head{display:flex;align-items:center;justify-content:space-between;gap:var(--sp);margin-bottom:calc(var(--sp)*2)}
+  /* mesmo problema de especificidade do .grid[hidden] — ver comentário lá */
+  .notes-main-head[hidden]{display:none}
   .notes-current-folder{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
   .notes-page-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
   .notes-page-list[hidden]{display:none}
@@ -1867,6 +1875,17 @@
   <section class="notes-page panel" id="page-notes">
     <div class="notes-page-body">
       <aside class="notes-sidebar">
+        <div class="notes-sidebar-head">
+          <svg class="notes-sidebar-duck" viewBox="0 0 32 32" aria-hidden="true">
+            <ellipse cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>
+            <circle cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>
+            <path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>
+            <circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>
+            <circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>
+            <circle cx="18.4" cy="14.6" r="1.5" fill="#fff" opacity=".18"/>
+          </svg>
+          <span>Quacknotes</span>
+        </div>
         <ul class="notes-folder-list" id="notes-folder-list"></ul>
         <div class="notes-folder-add">
           <input type="text" id="notes-folder-name" placeholder="Nova pasta" maxlength="40" aria-label="Nome da nova pasta">
@@ -1878,11 +1897,10 @@
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
           <input type="text" id="notes-search" placeholder="Buscar em todas as notas…" aria-label="Buscar notas">
         </div>
-        <div class="notes-main-head">
+        <div class="notes-main-head" id="notes-main-head">
           <span class="notes-current-folder" id="notes-current-folder"></span>
-          <button class="btn-main" id="notes-page-add">
-            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-            Nova nota
+          <button class="btn-main icon-only" id="notes-page-add" aria-label="Nova nota" title="Nova nota">
+            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
           </button>
         </div>
         <ul class="notes-page-list" id="notes-page-list"></ul>
@@ -6557,9 +6575,14 @@
     var empty = $("notes-page-empty");
     var head = $("notes-current-folder");
     var searchRow = $("notes-search-row");
+    var mainHead = $("notes-main-head");
 
-    if(notesOpenPageId){ list.hidden = true; empty.hidden = true; searchRow.hidden = true; return; }
+    // com uma nota aberta, o cabeçalho da lista (pasta atual + busca + "nova
+    // nota") só sobrava por cima do editor sem servir pra nada — a volta
+    // pra lista já é o botão de voltar do próprio editor
+    if(notesOpenPageId){ list.hidden = true; empty.hidden = true; searchRow.hidden = true; mainHead.hidden = true; return; }
     searchRow.hidden = false;
+    mainHead.hidden = false;
 
     var q = notesSearch.trim().toLowerCase();
     var pages;
@@ -6678,13 +6701,17 @@
     noneOpt.textContent = "Sem vínculo";
     select.appendChild(noneOpt);
 
-    if(S.tasks.length){
+    // só tarefas em aberto — uma vez concluída, ela não é mais algo a que
+    // vale a pena vincular notas novas (mas a nota que já apontava pra ela
+    // continua mostrando o vínculo normalmente, ver noteLinkLabel)
+    var tarefasAbertas = S.tasks.filter(function(t){ return !t.completed || "task:" + t.id === current; });
+    if(tarefasAbertas.length){
       var gt = document.createElement("optgroup");
       gt.label = "Tarefas";
-      S.tasks.forEach(function(t){
+      tarefasAbertas.forEach(function(t){
         var o = document.createElement("option");
         o.value = "task:" + t.id;
-        o.textContent = t.title + (t.completed ? " (concluída)" : "");
+        o.textContent = t.title;
         gt.appendChild(o);
       });
       select.appendChild(gt);
@@ -7750,7 +7777,19 @@
     }
     $("dev-ticks").innerHTML = out.join("");
   })();
-  $("dev-duck-wrap").innerHTML = duckSvg("");
+  // o patinho das Ferramentas de dev ganha um óculos (aro + haste) só pra
+  // diferenciar visualmente do patinho "padrão" do timer principal — mesmo
+  // corpo do duckSvg(), só com esse acessório extra por cima
+  $("dev-duck-wrap").innerHTML =
+    '<svg viewBox="0 0 32 32" aria-hidden="true">' +
+    '<ellipse class="body" cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>' +
+    '<circle class="body" cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>' +
+    '<path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>' +
+    '<circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>' +
+    '<circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>' +
+    '<circle cx="22.4" cy="10.8" r="2.7" fill="none" stroke="var(--ink)" stroke-width="1.1"/>' +
+    '<path d="M25 11.3 Q26.7 12 26.3 13.7" fill="none" stroke="var(--ink)" stroke-width="1.1" stroke-linecap="round"/>' +
+    '</svg>';
 
   /* ---------- eventos ---------- */
   $("btn-start").onclick = function(){ S.timer.running ? pause() : start(); };
