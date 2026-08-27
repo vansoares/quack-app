@@ -589,6 +589,31 @@
   }
   .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+  /* ---------- mini-player flutuante ---------- */
+  /* fica fora de #main de propósito — assim continua visível trocando de
+     aba, já que o player externo (YouTube/Spotify) segue tocando escondido
+     mesmo quando a aba do Som não está em foco */
+  .mini-player{
+    position:fixed;left:0;right:0;bottom:0;z-index:55;
+    display:flex;align-items:center;gap:calc(var(--sp)*2);
+    padding:10px calc(var(--sp)*3);padding-bottom:calc(10px + env(safe-area-inset-bottom));
+    background:var(--panel);border-top:1px solid var(--glass-border);
+    backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);
+  }
+  .mini-player[hidden]{display:none}
+  .mini-player-label{
+    flex:1;min-width:0;font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--ink-3);
+  }
+  #mini-player-toggle{
+    flex:none;width:38px;height:38px;border-radius:50%;padding:0;
+    background:var(--ink);color:var(--on-ink);border:0;
+    display:flex;align-items:center;justify-content:center;
+  }
+  #mini-player-close{flex:none;color:var(--ink-3)}
+  body.has-mini-player #main{padding-bottom:76px}
+  body.has-mini-player .toast{bottom:calc(24px + 58px + env(safe-area-inset-bottom))}
+
   /* ---------- estante ---------- */
   .shelf{
     display:flex;align-items:flex-end;gap:3px;flex-wrap:wrap;
@@ -1127,6 +1152,22 @@
   #task-due{width:148px;font-family:var(--mono);font-size:12px;color:var(--ink-2)}
   .warn{color:var(--signal);font-weight:600}
 
+  /* ---------- listas ---------- */
+  .lists{grid-column:1 / -1}
+  .lists-nav{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:calc(var(--sp)*2)}
+  .lists-nav[hidden]{display:none}
+  .lists-nav button{
+    background:var(--field);border:1px solid var(--line);color:var(--ink-2);cursor:pointer;
+    font-family:var(--sans);font-size:13px;font-weight:600;padding:7px 14px;border-radius:var(--r-pill);
+  }
+  .lists-nav button[aria-selected="true"]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
+  .list-actions{display:flex;gap:var(--sp);margin-bottom:calc(var(--sp)*2)}
+  .list-actions[hidden]{display:none}
+  /* .new-task já define display:flex com a mesma especificidade do [hidden]
+     do navegador — sem isso, esconder o campo de novo item (lista vazia)
+     não escondia nada de verdade, mesmo bug que .grid/.tabbar já tinham */
+  #new-list-item[hidden]{display:none}
+
   /* ---------- som ---------- */
   .sound{grid-column:1 / -1}
   .sound-row{display:flex;flex-wrap:wrap;align-items:center;gap:calc(var(--sp)*2.5)}
@@ -1414,6 +1455,10 @@
       <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 3v5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="9.3" cy="16.3" rx="3.1" ry="2.1" fill="var(--signal)"/><circle cx="12.6" cy="13.7" r="2.3" fill="var(--signal)"/></svg>
       Notas
     </button>
+    <button type="button" role="tab" class="tab-btn" data-tab="listas" id="tab-btn-listas" aria-selected="false">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h6"/></svg>
+      Listas
+    </button>
   </div>
 
   <main id="main">
@@ -1445,6 +1490,7 @@
     <div class="grid tab-panel" data-tab="leitura" id="tab-leitura" hidden></div>
     <div class="grid tab-panel" data-tab="ferramentas" id="tab-ferramentas" hidden></div>
     <div class="tab-panel" data-tab="notas" id="tab-notas" hidden></div>
+    <div class="grid tab-panel" data-tab="listas" id="tab-listas" hidden></div>
 
     <!-- TIMER -->
     <section class="panel" id="section-timer">
@@ -1648,6 +1694,38 @@
         <div class="wd" id="habit-days" role="group" aria-label="Dias da semana" hidden></div>
         <input type="number" id="habit-target" min="1" max="7" value="3" title="Quantas vezes por semana" aria-label="Vezes por semana" hidden>
         <button class="btn-ghost" id="habit-add">Adicionar</button>
+      </div>
+    </section>
+
+    <!-- LISTAS -->
+    <section class="panel lists" id="panel-lists">
+      <div class="panel-head">
+        <h2 class="panel-title"><span class="panel-icon teal" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h6"/></svg></span>Listas</h2>
+        <span class="panel-title" id="lists-count"></span>
+      </div>
+
+      <div class="lists-nav" id="lists-nav" role="tablist" aria-label="Suas listas"></div>
+      <div class="empty-state" id="lists-empty" hidden>
+        Nenhuma lista ainda. Crie uma abaixo — compras, mala de viagem, o que for.
+      </div>
+
+      <div class="list-actions" id="list-actions" hidden>
+        <button class="btn-ghost" id="list-rename">Renomear</button>
+        <button class="btn-ghost danger" id="list-delete">Excluir lista</button>
+      </div>
+
+      <ul class="task-list" id="list-items"></ul>
+      <div class="empty-state" id="list-items-empty" hidden>
+        Lista vazia. Adicione o primeiro item abaixo.
+      </div>
+      <div class="new-task" id="new-list-item" hidden>
+        <input type="text" id="list-item-text" placeholder="Novo item" maxlength="120" aria-label="Novo item">
+        <button class="btn-ghost" id="list-item-add">Adicionar</button>
+      </div>
+
+      <div class="new-habit">
+        <input type="text" id="list-name" placeholder="Nova lista (ex.: compras do mês)" maxlength="60" aria-label="Nome da lista">
+        <button class="btn-ghost" id="list-add">Criar lista</button>
       </div>
     </section>
 
@@ -2079,7 +2157,17 @@
     <div class="field"><label for="p-capsule">Cápsula do tempo</label><span class="switch"><input type="checkbox" id="p-capsule"></span></div>
     <div class="field"><label for="p-music">Música ambiente</label><span class="switch"><input type="checkbox" id="p-music"></span></div>
     <div class="field"><label for="p-dev">Ferramentas de dev</label><span class="switch"><input type="checkbox" id="p-dev"></span></div>
+    <div class="field"><label for="p-lists">Listas</label><span class="switch"><input type="checkbox" id="p-lists"></span></div>
     <p class="hint">Ocultar um painel não apaga nada: os registros continuam guardados e voltam quando você reativar.</p>
+
+    <p class="cap-meta" style="margin-top:10px">O que entra no resumo da semana</p>
+    <div class="field"><label for="p-card-season">Nome da temporada</label><span class="switch"><input type="checkbox" id="p-card-season"></span></div>
+    <div class="field"><label for="p-card-numbers">Pomodoros, foco, tarefas e hábitos</label><span class="switch"><input type="checkbox" id="p-card-numbers"></span></div>
+    <div class="field"><label for="p-card-chart">Gráfico da semana</label><span class="switch"><input type="checkbox" id="p-card-chart"></span></div>
+    <div class="field"><label for="p-card-reading">Leitura e séries</label><span class="switch"><input type="checkbox" id="p-card-reading"></span></div>
+    <div class="field"><label for="p-card-highlight">Destaque da semana</label><span class="switch"><input type="checkbox" id="p-card-highlight"></span></div>
+    <div class="field"><label for="p-card-dev">Linhas de dev</label><span class="switch"><input type="checkbox" id="p-card-dev"></span></div>
+    <p class="hint">Só afeta o cartão da imagem — os dados continuam todos guardados.</p>
   </div>
   <div class="dlg-foot">
     <button class="btn-ghost" id="btn-export">Baixar backup</button>
@@ -2364,6 +2452,14 @@
   </div>
 </dialog>
 
+<div class="mini-player" id="mini-player" hidden>
+  <span class="mini-player-label" id="mini-player-label"></span>
+  <button class="btn-ghost icon-only" id="mini-player-toggle" aria-label="Tocar"></button>
+  <button class="btn-ghost icon-only" id="mini-player-close" aria-label="Remover player" title="Remover player">
+    <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>
+  </button>
+</div>
+
 <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -2386,7 +2482,11 @@
     watchLog: [],
     seasons: [],
     milestones: [],
-    panels: { habitos:true, leitura:true, tela:true, objetivos:true, pdi:true, temporada:true, capsula:true, musica:true },
+    panels: { habitos:true, leitura:true, tela:true, objetivos:true, pdi:true, temporada:true, capsula:true, musica:true, listas:true },
+    cardFields: { season:true, numbers:true, chart:true, reading:true, highlight:true, dev:true },
+    lists: [],
+    listItems: [],
+    activeListId: null,
     goals: [],
     noteFolders: [],
     notePages: [],
@@ -2457,6 +2557,10 @@
     if(Array.isArray(d.seasons)) s.seasons = d.seasons;
     if(Array.isArray(d.milestones)) s.milestones = d.milestones;
     if(d.panels) Object.assign(s.panels, d.panels);
+    if(d.cardFields) Object.assign(s.cardFields, d.cardFields);
+    if(Array.isArray(d.lists)) s.lists = d.lists;
+    if(Array.isArray(d.listItems)) s.listItems = d.listItems;
+    if(typeof d.activeListId !== "undefined") s.activeListId = d.activeListId;
     if(Array.isArray(d.goals)) s.goals = d.goals;
     if(Array.isArray(d.noteFolders)) s.noteFolders = d.noteFolders;
     if(Array.isArray(d.notePages)) s.notePages = d.notePages;
@@ -2523,7 +2627,8 @@
   function markDeletedMany(ids){ ids.forEach(markDeleted); }
 
   var SYNCED_ARRAYS = ["tasks","sessions","habits","books","readLog","capsules",
-    "media","watchLog","seasons","milestones","builds","duckNotes","goals","noteFolders","notePages","pdi","reviews","meetings","studyTopics"];
+    "media","watchLog","seasons","milestones","builds","duckNotes","goals","noteFolders","notePages","pdi","reviews","meetings","studyTopics",
+    "lists","listItems"];
 
   // funde um estado recebido (de outra aba ou do servidor) com o local, sem
   // perder nada dos dois lados — pura, não depende de qual é o S de agora
@@ -3102,6 +3207,7 @@
     // só atualiza a página de notas se a aba dela for a ativa agora — mais
     // barato, e renderNoteEditor() já protege o que estiver sendo digitado
     if(S.activeTab === "notas") renderNotesPage();
+    if(S.activeTab === "listas") renderLists();
   }
 
   function paintClock(){
@@ -4169,6 +4275,152 @@
     input.focus();
   }
 
+  /* ---------- listas ---------- */
+  function activeList(){
+    return S.lists.filter(function(l){ return l.id === S.activeListId; })[0] || null;
+  }
+
+  function listItemsFor(listId){
+    return S.listItems.filter(function(it){ return it.listId === listId; });
+  }
+
+  function renderLists(){
+    // a lista ativa pode ter sido apagada (em outro aparelho, por exemplo) —
+    // cai pra primeira disponível em vez de deixar a tela sem nada selecionado
+    if(S.activeListId && !activeList()) S.activeListId = null;
+    if(!S.activeListId && S.lists.length) S.activeListId = S.lists[0].id;
+
+    var nav = $("lists-nav");
+    nav.innerHTML = "";
+    nav.hidden = !S.lists.length;
+    $("lists-empty").hidden = S.lists.length > 0;
+
+    S.lists.forEach(function(l){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.setAttribute("role", "tab");
+      b.setAttribute("aria-selected", String(l.id === S.activeListId));
+      b.textContent = l.name;
+      b.onclick = function(){ S.activeListId = l.id; save(); renderLists(); };
+      nav.appendChild(b);
+    });
+
+    var list = activeList();
+    $("list-actions").hidden = !list;
+    $("new-list-item").hidden = !list;
+
+    var items = list ? listItemsFor(list.id) : [];
+    var ul = $("list-items");
+    ul.innerHTML = "";
+    items.forEach(function(it){ ul.appendChild(listItemRow(it)); });
+    $("list-items-empty").hidden = !list || items.length > 0;
+    $("lists-count").textContent = list && items.length
+      ? items.filter(function(it){ return it.checked; }).length + "/" + items.length
+      : "";
+  }
+
+  function listItemRow(it){
+    var li = document.createElement("li");
+    li.className = "task" + (it.checked ? " done" : "");
+
+    var chk = document.createElement("button");
+    chk.className = "check";
+    chk.textContent = "✓";
+    chk.setAttribute("aria-label", it.checked ? "Desmarcar item" : "Marcar item");
+    chk.onclick = function(){ toggleListItem(it.id); };
+
+    var title = document.createElement("span");
+    title.className = "title";
+    title.textContent = it.text;
+
+    var del = document.createElement("button");
+    del.className = "kill";
+    del.textContent = "×";
+    del.setAttribute("aria-label", "Excluir item");
+    del.onclick = function(){ removeListItem(it.id); };
+
+    li.appendChild(chk); li.appendChild(title); li.appendChild(del);
+    return li;
+  }
+
+  function createList(){
+    var input = $("list-name");
+    var name = input.value.trim();
+    if(!name){ input.focus(); return; }
+    var l = { id: uid(), name: name, createdAt: Date.now() };
+    S.lists.push(l);
+    S.activeListId = l.id;
+    input.value = "";
+    save(); renderLists();
+    input.focus();
+  }
+
+  function renameList(){
+    var list = activeList();
+    if(!list) return;
+    var btn = Array.prototype.filter.call($("lists-nav").children, function(b){
+      return b.getAttribute("aria-selected") === "true";
+    })[0];
+    if(!btn) return;
+    var inp = document.createElement("input");
+    inp.type = "text";
+    inp.value = list.name;
+    inp.maxLength = 60;
+    inp.setAttribute("aria-label", "Novo nome da lista");
+    btn.replaceWith(inp);
+    inp.focus(); inp.select();
+    var settled = false;
+    function commit(){
+      if(settled) return;
+      settled = true;
+      var v = inp.value.trim();
+      if(v) list.name = v;
+      save(); renderLists();
+    }
+    inp.addEventListener("blur", commit);
+    inp.addEventListener("keydown", function(e){
+      if(e.key === "Enter") commit();
+      if(e.key === "Escape"){ settled = true; renderLists(); }
+    });
+  }
+
+  async function deleteList(){
+    var list = activeList();
+    if(!list) return;
+    if(!(await askConfirm("Excluir a lista “" + list.name + "”? Os itens dela vão junto.", { danger:true }))) return;
+    var ids = listItemsFor(list.id).map(function(it){ return it.id; });
+    S.listItems = S.listItems.filter(function(it){ return it.listId !== list.id; });
+    S.lists = S.lists.filter(function(l){ return l.id !== list.id; });
+    markDeletedMany(ids.concat([list.id]));
+    S.activeListId = null;
+    save(); renderLists();
+  }
+
+  function addListItem(){
+    var list = activeList();
+    if(!list) return;
+    var input = $("list-item-text");
+    var text = input.value.trim();
+    if(!text){ input.focus(); return; }
+    S.listItems.push({ id: uid(), listId: list.id, text: text, checked: false, createdAt: Date.now() });
+    input.value = "";
+    save(); renderLists();
+    input.focus();
+  }
+
+  function toggleListItem(id){
+    var it = S.listItems.filter(function(x){ return x.id === id; })[0];
+    if(!it) return;
+    it.checked = !it.checked;
+    save(); renderLists();
+  }
+
+  function removeListItem(id){
+    S.listItems = S.listItems.filter(function(it){ return it.id !== id; });
+    markDeleted(id);
+    save(); renderLists();
+  }
+
   /* ---------- cor por tópico ---------- */
   var HUES = [8, 32, 48, 96, 150, 186, 214, 258, 300, 336];
 
@@ -4699,6 +4951,7 @@
     var g = cv.getContext("2d");
     var W = cv.width, H = cv.height;
     var d = cardData();
+    var cf = S.cardFields;
 
     g.fillStyle = CARD.bg;
     g.fillRect(0, 0, W, H);
@@ -4707,7 +4960,7 @@
     g.strokeStyle = CARD.grid2;
     g.lineWidth = 1;
     for(var x = 0; x <= W; x += 45){ g.beginPath(); g.moveTo(x+.5, 0); g.lineTo(x+.5, H); g.stroke(); }
-    for(var y = 0; y <= H; y += 45){ g.beginPath(); g.moveTo(0, y+.5); g.lineTo(W, y+.5); g.stroke(); }
+    for(var gy0 = 0; gy0 <= H; gy0 += 45){ g.beginPath(); g.moveTo(0, gy0+.5); g.lineTo(W, gy0+.5); g.stroke(); }
 
     var M = 80;                       // margem
     var mono = '"Inter", ui-monospace, monospace';
@@ -4733,71 +4986,89 @@
       }
     }
 
+    // cursor vertical: cada bloco só avança o "y" se estiver ligado em
+    // S.cardFields — assim desligar um pedaço não deixa buraco no meio do
+    // cartão, o que vem depois simplesmente sobe
+    var y = 118;
+
     var sea = currentSeason();
-    if(sea) txt(("TEMPORADA " + sea.name).toUpperCase(), M, 118, 20, CARD.ink3, "mono", "left", 4);
+    if(sea && cf.season){
+      txt(("TEMPORADA " + sea.name).toUpperCase(), M, y, 20, CARD.ink3, "mono", "left", 4);
+      y += 60;
+    }
 
     var mi = d.ini.toLocaleDateString("pt-BR", { month:"long" });
     var mf = d.fim.toLocaleDateString("pt-BR", { month:"long" });
     var periodo = d.ini.getDate() + " de " + mi + " – " + d.fim.getDate() + " de " + mf;
-    txt(periodo, M, 178, 44, CARD.ink, "sans");
+    txt(periodo, M, y, 44, CARD.ink, "sans");
+    y += 36;
 
     g.strokeStyle = CARD.line;
-    g.beginPath(); g.moveTo(M, 214); g.lineTo(W - M, 214); g.stroke();
+    g.beginPath(); g.moveTo(M, y + .5); g.lineTo(W - M, y + .5); g.stroke();
+    y += 116;
 
     // números principais
-    var col = [M, W/2 + 10];
-    var linha = 330;
-    function bloco(x, y, valor, rotulo, cor){
-      txt(String(valor), x, y, 92, cor, "mono");
-      txt(rotulo.toUpperCase(), x, y + 42, 18, CARD.ink3, "mono", "left", 3.5);
+    function bloco(x, yy, valor, rotulo, cor){
+      txt(String(valor), x, yy, 92, cor, "mono");
+      txt(rotulo.toUpperCase(), x, yy + 42, 18, CARD.ink3, "mono", "left", 3.5);
     }
-    bloco(col[0], linha, d.pomos, "pomodoros", CARD.signal);
-    bloco(col[1], linha, fmtDuration(d.min * MIN), "de foco", CARD.ink);
-    bloco(col[0], linha + 175, d.tarefas, "tarefas concluídas", CARD.ink);
-    bloco(col[1], linha + 175, d.habitos.devidos ? d.habitos.feitos + "/" + d.habitos.devidos : "—", "hábitos", CARD.green);
+    if(cf.numbers){
+      var col = [M, W/2 + 10];
+      bloco(col[0], y, d.pomos, "pomodoros", CARD.signal);
+      bloco(col[1], y, fmtDuration(d.min * MIN), "de foco", CARD.ink);
+      bloco(col[0], y + 175, d.tarefas, "tarefas concluídas", CARD.ink);
+      bloco(col[1], y + 175, d.habitos.devidos ? d.habitos.feitos + "/" + d.habitos.devidos : "—", "hábitos", CARD.green);
+      y += 175 + 115;
+    }
 
     // gráfico da semana
-    var gx = M, gy = 620, gw = W - M*2, gh = 270;
-    var max = Math.max.apply(null, d.porDia.concat([1]));
-    var slot = gw / 7;
-    var bw = Math.min(64, slot * 0.5);
-    g.strokeStyle = CARD.line;
-    g.beginPath(); g.moveTo(gx, gy + gh + .5); g.lineTo(gx + gw, gy + gh + .5); g.stroke();
+    if(cf.chart){
+      var gx = M, gyc = y, gw = W - M*2, gh = 270;
+      var max = Math.max.apply(null, d.porDia.concat([1]));
+      var slot = gw / 7;
+      var bw = Math.min(64, slot * 0.5);
+      g.strokeStyle = CARD.line;
+      g.beginPath(); g.moveTo(gx, gyc + gh + .5); g.lineTo(gx + gw, gyc + gh + .5); g.stroke();
 
-    var nomes = ["seg","ter","qua","qui","sex","sáb","dom"];
-    d.porDia.forEach(function(v, i){
-      var h = v ? Math.max(6, (v / max) * gh) : 6;
-      var x = gx + i*slot + (slot - bw)/2;
-      g.fillStyle = v ? CARD.signal : CARD.grid;
-      g.fillRect(x, gy + gh - h, bw, h);
-      txt(nomes[i], gx + i*slot + slot/2, gy + gh + 36, 18, CARD.ink3, "mono", "center", 2);
-      if(v) txt(String(v), gx + i*slot + slot/2, gy + gh - h - 16, 20, CARD.ink2, "mono", "center");
-    });
+      var nomes = ["seg","ter","qua","qui","sex","sáb","dom"];
+      d.porDia.forEach(function(v, i){
+        var h = v ? Math.max(6, (v / max) * gh) : 6;
+        var xx = gx + i*slot + (slot - bw)/2;
+        g.fillStyle = v ? CARD.signal : CARD.grid;
+        g.fillRect(xx, gyc + gh - h, bw, h);
+        txt(nomes[i], gx + i*slot + slot/2, gyc + gh + 36, 18, CARD.ink3, "mono", "center", 2);
+        if(v) txt(String(v), gx + i*slot + slot/2, gyc + gh - h - 16, 20, CARD.ink2, "mono", "center");
+      });
+      y += gh + 110;
+    }
 
-    // rodapé: leitura, tela e destaque
-    var fy = 1000;
-    g.strokeStyle = CARD.line;
-    g.beginPath(); g.moveTo(M, fy); g.lineTo(W - M, fy); g.stroke();
-
+    // rodapé: leitura, tela, destaque e dev — cada grupo só entra se a linha
+    // correspondente estiver ligada nos Ajustes
     var linhas = [];
-    if(d.paginas) linhas.push(d.paginas + " páginas lidas");
-    if(d.eps) linhas.push(d.eps + (d.eps === 1 ? " episódio" : " episódios"));
-    if(d.livros.length) linhas.push(d.livros.length === 1 ? "1 livro terminado" : d.livros.length + " livros terminados");
-    if(d.topo) linhas.push("mais tempo em " + d.topo + " (" + d.topoN + ")");
-    if(S.dev && d.dev.buildCount) linhas.push(fmtShort(d.dev.buildMin) + " esperando build (" + d.dev.buildCount + "x)");
-    if(S.dev && d.dev.duckCount){
+    if(cf.reading){
+      if(d.paginas) linhas.push(d.paginas + " páginas lidas");
+      if(d.eps) linhas.push(d.eps + (d.eps === 1 ? " episódio" : " episódios"));
+      if(d.livros.length) linhas.push(d.livros.length === 1 ? "1 livro terminado" : d.livros.length + " livros terminados");
+    }
+    if(cf.highlight && d.topo) linhas.push("mais tempo em " + d.topo + " (" + d.topoN + ")");
+    if(cf.dev && S.dev && d.dev.buildCount) linhas.push(fmtShort(d.dev.buildMin) + " esperando build (" + d.dev.buildCount + "x)");
+    if(cf.dev && S.dev && d.dev.duckCount){
       linhas.push(d.dev.duckCount + (d.dev.duckCount === 1 ? " sessão de patoterapia" : " sessões de patoterapia") +
                   (d.dev.duckSolved ? " · " + d.dev.duckSolved + " resolvida" + (d.dev.duckSolved > 1 ? "s" : "") : ""));
     }
-    if(S.dev && d.dev.reviewCount){
+    if(cf.dev && S.dev && d.dev.reviewCount){
       linhas.push(fmtShort(d.dev.reviewMin) + " revisando código (" + d.dev.reviewCount + "x)");
     }
-    if(S.dev && d.dev.meetingCount){
+    if(cf.dev && S.dev && d.dev.meetingCount){
       linhas.push(fmtShort(d.dev.meetingMin) + " em reunião (" + d.dev.meetingCount + "x)");
     }
     if(!linhas.length) linhas.push("uma semana em branco também conta");
 
-    var maxLinhas = S.dev ? 6 : 4;
+    var fy = y;
+    g.strokeStyle = CARD.line;
+    g.beginPath(); g.moveTo(M, fy + .5); g.lineTo(W - M, fy + .5); g.stroke();
+
+    var maxLinhas = (S.dev && cf.dev) ? 6 : 4;
     var yy = fy + 58;
     linhas.slice(0, maxLinhas).forEach(function(l){
       txt("·  " + l, M, yy, 30, CARD.ink2, "sans");
@@ -7696,6 +7967,7 @@
     $("section-capsule").hidden = !S.panels.capsula;
     $("panel-sound").hidden = !S.panels.musica;
     $("panel-dev").hidden = !S.dev;
+    $("panel-lists").hidden = !S.panels.listas;
     applyTabs();
   }
 
@@ -7710,7 +7982,8 @@
     habitos: ["panel-habits"],
     leitura: ["panel-reading", "panel-screen"],
     ferramentas: ["panel-dev"],
-    notas: ["page-notes"]
+    notas: ["page-notes"],
+    listas: ["panel-lists"]
   };
 
   function selectTab(tab){
@@ -7726,6 +7999,7 @@
     });
     if(S.activeTab !== tab){ S.activeTab = tab; save(); }
     if(tab === "notas") renderNotesPage();
+    if(tab === "listas") renderLists();
   }
 
   // esconde da barra as abas cujos painéis estão todos desligados nos
@@ -7780,6 +8054,17 @@
   }
 
   /* ---------- player externo ---------- */
+  // enablejsapi+origin é o que permite ao mini-player mandar play/pause de
+  // verdade pro iframe do YouTube depois (ver YT.Player em renderEmbed) —
+  // sem isso o botão flutuante não teria como controlar um player que já
+  // está tocando numa aba diferente
+  function youtubeSrc(kind, id){
+    var base = kind === "list"
+      ? "https://www.youtube.com/embed/videoseries?list=" + id
+      : "https://www.youtube.com/embed/" + id + "?rel=0";
+    return base + "&enablejsapi=1&origin=" + encodeURIComponent(location.origin);
+  }
+
   function parseEmbed(url){
     var u;
     try{ u = new URL(String(url).trim()); }catch(e){ return null; }
@@ -7791,21 +8076,100 @@
     if(host === "youtu.be"){
       var short = u.pathname.slice(1);
       if(!ID.test(short)) return null;
-      return { src:"https://www.youtube.com/embed/" + short + "?rel=0", h:220, kind:"YouTube" };
+      return { src:youtubeSrc("video", short), h:220, kind:"YouTube" };
     }
     if(host === "youtube.com" || host === "m.youtube.com" || host === "music.youtube.com"){
       var list = u.searchParams.get("list");
       var v = u.searchParams.get("v");
-      if(list && ID.test(list)) return { src:"https://www.youtube.com/embed/videoseries?list=" + list, h:220, kind:"YouTube" };
-      if(v && ID.test(v)) return { src:"https://www.youtube.com/embed/" + v + "?rel=0", h:220, kind:"YouTube" };
+      if(list && ID.test(list)) return { src:youtubeSrc("list", list), h:220, kind:"YouTube" };
+      if(v && ID.test(v)) return { src:youtubeSrc("video", v), h:220, kind:"YouTube" };
       return null;
     }
     if(host === "open.spotify.com"){
       var m = u.pathname.match(/^\/(?:intl-[a-z]{2}\/)?(playlist|album|track|episode|show)\/([A-Za-z0-9]+)/);
       if(!m) return null;
-      return { src:"https://open.spotify.com/embed/" + m[1] + "/" + m[2], h: m[1] === "track" ? 152 : 232, kind:"Spotify" };
+      return { src:"https://open.spotify.com/embed/" + m[1] + "/" + m[2], uri:"spotify:" + m[1] + ":" + m[2],
+               h: m[1] === "track" ? 152 : 232, kind:"Spotify" };
     }
     return null;
+  }
+
+  // carrega a API oficial de cada serviço uma única vez, sob demanda — só
+  // quando o primeiro embed daquele tipo é montado, pra não pesar o
+  // carregamento de quem nunca usa player externo
+  var ytApiPromise = null;
+  function loadYouTubeApi(){
+    if(window.YT && window.YT.Player) return Promise.resolve(window.YT);
+    if(ytApiPromise) return ytApiPromise;
+    ytApiPromise = new Promise(function(resolve){
+      var prev = window.onYouTubeIframeAPIReady;
+      window.onYouTubeIframeAPIReady = function(){
+        if(prev) prev();
+        resolve(window.YT);
+      };
+      var s = document.createElement("script");
+      s.src = "https://www.youtube.com/iframe_api";
+      document.head.appendChild(s);
+    });
+    return ytApiPromise;
+  }
+
+  var spotifyApiPromise = null;
+  function loadSpotifyApi(){
+    if(spotifyApiPromise) return spotifyApiPromise;
+    spotifyApiPromise = new Promise(function(resolve){
+      var prev = window.onSpotifyIframeApiReady;
+      window.onSpotifyIframeApiReady = function(IFrameAPI){
+        if(prev) prev(IFrameAPI);
+        resolve(IFrameAPI);
+      };
+      var s = document.createElement("script");
+      s.src = "https://open.spotify.com/embed/iframe-api/v1";
+      s.async = true;
+      document.head.appendChild(s);
+    });
+    return spotifyApiPromise;
+  }
+
+  // estado do mini-player flutuante: a referência de controle de cada API
+  // (só uma existe por vez, conforme o "kind" do embed atual) e o último
+  // estado de play/pause que a própria API avisou por evento
+  var ytPlayer = null;
+  var spotifyController = null;
+  var miniPlayerState = "paused";
+
+  function toggleMiniPlayer(){
+    var e = S.sound.embed;
+    if(!e) return;
+    if(e.kind === "YouTube" && ytPlayer && ytPlayer.getPlayerState){
+      if(ytPlayer.getPlayerState() === 1) ytPlayer.pauseVideo(); else ytPlayer.playVideo();
+    }else if(e.kind === "Spotify" && spotifyController){
+      spotifyController.togglePlay();
+    }
+  }
+
+  function closeMiniPlayer(){
+    S.sound.embed = null;
+    save(); renderEmbed();
+  }
+
+  function renderMiniPlayer(){
+    var bar = $("mini-player");
+    var e = S.sound.embed;
+    if(!e){
+      bar.hidden = true;
+      document.body.classList.remove("has-mini-player");
+      return;
+    }
+    bar.hidden = false;
+    document.body.classList.add("has-mini-player");
+    $("mini-player-label").textContent = e.kind;
+    var playing = miniPlayerState === "playing";
+    var toggle = $("mini-player-toggle");
+    toggle.setAttribute("aria-label", playing ? "Pausar" : "Tocar");
+    toggle.innerHTML = playing
+      ? '<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg>'
+      : '<svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M7 4.5v15l13-7.5Z"/></svg>';
   }
 
   // guarda o src do iframe atualmente montado — renderEmbed() é chamado a cada
@@ -7821,27 +8185,71 @@
     if(!e){
       box.innerHTML = "";
       lastEmbedSrc = null;
+      ytPlayer = null;
+      spotifyController = null;
+      miniPlayerState = "paused";
       box.hidden = true;
-      $("embed-hint").textContent = "O player abre aqui dentro e continua tocando enquanto você usa o app. Precisa de internet, e o controle de play fica no próprio player.";
+      $("embed-hint").textContent = "O player abre aqui dentro e continua tocando enquanto você usa o app. Precisa de internet — o play/pause funciona tanto no player quanto no botão flutuante que aparece em qualquer aba.";
+      renderMiniPlayer();
       return;
     }
     if(e.src === lastEmbedSrc){
       box.hidden = false;
       $("embed-hint").textContent = "";
+      renderMiniPlayer();
       return;
     }
     box.innerHTML = "";
-    var f = document.createElement("iframe");
-    f.src = e.src;
-    f.height = e.h;
-    f.loading = "lazy";
-    f.title = "Player " + e.kind;
-    f.setAttribute("allow", "autoplay; encrypted-media; clipboard-write; picture-in-picture");
-    f.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
-    box.appendChild(f);
+    ytPlayer = null;
+    spotifyController = null;
+    miniPlayerState = "paused";
+    var expectedSrc = e.src;   // uma sincronização com o servidor pode trocar o
+                                // objeto S.sound.embed por outro com o mesmo src
+                                // antes da API externa terminar de carregar —
+                                // comparar pelo src (não pelo objeto) evita que
+                                // isso deixe o player anexado sem controle
+
+    if(e.kind === "Spotify"){
+      var holder = document.createElement("div");
+      box.appendChild(holder);
+      loadSpotifyApi().then(function(IFrameAPI){
+        if(!S.sound.embed || S.sound.embed.src !== expectedSrc) return;
+        IFrameAPI.createController(holder, { uri:e.uri, width:"100%", height:e.h }, function(EmbedController){
+          spotifyController = EmbedController;
+          EmbedController.addListener("playback_update", function(ev){
+            miniPlayerState = ev.data.isPaused ? "paused" : "playing";
+            renderMiniPlayer();
+          });
+        });
+      });
+    }else{
+      var f = document.createElement("iframe");
+      f.src = e.src;
+      f.height = e.h;
+      f.loading = "lazy";
+      f.title = "Player " + e.kind;
+      f.setAttribute("allow", "autoplay; encrypted-media; clipboard-write; picture-in-picture");
+      f.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
+      box.appendChild(f);
+      if(e.kind === "YouTube"){
+        loadYouTubeApi().then(function(YT){
+          if(!S.sound.embed || S.sound.embed.src !== expectedSrc) return;
+          ytPlayer = new YT.Player(f, {
+            events: {
+              onStateChange: function(ev){
+                miniPlayerState = ev.data === YT.PlayerState.PLAYING ? "playing" : "paused";
+                renderMiniPlayer();
+              }
+            }
+          });
+        });
+      }
+    }
+
     box.hidden = false;
     lastEmbedSrc = e.src;
     $("embed-hint").textContent = "";
+    renderMiniPlayer();
   }
 
   function exportHabitsCsv(){
@@ -8198,6 +8606,14 @@
   $("wk-prev").onclick = function(){ weekOffset--; renderHabits(); };
   $("wk-next").onclick = function(){ if(weekOffset < 0){ weekOffset++; renderHabits(); } };
 
+  // listas
+  $("list-add").onclick = createList;
+  $("list-name").addEventListener("keydown", function(e){ if(e.key === "Enter") createList(); });
+  $("list-item-add").onclick = addListItem;
+  $("list-item-text").addEventListener("keydown", function(e){ if(e.key === "Enter") addListItem(); });
+  $("list-rename").onclick = renameList;
+  $("list-delete").onclick = deleteList;
+
   // som ambiente
   document.querySelectorAll("#amb button").forEach(function(b){
     b.onclick = function(){
@@ -8377,8 +8793,7 @@
 
   $("embed-clear").onclick = function(){
     if(!S.sound.embed){ toast("Nenhum player carregado"); return; }
-    S.sound.embed = null;
-    save(); renderEmbed();
+    closeMiniPlayer();
   };
 
   // atalhos pra rádio de verdade tocando. Os ids de vídeo são fixos — a Lofi Girl
@@ -8386,16 +8801,19 @@
   // do ar em maio/2026 por questão de direitos autorais), então se um dia um
   // desses parar de tocar, é só colar o link da transmissão atual na caixa acima
   $("embed-lofi-girl").onclick = function(){
-    S.sound.embed = { src:"https://www.youtube.com/embed/XVFUtEh9zrY?rel=0", h:220, kind:"YouTube" };
+    S.sound.embed = { src:youtubeSrc("video", "XVFUtEh9zrY"), h:220, kind:"YouTube" };
     save(); renderEmbed();
     toast("Lofi Girl carregada");
   };
 
   $("embed-synthwave").onclick = function(){
-    S.sound.embed = { src:"https://www.youtube.com/embed/4xDzrJKXOOY?rel=0", h:220, kind:"YouTube" };
+    S.sound.embed = { src:youtubeSrc("video", "4xDzrJKXOOY"), h:220, kind:"YouTube" };
     save(); renderEmbed();
     toast("Synthwave Radio carregada");
   };
+
+  $("mini-player-toggle").onclick = toggleMiniPlayer;
+  $("mini-player-close").onclick = closeMiniPlayer;
 
   $("task-add").onclick = addTask;
   $("task-input").addEventListener("keydown", function(e){ if(e.key === "Enter") addTask(); });
@@ -8462,6 +8880,13 @@
     $("p-capsule").checked = !!S.panels.capsula;
     $("p-music").checked = !!S.panels.musica;
     $("p-dev").checked = !!S.dev;
+    $("p-lists").checked = !!S.panels.listas;
+    $("p-card-season").checked = !!S.cardFields.season;
+    $("p-card-numbers").checked = !!S.cardFields.numbers;
+    $("p-card-chart").checked = !!S.cardFields.chart;
+    $("p-card-reading").checked = !!S.cardFields.reading;
+    $("p-card-highlight").checked = !!S.cardFields.highlight;
+    $("p-card-dev").checked = !!S.cardFields.dev;
     dlg.showModal();
   };
   $("dlg-close").onclick = function(){ dlg.close(); };
@@ -8503,10 +8928,17 @@
     save(); applyPanels(); renderTasks(); renderTimer();   // o botão de branch aparece nas tarefas; "Estudando" some/aparece junto
   };
 
-  [["p-habits","habitos"], ["p-reading","leitura"], ["p-screen","tela"], ["p-goals","objetivos"], ["p-pdi","pdi"], ["p-season","temporada"], ["p-capsule","capsula"], ["p-music","musica"]].forEach(function(par){
+  [["p-habits","habitos"], ["p-reading","leitura"], ["p-screen","tela"], ["p-goals","objetivos"], ["p-pdi","pdi"], ["p-season","temporada"], ["p-capsule","capsula"], ["p-music","musica"], ["p-lists","listas"]].forEach(function(par){
     $(par[0]).onchange = function(){
       S.panels[par[1]] = this.checked;
       save(); applyPanels();
+    };
+  });
+
+  [["p-card-season","season"], ["p-card-numbers","numbers"], ["p-card-chart","chart"], ["p-card-reading","reading"], ["p-card-highlight","highlight"], ["p-card-dev","dev"]].forEach(function(par){
+    $(par[0]).onchange = function(){
+      S.cardFields[par[1]] = this.checked;
+      save();
     };
   });
 
