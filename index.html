@@ -1208,10 +1208,18 @@
   .notes-folder-add{display:flex;gap:6px;border-top:1px solid var(--line);padding-top:calc(var(--sp)*2)}
   .notes-folder-add input{flex:1;min-width:0;font-size:13px}
   .notes-main{flex:1;min-width:0}
+  .notes-search-row{
+    display:flex;align-items:center;gap:8px;margin-bottom:calc(var(--sp)*2);
+    background:var(--card);border:1px solid var(--grid-a);border-radius:var(--r-md);padding:9px 12px;color:var(--ink-3);
+  }
+  .notes-search-row[hidden]{display:none}
+  .notes-search-row svg{flex:none}
+  .notes-search-row input{flex:1;min-width:0;background:none;border:0;padding:0;font-size:13.5px;color:var(--ink)}
   .notes-main-head{display:flex;align-items:center;justify-content:space-between;gap:var(--sp);margin-bottom:calc(var(--sp)*2)}
   .notes-current-folder{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
   .notes-page-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
   .notes-page-list[hidden]{display:none}
+  .notes-page-list li{display:flex;align-items:center;gap:6px}
   .notes-page-empty{display:flex;flex-direction:column;align-items:center;gap:10px}
   /* mesmo problema do #main.grid: display:flex tem a mesma especificidade de
      [hidden], e como regra de autor sempre vence a regra padrão do navegador
@@ -1220,18 +1228,33 @@
   .notes-page-empty[hidden]{display:none}
   .notes-page-empty p{margin:0}
   .notes-empty-duck{width:100px;height:auto;opacity:.85}
+  .note-pin-btn{
+    flex:none;background:none;border:0;padding:6px;border-radius:var(--r-sm);color:var(--ink-3);
+    display:flex;align-items:center;justify-content:center;cursor:pointer;min-height:0;
+  }
+  .note-pin-btn:hover{background:var(--card);color:var(--ink)}
+  .note-pin-btn.active{color:var(--amber-ink)}
   .notes-page-row{
     display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--grid-a);
-    border-radius:var(--r-md);padding:11px 14px;cursor:pointer;text-align:left;width:100%;
+    border-radius:var(--r-md);padding:11px 14px;cursor:pointer;text-align:left;flex:1;min-width:0;
   }
   .notes-page-row:hover{border-color:var(--ink-3)}
   .notes-page-row-title{flex:1;min-width:0;display:flex;align-items:center;gap:7px;font-size:14px;color:var(--ink)}
   .notes-page-row-title svg{flex:none;color:var(--ink-3)}
   .notes-page-row-title span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .notes-page-row-meta{display:flex;align-items:center;gap:6px;flex:none}
+  .notes-page-row-link{
+    font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+    color:var(--ink-2);background:var(--grid-a);border-radius:var(--r-md);padding:3px 6px;
+    max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:none;
+  }
   .notes-page-row-date{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);flex:none}
   .notes-editor{background:var(--panel);border:1px solid var(--glass-border);border-radius:var(--r-lg);padding:calc(var(--sp)*2);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
   .notes-editor-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:calc(var(--sp)*2)}
   .notes-editor-title{flex:1;min-width:160px;font-size:15px;font-weight:600;font-family:var(--sans)}
+  .notes-editor-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:calc(var(--sp)*2)}
+  #notes-editor-pin.active{color:var(--amber-ink);border-color:var(--amber)}
+  #notes-editor-link{font-size:12.5px;min-width:0;max-width:100%}
   .notes-editor-body{
     width:100%;min-height:min(50vh,420px);font-family:var(--mono);font-size:13.5px;line-height:1.65;
     resize:vertical;background:var(--card);border:1px solid var(--grid-a);border-radius:var(--r-md);
@@ -1851,6 +1874,10 @@
         </div>
       </aside>
       <div class="notes-main">
+        <div class="notes-search-row" id="notes-search-row">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="notes-search" placeholder="Buscar em todas as notas…" aria-label="Buscar notas">
+        </div>
         <div class="notes-main-head">
           <span class="notes-current-folder" id="notes-current-folder"></span>
           <button class="btn-main" id="notes-page-add">
@@ -1880,7 +1907,7 @@
             <circle cx="37" cy="10.2" r=".6" fill="#fff" opacity=".85"/>
             <circle cx="32.4" cy="14.6" r="1.5" fill="#fff" opacity=".18"/>
           </svg>
-          <p>Nenhuma nota aqui ainda. Clique em "Nova nota" para começar.</p>
+          <p id="notes-page-empty-text">Nenhuma nota aqui ainda. Clique em "Nova nota" para começar.</p>
         </div>
         <div class="notes-editor" id="notes-editor" hidden>
           <div class="notes-editor-head">
@@ -1890,6 +1917,15 @@
             <input type="text" id="notes-editor-title" class="notes-editor-title" placeholder="Título da nota" maxlength="140" aria-label="Título da nota">
             <button class="btn-ghost" id="notes-editor-toggle">Visualizar</button>
             <button class="kill" id="notes-editor-delete" aria-label="Excluir nota">×</button>
+          </div>
+          <div class="notes-editor-meta">
+            <button type="button" class="btn-ghost" id="notes-editor-pin" aria-label="Fixar nota">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="none" aria-hidden="true"><path d="M12 2a4 4 0 0 1 4 4c0 2-1.5 3.2-2 4.5L18 15H6l4-4.5C9.5 9.2 8 8 8 6a4 4 0 0 1 4-4Z"/><rect x="11" y="15" width="2" height="7" rx="1"/></svg>
+              <span id="notes-editor-pin-label">Fixar</span>
+            </button>
+            <select id="notes-editor-link" aria-label="Vincular a uma tarefa ou tópico de estudo">
+              <option value="">Sem vínculo</option>
+            </select>
           </div>
           <textarea id="notes-editor-body" class="notes-editor-body" placeholder="Escreva em Markdown…" aria-label="Corpo da nota"></textarea>
           <div class="notes-editor-preview markdown-body" id="notes-editor-preview" hidden></div>
@@ -6267,12 +6303,40 @@
   var notesOpenPageId = null;       // nota aberta no editor, ou null (mostra a lista)
   var notesPreviewMode = false;
   var notesEditorLoadedId = null;   // id da nota cujo título/corpo estão carregados nos campos agora
+  var notesSearch = "";             // busca ativa: quando preenchida, ignora a pasta selecionada e olha pra tudo
 
   function findNoteFolder(id){ return S.noteFolders.filter(function(f){ return f.id === id; })[0] || null; }
   function findNotePage(id){ return S.notePages.filter(function(p){ return p.id === id; })[0] || null; }
 
   var FOLDER_ICON_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg>';
   var FILE_ICON_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M15 3v5h5"/></svg>';
+  var PIN_ICON_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" stroke="none" aria-hidden="true"><path d="M12 2a4 4 0 0 1 4 4c0 2-1.5 3.2-2 4.5L18 15H6l4-4.5C9.5 9.2 8 8 8 6a4 4 0 0 1 4-4Z"/><rect x="11" y="15" width="2" height="7" rx="1"/></svg>';
+
+  // nota vinculada a uma tarefa ou a um tópico de estudo — puramente
+  // informativo (não move nada de lugar), só pra achar de relance qual
+  // anotação pertence a qual pendência quando a lista crescer
+  function noteLinkLabel(p){
+    if(!p || !p.linkType || !p.linkId) return null;
+    if(p.linkType === "task"){ var t = findTask(p.linkId); return t ? t.title : null; }
+    if(p.linkType === "topic"){ var s = findStudyTopic(p.linkId); return s ? s.title : null; }
+    return null;
+  }
+
+  function toggleNotePin(id){
+    var p = findNotePage(id);
+    if(!p) return;
+    p.pinned = !p.pinned;
+    save(); renderNotesPage();
+  }
+
+  function setNoteLink(id, type, linkId){
+    var p = findNotePage(id);
+    if(!p) return;
+    p.linkType = type || null;
+    p.linkId = linkId || null;
+    p.updatedAt = Date.now();
+    save(); renderNotesPage();
+  }
 
   // mesma paleta/mecânica de cor por tópico (HUES, cycleTopicColor) já usada
   // em tarefas — reaproveitada aqui pra pasta em vez de reinventar um seletor
@@ -6443,6 +6507,10 @@
         notesSelectedFolder = id;
         notesOpenPageId = null;
         notesEditorLoadedId = null;
+        // busca ativa "vence" o filtro de pasta na lista (ver renderNotePageList)
+        // — sem limpar aqui, clicar numa pasta pareceria não fazer nada
+        notesSearch = "";
+        $("notes-search").value = "";
         renderNotesPage();
       };
       li.appendChild(btn);
@@ -6478,33 +6546,74 @@
     var list = $("notes-page-list");
     var empty = $("notes-page-empty");
     var head = $("notes-current-folder");
+    var searchRow = $("notes-search-row");
 
-    if(notesOpenPageId){ list.hidden = true; empty.hidden = true; return; }
+    if(notesOpenPageId){ list.hidden = true; empty.hidden = true; searchRow.hidden = true; return; }
+    searchRow.hidden = false;
 
-    var folder = notesSelectedFolder !== "all" && notesSelectedFolder !== "none" ? findNoteFolder(notesSelectedFolder) : null;
-    head.textContent = notesSelectedFolder === "all" ? "todas as notas"
-      : notesSelectedFolder === "none" ? "sem pasta"
-      : (folder ? folder.name : "pasta");
+    var q = notesSearch.trim().toLowerCase();
+    var pages;
+    if(q){
+      // busca olha pra todas as notas, não só a pasta selecionada — o ponto
+      // é achar rápido, e a pasta some da vista assim que a busca começa
+      pages = S.notePages.filter(function(p){
+        var hay = ((p.title || "") + " " + (p.body || "")).toLowerCase();
+        return hay.indexOf(q) >= 0;
+      });
+      head.textContent = "resultados para “" + notesSearch.trim() + "”";
+    }else{
+      var folder = notesSelectedFolder !== "all" && notesSelectedFolder !== "none" ? findNoteFolder(notesSelectedFolder) : null;
+      head.textContent = notesSelectedFolder === "all" ? "todas as notas"
+        : notesSelectedFolder === "none" ? "sem pasta"
+        : (folder ? folder.name : "pasta");
+      pages = currentFolderNotes();
+    }
 
-    var pages = currentFolderNotes().slice().sort(function(a, b){
+    // fixadas primeiro, e dentro de cada grupo a mais recente primeiro
+    pages = pages.slice().sort(function(a, b){
+      if(!!b.pinned !== !!a.pinned) return (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
       return (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt);
     });
+
     list.hidden = false;
     list.innerHTML = "";
     empty.hidden = pages.length > 0;
+    $("notes-page-empty-text").textContent = q
+      ? "Nenhuma nota encontrada para “" + notesSearch.trim() + "”."
+      : "Nenhuma nota aqui ainda. Clique em \"Nova nota\" para começar.";
 
     pages.forEach(function(p){
       var li = document.createElement("li");
+
+      var pinBtn = document.createElement("button");
+      pinBtn.type = "button";
+      pinBtn.className = "note-pin-btn" + (p.pinned ? " active" : "");
+      pinBtn.innerHTML = PIN_ICON_SVG;
+      pinBtn.setAttribute("aria-label", p.pinned ? "Desafixar nota" : "Fixar nota");
+      pinBtn.title = p.pinned ? "Desafixar" : "Fixar";
+      pinBtn.onclick = function(ev){ ev.stopPropagation(); toggleNotePin(p.id); };
+      li.appendChild(pinBtn);
+
       var row = document.createElement("button");
       row.type = "button";
       row.className = "notes-page-row";
       var title = document.createElement("span");
       title.className = "notes-page-row-title";
       title.innerHTML = FILE_ICON_SVG + "<span>" + escapeHtml(p.title || "Sem título") + "</span>";
+      var meta = document.createElement("span");
+      meta.className = "notes-page-row-meta";
+      var linkLabel = noteLinkLabel(p);
+      if(linkLabel){
+        var linkTag = document.createElement("span");
+        linkTag.className = "notes-page-row-link";
+        linkTag.textContent = linkLabel;
+        meta.appendChild(linkTag);
+      }
       var date = document.createElement("span");
       date.className = "notes-page-row-date";
       date.textContent = new Date(p.updatedAt || p.createdAt).toLocaleDateString("pt-BR", { day:"numeric", month:"short" });
-      row.appendChild(title); row.appendChild(date);
+      meta.appendChild(date);
+      row.appendChild(title); row.appendChild(meta);
       // abre em modo de visualização — a pessoa clicou pra LER a nota, não
       // necessariamente pra editar; "Editar" fica a um clique de distância
       row.onclick = function(){ notesOpenPageId = p.id; notesPreviewMode = true; renderNotesPage(); };
@@ -6541,6 +6650,47 @@
     var preview = $("notes-editor-preview");
     preview.hidden = !notesPreviewMode;
     if(notesPreviewMode) preview.innerHTML = mdToHtml(bodyTa.value);
+
+    var pinBtn = $("notes-editor-pin");
+    pinBtn.classList.toggle("active", !!p.pinned);
+    $("notes-editor-pin-label").textContent = p.pinned ? "Fixada" : "Fixar";
+
+    var current = (p.linkType && p.linkId) ? (p.linkType + ":" + p.linkId) : "";
+    renderNoteLinkOptions($("notes-editor-link"), current);
+  }
+
+  // popula o seletor de vínculo com tarefas e tópicos de estudo atuais —
+  // refeito a cada render porque a lista de tarefas muda o tempo todo
+  function renderNoteLinkOptions(select, current){
+    select.innerHTML = "";
+    var noneOpt = document.createElement("option");
+    noneOpt.value = "";
+    noneOpt.textContent = "Sem vínculo";
+    select.appendChild(noneOpt);
+
+    if(S.tasks.length){
+      var gt = document.createElement("optgroup");
+      gt.label = "Tarefas";
+      S.tasks.forEach(function(t){
+        var o = document.createElement("option");
+        o.value = "task:" + t.id;
+        o.textContent = t.title + (t.completed ? " (concluída)" : "");
+        gt.appendChild(o);
+      });
+      select.appendChild(gt);
+    }
+    if(S.studyTopics.length){
+      var gs = document.createElement("optgroup");
+      gs.label = "Tópicos de estudo";
+      S.studyTopics.forEach(function(s){
+        var o = document.createElement("option");
+        o.value = "topic:" + s.id;
+        o.textContent = s.title;
+        gs.appendChild(o);
+      });
+      select.appendChild(gs);
+    }
+    select.value = current;
   }
 
   function commitNoteEditor(){
@@ -6580,7 +6730,7 @@
 
   function createNotePage(){
     var folderId = (notesSelectedFolder === "all" || notesSelectedFolder === "none") ? null : notesSelectedFolder;
-    var p = { id: uid(), folderId: folderId, title: "", body: "", createdAt: Date.now(), updatedAt: Date.now() };
+    var p = { id: uid(), folderId: folderId, title: "", body: "", pinned: false, linkType: null, linkId: null, createdAt: Date.now(), updatedAt: Date.now() };
     S.notePages.unshift(p);
     notesOpenPageId = p.id;
     notesPreviewMode = false;
@@ -7840,6 +7990,17 @@
   $("notes-editor-delete").onclick = function(){ if(notesOpenPageId) deleteNotePage(notesOpenPageId); };
   $("notes-editor-title").addEventListener("blur", commitNoteEditor);
   $("notes-editor-body").addEventListener("blur", commitNoteEditor);
+  $("notes-editor-pin").onclick = function(){ if(notesOpenPageId) toggleNotePin(notesOpenPageId); };
+  $("notes-editor-link").addEventListener("change", function(){
+    if(!notesOpenPageId) return;
+    var v = this.value;
+    var parts = v ? v.split(":") : null;
+    setNoteLink(notesOpenPageId, parts ? parts[0] : null, parts ? parts[1] : null);
+  });
+  $("notes-search").addEventListener("input", function(){
+    notesSearch = this.value;
+    renderNotePageList();
+  });
 
   $("account-change-pw").onclick = function(){
     $("pw-current").value = ""; $("pw-new").value = ""; $("changepw-error").textContent = "";
