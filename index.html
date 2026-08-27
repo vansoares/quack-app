@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Quack — registro de sessões</title>
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='14' cy='21' rx='9.4' ry='5.8' fill='%23E08A3C'/%3E%3Ccircle cx='20.5' cy='12.5' r='7' fill='%23E08A3C'/%3E%3Cpath d='M26.6 12.2 L31 13.6 L26.6 15.2 Z' fill='%23DBE3EF'/%3E%3Ccircle cx='22.4' cy='10.8' r='1.7' fill='%230F1621'/%3E%3Ccircle cx='23' cy='10.2' r='.6' fill='%23ffffff'/%3E%3Cg stroke='%2367788F' stroke-width='1.7' stroke-linecap='round'%3E%3Cline x1='2' y1='28' x2='10' y2='28'/%3E%3Cline x1='13' y1='28' x2='22' y2='28'/%3E%3Cline x1='25' y1='28' x2='30' y2='28'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='14' cy='21' rx='9.4' ry='5.8' fill='%23E08A3C'/%3E%3Ccircle cx='20.5' cy='12.5' r='7' fill='%23E08A3C'/%3E%3Cpath d='M26.6 12.2 Q31 13.6 26.6 15.2 Z' fill='%23DBE3EF'/%3E%3Ccircle cx='22.4' cy='10.8' r='1.7' fill='%230F1621'/%3E%3Ccircle cx='23' cy='10.2' r='.6' fill='%23ffffff'/%3E%3Cg stroke='%2367788F' stroke-width='1.7' stroke-linecap='round'%3E%3Cline x1='2' y1='28' x2='10' y2='28'/%3E%3Cline x1='13' y1='28' x2='22' y2='28'/%3E%3Cline x1='25' y1='28' x2='30' y2='28'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1307,7 +1307,7 @@
       <svg class="duck" viewBox="0 0 32 32" role="img" aria-label="Patinho de borracha">
         <ellipse cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>
         <circle cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>
-        <path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>
+        <path d="M26.6 12.2 Q31 13.6 26.6 15.2 Z" fill="var(--ink)"/>
         <circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>
         <circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>
         <circle cx="18.4" cy="14.6" r="1.5" fill="#fff" opacity=".18"/>
@@ -1432,7 +1432,7 @@
               <svg class="duck-orbit-duck" viewBox="0 0 24 24" width="24" height="24">
                 <ellipse cx="10.3" cy="15.6" rx="7.1" ry="4.5" fill="currentColor"/>
                 <circle cx="15.1" cy="9.4" r="4.9" fill="currentColor"/>
-                <path d="M19.4 9.1 L23 10.3 L19.4 11.4 Z" fill="var(--ink)"/>
+                <path d="M19.4 9.1 Q23 10.3 19.4 11.4 Z" fill="var(--ink)"/>
                 <g id="orbit-eyes">
                   <circle cx="16.7" cy="7.9" r="1.1" fill="var(--paper)"/>
                   <circle cx="17.1" cy="7.55" r=".4" fill="#fff" opacity=".9"/>
@@ -1879,7 +1879,7 @@
           <svg class="notes-sidebar-duck" viewBox="0 0 32 32" aria-hidden="true">
             <ellipse cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>
             <circle cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>
-            <path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>
+            <path d="M26.6 12.2 Q31 13.6 26.6 15.2 Z" fill="var(--ink)"/>
             <circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>
             <circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>
             <circle cx="18.4" cy="14.6" r="1.5" fill="#fff" opacity=".18"/>
@@ -1920,7 +1920,7 @@
             <!-- patinho -->
             <ellipse cx="28" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>
             <circle cx="34.5" cy="12.5" r="7" fill="var(--signal)"/>
-            <path d="M40.6 12.2 L45 13.6 L40.6 15.2 Z" fill="var(--ink)"/>
+            <path d="M40.6 12.2 Q45 13.6 40.6 15.2 Z" fill="var(--ink)"/>
             <circle cx="36.4" cy="10.8" r="1.7" fill="var(--paper)"/>
             <circle cx="37" cy="10.2" r=".6" fill="#fff" opacity=".85"/>
             <circle cx="32.4" cy="14.6" r="1.5" fill="#fff" opacity=".18"/>
@@ -5154,7 +5154,7 @@
     return '<svg class="' + cls + '" viewBox="0 0 32 32" aria-hidden="true">' +
       '<ellipse class="body" cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>' +
       '<circle class="body" cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>' +
-      '<path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>' +
+      '<path d="M26.6 12.2 Q31 13.6 26.6 15.2 Z" fill="var(--ink)"/>' +
       eyes +
       '</svg>';
   }
@@ -7777,18 +7777,19 @@
     }
     $("dev-ticks").innerHTML = out.join("");
   })();
-  // o patinho das Ferramentas de dev ganha um óculos (aro + haste) só pra
-  // diferenciar visualmente do patinho "padrão" do timer principal — mesmo
-  // corpo do duckSvg(), só com esse acessório extra por cima
+  // o patinho das Ferramentas de dev é o mesmo patinho de sempre (rosto
+  // intacto), só com um notebook na frente — o toque "modo dev" fica no
+  // acessório, não em mexer na cara dele
   $("dev-duck-wrap").innerHTML =
     '<svg viewBox="0 0 32 32" aria-hidden="true">' +
     '<ellipse class="body" cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>' +
     '<circle class="body" cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>' +
-    '<path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>' +
+    '<path d="M26.6 12.2 Q31 13.6 26.6 15.2 Z" fill="var(--ink)"/>' +
     '<circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>' +
     '<circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>' +
-    '<circle cx="22.4" cy="10.8" r="2.7" fill="none" stroke="var(--ink)" stroke-width="1.1"/>' +
-    '<path d="M25 11.3 Q26.7 12 26.3 13.7" fill="none" stroke="var(--ink)" stroke-width="1.1" stroke-linecap="round"/>' +
+    '<rect x="2" y="19" width="7.5" height="5.6" rx="0.8" fill="var(--ink-3)"/>' +
+    '<rect x="2.9" y="19.8" width="5.7" height="4" rx="0.3" fill="var(--card)"/>' +
+    '<path d="M0.8 25.2 L10.7 25.2 L11.6 26.6 L0 26.6 Z" fill="var(--ink-3)"/>' +
     '</svg>';
 
   /* ---------- eventos ---------- */
