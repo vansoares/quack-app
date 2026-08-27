@@ -1266,6 +1266,20 @@
   .notes-editor-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:calc(var(--sp)*2)}
   #notes-editor-pin.active{color:var(--amber-ink);border-color:var(--amber)}
   #notes-editor-link{font-size:12.5px;min-width:0;max-width:100%}
+  .notes-editor-tags{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:calc(var(--sp)*2)}
+  .notes-tag-list{display:flex;flex-wrap:wrap;gap:6px}
+  .note-tag-chip{
+    display:inline-flex;align-items:center;gap:4px;font-family:var(--mono);font-size:9px;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--ink-2);background:var(--grid-a);border:0;border-radius:var(--r-md);
+    padding:4px 7px;cursor:pointer;white-space:nowrap;
+  }
+  .note-tag-chip:hover{color:var(--signal)}
+  .note-tag-chip .x{opacity:.6}
+  #notes-editor-tag-input{
+    width:110px;font-size:11.5px;background:none;border:1px dashed var(--line);border-radius:var(--r-md);
+    padding:4px 8px;color:var(--ink);
+  }
+  .notes-page-row-tags{display:flex;gap:4px;flex:none}
   .notes-editor-body{
     width:100%;min-height:min(70vh,620px);font-family:var(--mono);font-size:13.5px;line-height:1.65;
     resize:vertical;background:var(--card);border:1px solid var(--grid-a);border-radius:var(--r-md);
@@ -1360,7 +1374,7 @@
 
   <div class="tabbar" role="tablist" aria-label="Seções" id="tabbar">
     <button type="button" role="tab" class="tab-btn" data-tab="foco" id="tab-btn-foco" aria-selected="true">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9h12v-9"/></svg>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.2"/><circle cx="12" cy="12" r="4.6"/><circle cx="12" cy="12" r="1" fill="currentColor" stroke="none"/></svg>
       Foco
     </button>
     <button type="button" role="tab" class="tab-btn" data-tab="produtividade" id="tab-btn-produtividade" aria-selected="false">
@@ -1384,7 +1398,7 @@
       Ferramentas de dev
     </button>
     <button type="button" role="tab" class="tab-btn" data-tab="notas" id="tab-btn-notas" aria-selected="false" hidden>
-      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M15 3v5h5"/><path d="M8 13h8M8 17h5"/></svg>
+      <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 3v5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="9.3" cy="16.3" rx="3.1" ry="2.1" fill="var(--signal)"/><circle cx="12.6" cy="13.7" r="2.3" fill="var(--signal)"/></svg>
       Notas
     </button>
   </div>
@@ -1956,6 +1970,10 @@
             <select id="notes-editor-link" aria-label="Vincular a uma tarefa ou tópico de estudo">
               <option value="">Sem vínculo</option>
             </select>
+          </div>
+          <div class="notes-editor-tags">
+            <div class="notes-tag-list" id="notes-editor-tags"></div>
+            <input type="text" id="notes-editor-tag-input" placeholder="+ etiqueta" maxlength="24" aria-label="Adicionar etiqueta">
           </div>
           <textarea id="notes-editor-body" class="notes-editor-body" placeholder="Escreva em Markdown…" aria-label="Corpo da nota"></textarea>
           <div class="notes-editor-preview markdown-body" id="notes-editor-preview" hidden></div>
@@ -6381,6 +6399,26 @@
     save(); renderNotesPage();
   }
 
+  function addNoteTag(id, raw){
+    var tag = normTag(raw);
+    if(!tag) return;
+    var p = findNotePage(id);
+    if(!p) return;
+    if(!p.tags) p.tags = [];
+    if(p.tags.some(function(t){ return t.toLowerCase() === tag.toLowerCase(); })) return;
+    p.tags.push(tag);
+    p.updatedAt = Date.now();
+    save(); renderNotesPage();
+  }
+
+  function removeNoteTag(id, tag){
+    var p = findNotePage(id);
+    if(!p || !p.tags) return;
+    p.tags = p.tags.filter(function(t){ return t.toLowerCase() !== tag.toLowerCase(); });
+    p.updatedAt = Date.now();
+    save(); renderNotesPage();
+  }
+
   // mesma paleta/mecânica de cor por tópico (HUES, cycleTopicColor) já usada
   // em tarefas — reaproveitada aqui pra pasta em vez de reinventar um seletor
   function folderHue(folder){
@@ -6605,7 +6643,7 @@
       // busca olha pra todas as notas, não só a pasta selecionada — o ponto
       // é achar rápido, e a pasta some da vista assim que a busca começa
       pages = S.notePages.filter(function(p){
-        var hay = ((p.title || "") + " " + (p.body || "")).toLowerCase();
+        var hay = ((p.title || "") + " " + (p.body || "") + " " + (p.tags || []).join(" ")).toLowerCase();
         return hay.indexOf(q) >= 0;
       });
       head.textContent = "resultados para “" + notesSearch.trim() + "”";
@@ -6657,6 +6695,17 @@
         linkTag.textContent = linkLabel;
         meta.appendChild(linkTag);
       }
+      if((p.tags || []).length){
+        var tagsWrap = document.createElement("span");
+        tagsWrap.className = "notes-page-row-tags";
+        p.tags.forEach(function(tag){
+          var t = document.createElement("span");
+          t.className = "tag";
+          t.textContent = tag;
+          tagsWrap.appendChild(t);
+        });
+        meta.appendChild(tagsWrap);
+      }
       var date = document.createElement("span");
       date.className = "notes-page-row-date";
       date.textContent = new Date(p.updatedAt || p.createdAt).toLocaleDateString("pt-BR", { day:"numeric", month:"short" });
@@ -6691,6 +6740,7 @@
       titleInp.value = p.title || "";
       bodyTa.value = p.body || "";
       notesEditorLoadedId = p.id;
+      $("notes-editor-tag-input").value = "";
     }
 
     $("notes-editor-toggle").textContent = notesPreviewMode ? "Editar" : "Visualizar";
@@ -6705,6 +6755,18 @@
 
     var current = (p.linkType && p.linkId) ? (p.linkType + ":" + p.linkId) : "";
     renderNoteLinkOptions($("notes-editor-link"), current);
+
+    var tagBox = $("notes-editor-tags");
+    tagBox.innerHTML = "";
+    (p.tags || []).forEach(function(tag){
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "note-tag-chip";
+      chip.title = "Remover etiqueta";
+      chip.innerHTML = escapeHtml(tag) + '<span class="x">×</span>';
+      chip.onclick = function(){ removeNoteTag(p.id, tag); };
+      tagBox.appendChild(chip);
+    });
   }
 
   // popula o seletor de vínculo com tarefas e tópicos de estudo atuais —
@@ -6782,7 +6844,7 @@
 
   function createNotePage(){
     var folderId = (notesSelectedFolder === "all" || notesSelectedFolder === "none") ? null : notesSelectedFolder;
-    var p = { id: uid(), folderId: folderId, title: "", body: "", pinned: false, linkType: null, linkId: null, createdAt: Date.now(), updatedAt: Date.now() };
+    var p = { id: uid(), folderId: folderId, title: "", body: "", pinned: false, linkType: null, linkId: null, tags: [], createdAt: Date.now(), updatedAt: Date.now() };
     S.notePages.unshift(p);
     notesOpenPageId = p.id;
     notesPreviewMode = false;
@@ -7349,6 +7411,7 @@
     var t = TRACKS[key];
     var st = t.state();
     var running = !!st.running;
+    renderDevDuck();
 
     document.querySelectorAll("#dev-tabs button").forEach(function(b){
       b.setAttribute("aria-pressed", String(b.dataset.track === key));
@@ -7792,20 +7855,44 @@
     }
     $("dev-ticks").innerHTML = out.join("");
   })();
-  // patinho de sempre (rosto intacto), com uma janelinha de terminal na
-  // frente — o toque "modo dev" escolhido entre as opções mostradas
-  $("dev-duck-wrap").innerHTML =
-    '<svg viewBox="0 0 32 32" aria-hidden="true">' +
-    '<ellipse class="body" cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>' +
-    '<circle class="body" cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>' +
-    '<path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>' +
-    '<circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>' +
-    '<circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>' +
-    '<rect x="0.5" y="17.5" width="11.5" height="8" rx="1.1" fill="var(--ink)"/>' +
-    '<circle cx="2.3" cy="19.1" r=".5" fill="var(--paper)" opacity=".6"/>' +
-    '<circle cx="3.7" cy="19.1" r=".5" fill="var(--paper)" opacity=".4"/>' +
-    '<text x="2" y="24" font-size="3.6" fill="var(--clover)" font-family="var(--mono)">&gt;_</text>' +
-    '</svg>';
+  // patinho de sempre (rosto intacto) — só o acessório na frente muda
+  // conforme a aba (build/revisão/reunião), pra dar identidade própria a
+  // cada uma em vez de repetir sempre o mesmo bicho
+  var DEV_DUCK_ACCESSORY = {
+    build:
+      '<circle cx="6" cy="20.5" r="5.5" fill="var(--ink)"/>' +
+      '<path d="M6 17.3v3.2l2.2 1.3" fill="none" stroke="var(--paper)" stroke-width="1.1" stroke-linecap="round"/>',
+    review:
+      '<rect x="0.5" y="15.3" width="13.5" height="9.7" rx="1.3" fill="var(--ink)"/>' +
+      '<circle cx="2.4" cy="17.2" r=".55" fill="var(--paper)" opacity=".6"/>' +
+      '<circle cx="4.1" cy="17.2" r=".55" fill="var(--paper)" opacity=".4"/>' +
+      '<text x="1.8" y="23.3" font-size="4.6" fill="var(--clover)" font-family="var(--mono)">&gt;_</text>',
+    meeting:
+      '<rect x="0.5" y="16" width="12.5" height="7.5" rx="2" fill="var(--ink)"/>' +
+      '<path d="M3 23.5 3 26 6.3 23.5Z" fill="var(--ink)"/>' +
+      '<circle cx="3.8" cy="19.7" r=".75" fill="var(--paper)"/>' +
+      '<circle cx="6.75" cy="19.7" r=".75" fill="var(--paper)"/>' +
+      '<circle cx="9.7" cy="19.7" r=".75" fill="var(--paper)"/>'
+  };
+  var devDuckKey = null;
+  function renderDevDuck(){
+    var key = S.devTab || "build";
+    // renderDevWatch() roda a cada 250ms enquanto algum cronômetro está
+    // ligado — sem essa guarda, o innerHTML seria refeito toda hora e a
+    // animação de balançar (CSS) reiniciaria a cada tick em vez de continuar
+    if(devDuckKey === key) return;
+    devDuckKey = key;
+    $("dev-duck-wrap").innerHTML =
+      '<svg viewBox="0 0 32 32" aria-hidden="true">' +
+      '<ellipse class="body" cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>' +
+      '<circle class="body" cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>' +
+      '<path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>' +
+      '<circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>' +
+      '<circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>' +
+      (DEV_DUCK_ACCESSORY[key] || DEV_DUCK_ACCESSORY.build) +
+      '</svg>';
+  }
+  renderDevDuck();
 
   /* ---------- eventos ---------- */
   $("btn-start").onclick = function(){ S.timer.running ? pause() : start(); };
@@ -8061,6 +8148,13 @@
     var v = this.value;
     var parts = v ? v.split(":") : null;
     setNoteLink(notesOpenPageId, parts ? parts[0] : null, parts ? parts[1] : null);
+  });
+  $("notes-editor-tag-input").addEventListener("keydown", function(e){
+    if(e.key !== "Enter") return;
+    e.preventDefault();
+    if(!notesOpenPageId) return;
+    addNoteTag(notesOpenPageId, this.value);
+    this.value = "";
   });
   $("notes-search").addEventListener("input", function(){
     notesSearch = this.value;
