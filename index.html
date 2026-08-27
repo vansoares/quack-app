@@ -181,13 +181,13 @@
 
   /* respeita preferências do sistema além do toggle manual */
   @media (prefers-contrast: more), (forced-colors: active){
-    .panel,dialog,.toast,.figures,.empty-state,.glossary-row,.lib-row,.theme-toggle,.float-nav{
+    .panel,dialog,.toast,.figures,.empty-state,.glossary-row,.lib-row,.theme-toggle,.tabbar{
       backdrop-filter:none !important;-webkit-backdrop-filter:none !important;border-width:2px;
     }
     .glow{opacity:.12}
   }
   @media (prefers-reduced-transparency: reduce){
-    .panel,dialog,.toast,.figures,.empty-state,.glossary-row,.lib-row,.modes,.range,.seg,.wd,.theme-toggle,.float-nav{
+    .panel,dialog,.toast,.figures,.empty-state,.glossary-row,.lib-row,.modes,.range,.seg,.wd,.theme-toggle,.tabbar{
       backdrop-filter:none !important;-webkit-backdrop-filter:none !important;
     }
     .glow{display:none}
@@ -321,40 +321,34 @@
   :root[data-theme="alto-contraste"] .theme-toggle{background:#fff;border-width:2px}
   :root[data-theme="alto-contraste"] .theme-toggle button[aria-pressed="true"]{background:#000;color:#fff}
 
-  /* ---------- navegação flutuante inferior ---------- */
-  .float-nav{
-    position:fixed;left:50%;bottom:20px;transform:translateX(-50%);z-index:5;
-    display:flex;gap:4px;padding:8px;border-radius:var(--r-pill);
-    background:var(--nav-fill);border:1px solid var(--nav-border);
-    backdrop-filter:blur(22px) saturate(160%);-webkit-backdrop-filter:blur(22px) saturate(160%);
-    box-shadow:0 10px 30px rgba(0,0,0,0.25);
+  /* ---------- barra de abas ---------- */
+  .tabbar{
+    display:flex;gap:4px;padding:4px;margin:0 0 calc(var(--sp)*3);
+    border-radius:var(--r-pill);background:var(--panel);border:1px solid var(--glass-border);
+    backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);
+    overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none;
   }
-  .float-nav .nav-item{
-    background:transparent;border:0;padding:0;margin:0;font:inherit;
-    box-sizing:border-box;cursor:pointer;
-    width:44px;height:44px;min-height:0;border-radius:50%;
-    display:flex;align-items:center;justify-content:center;
-    color:rgba(255,255,255,0.62);
-    transition:background-color .2s cubic-bezier(.22,.8,.28,1),color .2s cubic-bezier(.22,.8,.28,1);
+  .tabbar::-webkit-scrollbar{display:none}
+  .tabbar button{
+    flex:none;background:transparent;border:0;color:var(--ink-3);
+    font-size:12.5px;font-weight:600;letter-spacing:.01em;padding:9px 16px;border-radius:var(--r-pill);
+    display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
   }
-  .float-nav .nav-item svg{width:19px;height:19px;flex:none;pointer-events:none}
-  .float-nav .nav-item[aria-current="page"]{background:rgba(255,255,255,0.16);color:#fff}
-  .float-nav .nav-item[hidden]{display:none}
-  .float-nav *:focus-visible{outline-color:#fff}
-  :root[data-theme="alto-contraste"] .float-nav{background:#000;border-width:2px}
-  @media (max-width:520px){
-    .float-nav{bottom:12px}
-    /* nesta largura o menu flutuante ocupa quase toda a largura útil —
-       sem essa folga extra o rodapé passa por baixo dele ao rolar até o fim */
-    .app-footer{margin-bottom:60px}
-  }
+  .tabbar button svg{width:15px;height:15px;flex:none;pointer-events:none}
+  .tabbar button[aria-selected="true"]{background:var(--ink);color:var(--on-ink)}
+  .tabbar button[hidden]{display:none}
+  /* mesmo problema do #main.grid: display:flex empata em especificidade com
+     [hidden] do navegador, e regra de autor sempre vence — sem isso, esconder
+     a barra ao abrir o Quacknotes não escondia nada de verdade */
+  .tabbar[hidden]{display:none}
+  :root[data-theme="alto-contraste"] .tabbar{background:#fff;border-width:2px}
+  :root[data-theme="alto-contraste"] .tabbar button[aria-selected="true"]{background:#000;color:#fff}
 
   /* ---------- painéis ---------- */
   .grid{display:grid;grid-template-columns:1.05fr .95fr;gap:calc(var(--sp)*3)}
   /* .grid define display:grid com a mesma especificidade de [hidden] (uma
-     classe) — sem essa regra, esconder #main via JS (hidden=true) não
-     escondia nada de verdade, e a página de notas aparecia colada embaixo
-     do dashboard inteiro ainda visível, em vez de substituí-lo */
+     classe) — sem essa regra, trocar de aba (hidden=true num ".tab-panel")
+     não escondia nada de verdade, e as abas ficavam todas empilhadas juntas */
   .grid[hidden]{display:none}
   .panel{
     min-width:0;
@@ -761,6 +755,10 @@
 
   /* ---------- objetivos do ano ---------- */
   .goals{grid-column:1 / -1}
+  /* PDI reaproveita o CSS de .goal-list/.goal, mas nunca tinha ganhado a
+     mesma largura total de .goals — sozinho na aba Metas, ficar preso a
+     meia coluna deixava metade da tela vazia ao lado */
+  .pdi{grid-column:1 / -1}
   .goal-list{list-style:none;margin:0;padding:0}
   .goal{padding:13px 2px;border-bottom:1px solid var(--grid-a)}
   .goal:last-child{border-bottom:0}
@@ -918,21 +916,7 @@
   .profile-block .k:not(:first-child){margin-top:14px}
   .profile-username-row{display:flex;gap:var(--sp)}
   .profile-username-row input{flex:1;min-width:0}
-  #auth, #changepw, #deleteaccount, #profiles{width:min(420px,92vw)}
-  .prof-list{list-style:none;margin:calc(var(--sp)*2) 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
-  .prof-row{
-    display:flex;align-items:center;gap:8px;flex-wrap:wrap;
-    border:1px solid var(--grid-a);border-radius:var(--r-md);padding:9px 11px;
-  }
-  .prof-row.active{border-color:var(--rest);background:var(--signal-soft)}
-  .prof-row .prof-name{
-    flex:1;min-width:80px;background:none;border:0;text-align:left;color:var(--ink);
-    font-size:14px;font-weight:600;padding:0;cursor:pointer;overflow-wrap:anywhere;
-  }
-  .prof-row .prof-badge{
-    font-family:var(--mono);font-size:8.5px;letter-spacing:.12em;text-transform:uppercase;
-    color:var(--rest);border:1px solid var(--rest);border-radius:var(--r-md);padding:2px 5px;flex:none;
-  }
+  #auth, #changepw, #deleteaccount{width:min(420px,92vw)}
   #auth .dlg-body input, #changepw .dlg-body input, #deleteaccount .dlg-body input{
     width:100%;margin-bottom:12px;
   }
@@ -1167,15 +1151,6 @@
   .task.done .tag{opacity:.5}
   .now-task .tag{margin-left:2px}
 
-  /* ---------- tag de perfil (cabeçalho) ---------- */
-  .profile-tag{
-    font-family:var(--mono);font-size:9px;letter-spacing:.12em;text-transform:uppercase;
-    color:var(--ink-2);background:var(--grid-a);border:1px solid var(--glass-border);border-radius:var(--r-pill);
-    padding:5px 10px;white-space:nowrap;cursor:pointer;align-self:center;
-  }
-  .profile-tag:hover{border-color:var(--rest);color:var(--rest)}
-  .profile-tag[hidden]{display:none}
-
   .filters{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 calc(var(--sp)*2.5)}
   .filters button{
     background:transparent;border:1px solid var(--line);color:var(--ink-3);
@@ -1314,21 +1289,9 @@
       </div>
     </div>
     <div class="top-actions">
-      <button class="btn-ghost" id="btn-season" aria-label="Temporada">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 0 1 8-8M20 12a8 8 0 0 1-8 8"/><path d="M4 12l3-3M4 12l3 3M20 12l-3-3M20 12l-3 3"/></svg>
-        <span class="btn-label">Temporada</span>
-      </button>
       <button class="btn-ghost" id="btn-card" aria-label="Cartão da semana">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3"/><path d="M3 10h18"/></svg>
         <span class="btn-label">Cartão da semana</span>
-      </button>
-      <button class="btn-ghost" id="btn-notes-page" aria-label="Quacknotes" hidden>
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M15 3v5h5"/><path d="M8 13h8M8 17h5"/></svg>
-        <span class="btn-label">Quacknotes</span>
-      </button>
-      <button class="btn-ghost" id="btn-capsule" aria-label="Cápsula do tempo">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="5"/><path d="M7 12h10"/></svg>
-        <span class="btn-label">Cápsula</span><span class="tab-dot" id="capsule-dot" hidden></span>
       </button>
       <div class="theme-toggle" id="theme-toggle" role="group" aria-label="Tema visual">
         <button type="button" data-theme-choice="claro" aria-label="Tema claro" aria-pressed="false" title="Claro">
@@ -1342,7 +1305,6 @@
         </button>
       </div>
       <div class="account-group">
-        <button class="profile-tag" id="btn-profile-tag" hidden></button>
         <button class="btn-ghost" id="btn-account" aria-label="Entrar">
           <svg id="btn-account-icon" viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg>
           <span class="btn-label">Entrar</span>
@@ -1355,7 +1317,66 @@
     </div>
   </header>
 
-  <main class="grid" id="main">
+  <div class="tabbar" role="tablist" aria-label="Seções" id="tabbar">
+    <button type="button" role="tab" class="tab-btn" data-tab="foco" id="tab-btn-foco" aria-selected="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9h12v-9"/></svg>
+      Foco
+    </button>
+    <button type="button" role="tab" class="tab-btn" data-tab="produtividade" id="tab-btn-produtividade" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19V9M10 19V5M16 19v-7M22 19H2"/></svg>
+      Produtividade
+    </button>
+    <button type="button" role="tab" class="tab-btn" data-tab="metas" id="tab-btn-metas" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5.5" width="17" height="15" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/><circle cx="12" cy="15" r="1.5" fill="currentColor" stroke="none"/></svg>
+      Metas
+    </button>
+    <button type="button" role="tab" class="tab-btn" data-tab="habitos" id="tab-btn-habitos" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21c-4-2.5-7-6-7-10a7 7 0 0 1 14 0c0 4-3 7.5-7 10Z"/></svg>
+      Hábitos
+    </button>
+    <button type="button" role="tab" class="tab-btn" data-tab="leitura" id="tab-btn-leitura" aria-selected="false">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v18H6.5A2.5 2.5 0 0 1 4 18.5v-13Z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v18h5.5a2.5 2.5 0 0 0 2.5-2.5v-13Z"/></svg>
+      Leitura &amp; séries
+    </button>
+    <button type="button" role="tab" class="tab-btn" data-tab="ferramentas" id="tab-btn-ferramentas" aria-selected="false">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="10" cy="14.5" r="6"/>
+        <circle cx="15.6" cy="8.6" r="3.4"/>
+        <path d="M18.7 8.1c1.2-.2 2.2.3 2.2 1s-1 1.2-2.2 1c-.5-.1-.9-.5-.9-1s.4-.9.9-1z"/>
+        <circle cx="16.5" cy="7.7" r=".5" fill="currentColor" stroke="none"/>
+      </svg>
+      Ferramentas
+    </button>
+    <button type="button" role="tab" class="tab-btn" data-tab="notas" id="tab-btn-notas" aria-selected="false" hidden>
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M15 3v5h5"/><path d="M8 13h8M8 17h5"/></svg>
+      Notas
+    </button>
+  </div>
+
+  <main id="main">
+    <div class="grid tab-panel" data-tab="foco" id="tab-foco"></div>
+    <div class="grid tab-panel" data-tab="produtividade" id="tab-produtividade" hidden></div>
+    <div class="grid tab-panel" data-tab="metas" id="tab-metas" hidden>
+      <section class="panel" id="section-marcos" style="grid-column:1 / -1">
+        <div class="panel-head">
+          <h2 class="panel-title"><span class="panel-icon amber" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12a8 8 0 0 1 8-8M20 12a8 8 0 0 1-8 8"/><path d="M4 12l3-3M4 12l3 3M20 12l-3-3M20 12l-3 3"/></svg></span>Temporada &amp; cápsula</h2>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn-ghost" id="btn-season" aria-label="Temporada">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12a8 8 0 0 1 8-8M20 12a8 8 0 0 1-8 8"/><path d="M4 12l3-3M4 12l3 3M20 12l-3-3M20 12l-3 3"/></svg>
+            <span class="btn-label">Temporada</span>
+          </button>
+          <button class="btn-ghost" id="btn-capsule" aria-label="Cápsula do tempo">
+            <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="5"/><path d="M7 12h10"/></svg>
+            <span class="btn-label">Cápsula</span><span class="tab-dot" id="capsule-dot" hidden></span>
+          </button>
+        </div>
+      </section>
+    </div>
+    <div class="grid tab-panel" data-tab="habitos" id="tab-habitos" hidden></div>
+    <div class="grid tab-panel" data-tab="leitura" id="tab-leitura" hidden></div>
+    <div class="grid tab-panel" data-tab="ferramentas" id="tab-ferramentas" hidden></div>
+    <div class="tab-panel" data-tab="notas" id="tab-notas" hidden></div>
 
     <!-- TIMER -->
     <section class="panel" id="section-timer">
@@ -1781,7 +1802,7 @@
     </section>
 
     <!-- BALANÇO -->
-    <section class="panel stats">
+    <section class="panel stats" id="panel-stats">
       <div class="panel-head">
         <h2 class="panel-title"><span class="panel-icon teal" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M11 20V4M18 20v-7"/></svg></span>Balanço</h2>
         <div class="range" role="group" aria-label="Período do balanço">
@@ -1817,7 +1838,7 @@
 
   </main>
 
-  <section class="notes-page" id="page-notes" hidden>
+  <section class="notes-page" id="page-notes">
     <div class="notes-page-head">
       <button class="btn-ghost" id="notes-back">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
@@ -1885,29 +1906,6 @@
   <footer class="app-footer">Desenvolvido por <a href="https://github.com/vansoares" target="_blank" rel="noopener noreferrer">VanSoares</a></footer>
 </div>
 
-<nav class="float-nav" aria-label="Navegação principal">
-  <button type="button" class="nav-item" data-nav-target="section-timer" aria-label="Início" title="Início">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 11.5 12 4l8 7.5"/><path d="M6 10v9h12v-9"/></svg>
-  </button>
-  <button type="button" class="nav-item" data-nav-target="section-tarefas" aria-label="Tarefas" title="Tarefas">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="4"/><path d="M8 12l2.5 2.5L16 9"/></svg>
-  </button>
-  <button type="button" class="nav-item" data-nav-target="panel-habits" id="nav-habitos" aria-label="Hábitos" title="Hábitos">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 21c-4-2.5-7-6-7-10a7 7 0 0 1 14 0c0 4-3 7.5-7 10Z"/></svg>
-  </button>
-  <button type="button" class="nav-item" data-nav-target="panel-reading" id="nav-leitura" aria-label="Leitura" title="Leitura">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v18H6.5A2.5 2.5 0 0 1 4 18.5v-13Z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v18h5.5a2.5 2.5 0 0 0 2.5-2.5v-13Z"/></svg>
-  </button>
-  <button type="button" class="nav-item" data-nav-target="panel-dev" id="nav-dev" aria-label="Ferramentas de dev" title="Ferramentas de dev">
-    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-      <circle cx="10" cy="14.5" r="6"/>
-      <circle cx="15.6" cy="8.6" r="3.4"/>
-      <path d="M18.7 8.1c1.2-.2 2.2.3 2.2 1s-1 1.2-2.2 1c-.5-.1-.9-.5-.9-1s.4-.9.9-1z"/>
-      <circle cx="16.5" cy="7.7" r=".5" fill="currentColor" stroke="none"/>
-    </svg>
-  </button>
-</nav>
-
 <dialog id="settings">
   <div class="dlg-head">
     <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>Ajustes</h2>
@@ -1932,7 +1930,6 @@
           <p class="hint" id="account-username-error" style="color:var(--signal);min-height:16px;margin:2px 0 0"></p>
         </div>
 
-        <button class="btn-ghost" id="btn-manage-profiles">Gerenciar perfis</button>
         <button class="btn-ghost" id="account-change-pw">Trocar senha</button>
         <button class="btn-ghost" id="account-logout">Sair</button>
         <button class="btn-ghost danger" id="account-delete">Excluir conta</button>
@@ -2194,21 +2191,6 @@
   </div>
 </dialog>
 
-<dialog id="profiles">
-  <div class="dlg-head">
-    <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><circle cx="17.5" cy="8.5" r="2.3"/><path d="M15.7 12.3a4.6 4.6 0 0 1 5.3 4.5"/></svg></span>Perfis</h2>
-    <button class="btn-ghost icon-only" id="profiles-close" aria-label="Fechar" title="Fechar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-  </div>
-  <div class="dlg-body">
-    <p class="hint" style="margin:0">Cada perfil tem suas próprias tarefas, hábitos, sessões — tudo separado. Painéis visíveis também são por perfil (ex.: um perfil "Trabalho" com as ferramentas de dev ligadas, um "Pessoal" com hábitos e leitura).</p>
-    <ul class="prof-list" id="profile-list"></ul>
-    <div class="new-book">
-      <input type="text" id="profile-new-name" placeholder="Nome do novo perfil (ex.: Trabalho)" maxlength="30" aria-label="Nome do novo perfil">
-      <button class="btn-ghost" id="profile-new-add">Criar perfil</button>
-    </div>
-  </div>
-</dialog>
-
 <dialog id="changepw">
   <div class="dlg-head">
     <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="10" rx="2.5"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></span>Trocar senha</h2>
@@ -2266,19 +2248,6 @@
 
   var KEY = "foco.v1";
   var MIN = 60000;
-  // TODAS as constantes usadas por loadProfiles()/sanitizeProfiles() têm que
-  // estar aqui em cima, atribuídas ANTES de "var PROFILES = loadProfiles();"
-  // rodar logo abaixo — "var" só iça a declaração, não o valor, então uma
-  // constante declarada mais adiante no arquivo (mesmo que antes de ser lida
-  // na ordem de execução normal) ainda vale undefined nesse ponto. Foi
-  // exatamente esse engano que quebrou LEGACY_PROFILE_ID antes, e de novo
-  // com PKEY — daí as duas viverem juntas aqui, pra não repetir
-  var PKEY = "foco.profiles.v1";
-  // id fixo (não uid()) pro perfil criado ao migrar uma cópia antiga (local
-  // ou do servidor) pro formato com perfis — local e servidor normalizam
-  // pro MESMO id assim, e a fusão reconhece os dois como o mesmo perfil
-  // "Pessoal" em vez de criar dois perfis duplicados.
-  var LEGACY_PROFILE_ID = "default";
 
   var DEFAULTS = {
     version: 1,
@@ -2323,18 +2292,13 @@
     collapsed: [],
     topicColors: {},
     sound: { ambient:"off", volume:35, follow:true, fade:true, embed:null },
-    theme: "auto"
+    theme: "auto",
+    activeTab: "foco"
   };
 
   /* ---------- estado ---------- */
   var REV = 0;                 // última revisão que esta aba conhece
   var S = load();
-
-  // container de perfis: por baixo é sempre um perfil (ou mais), mesmo sem
-  // conta — só que sem conta a interface de perfis nem aparece. Isso evita
-  // dois caminhos de código diferentes pra logado/anônimo
-  var PROFILES = loadProfiles();
-  PROFILES.archive[PROFILES.activeProfileId] = S;   // liga os dois pela mesma referência
 
   function parseState(raw){
     try{ return JSON.parse(raw); }catch(e){ return null; }
@@ -2395,127 +2359,9 @@
     if(d.topicColors) s.topicColors = d.topicColors;
     if(d.sound) Object.assign(s.sound, d.sound);
     if(d.theme) s.theme = d.theme;
+    if(typeof d.activeTab !== "undefined") s.activeTab = d.activeTab;
     if(d.rev) s.rev = d.rev;
     return s;
-  }
-
-  /* ---------- perfis ---------- */
-  // cada perfil é um blob independente, do mesmo formato de DEFAULTS/S —
-  // trocar de perfil é trocar qual blob a variável S aponta, nunca misturar
-  // campos de dois perfis dentro do mesmo objeto
-
-  function newProfileMeta(name){
-    return { id: uid(), name: name, createdAt: Date.now() };
-  }
-
-  function findProfileMeta(id){
-    return PROFILES.profiles.filter(function(p){ return p.id === id; })[0] || null;
-  }
-
-  // conserta um container sem apagar nada: perfil sem id válido ganha um id
-  // novo em vez de ser descartado — é o jeito seguro de reparar dados que
-  // ficaram quebrados por um bug já corrigido (um perfil sem id de verdade
-  // não tem como ser aberto nem excluído direito). Já um id REPETIDO é só
-  // ignorado na segunda ocorrência (não ganha id novo) — dar um id novo pra
-  // ele criava um "perfil fantasma" com uma cópia do mesmo arquivo (mesmas
-  // tarefas) por baixo de um nome duplicado, que foi exatamente o bug
-  // reportado depois da funcionalidade de perfis ir pro ar
-  function sanitizeProfiles(container){
-    var profiles = Array.isArray(container.profiles) ? container.profiles : [];
-    var archive = container.archive || {};
-    var oldActiveId = container.activeProfileId;
-    var seenIds = {}, cleanProfiles = [], cleanArchive = {}, newActiveId = null;
-
-    profiles.forEach(function(p){
-      if(!p) return;
-      var origId = p.id;
-      if(origId && typeof origId === "string" && seenIds[origId]){
-        if(origId === oldActiveId) newActiveId = origId;
-        return;
-      }
-      var blob = archive[origId];       // funciona mesmo com origId undefined (vira "undefined")
-      var id = origId;
-      if(!id || typeof id !== "string") id = uid();
-      if(origId === oldActiveId) newActiveId = id;
-      seenIds[id] = true;
-      cleanProfiles.push({ id:id, name:p.name || "Perfil", createdAt: p.createdAt || Date.now() });
-      cleanArchive[id] = blob || clone(DEFAULTS);
-    });
-
-    if(!cleanProfiles.length){
-      var meta = { id: LEGACY_PROFILE_ID, name:"Pessoal", createdAt: Date.now() };
-      cleanProfiles.push(meta);
-      cleanArchive[meta.id] = clone(DEFAULTS);
-      newActiveId = meta.id;
-    }
-    if(!newActiveId || !seenIds[newActiveId]) newActiveId = cleanProfiles[0].id;
-
-    return { activeProfileId: newActiveId, profiles: cleanProfiles, archive: cleanArchive };
-  }
-
-  // na primeira vez que uma cópia antiga (sem esse conceito) roda este
-  // código, cria um perfil "Pessoal" — o arquivo dele é preenchido pelo S
-  // que já existia, logo abaixo, sem perder nada
-  function loadProfiles(){
-    try{
-      var raw = localStorage.getItem(PKEY);
-      if(raw){
-        var d = JSON.parse(raw);
-        if(d && Array.isArray(d.profiles) && d.profiles.length && d.archive && d.activeProfileId){
-          return sanitizeProfiles(d);
-        }
-      }
-    }catch(e){}
-    var meta = { id: LEGACY_PROFILE_ID, name: "Pessoal", createdAt: Date.now() };
-    return { activeProfileId: meta.id, profiles: [meta], archive: {} };
-  }
-
-  function saveProfiles(){
-    try{ localStorage.setItem(PKEY, JSON.stringify(PROFILES)); }catch(e){}
-    schedulePush();   // qualquer mudança no container (criar/renomear/excluir perfil) precisa sincronizar
-  }
-
-  // formato antigo (de antes dos perfis existirem): um blob só, sem
-  // conceito de perfil — vira um perfil "Pessoal" único antes de fundir
-  function normalizeProfilesContainer(raw){
-    if(raw && Array.isArray(raw.profiles) && raw.archive && raw.activeProfileId) return raw;
-    var meta = { id: LEGACY_PROFILE_ID, name: "Pessoal", createdAt: Date.now() };
-    var archive = {};
-    archive[meta.id] = raw || {};
-    return { activeProfileId: meta.id, profiles: [meta], archive: archive };
-  }
-
-  // funde o container de perfis inteiro: une a lista por id (nome do lado
-  // remoto prevalece em conflito, mesma convenção do resto do adopt()) e
-  // funde os dados de cada perfil presente em qualquer um dos dois lados
-  function mergeProfilesContainer(local, remote){
-    var byId = {}, order = [];
-    // se algum dos dois lados já chegou com um id repetido dentro da própria
-    // lista (dado corrompido de antes desse reparo existir), o "if(byId[p.id])"
-    // evita empurrar o mesmo id de novo pro "order" — sem essa guarda o id
-    // aparecia duas vezes em "order", e o sanitizeProfiles (mais abaixo) achava
-    // que era um perfil NOVO duplicado e criava um id extra com uma cópia do
-    // mesmo arquivo — daí o "perfil fantasma" com as mesmas tarefas
-    (local.profiles || []).forEach(function(p){
-      if(byId[p.id]) return;
-      byId[p.id] = { id:p.id, name:p.name, createdAt:p.createdAt };
-      order.push(p.id);
-    });
-    (remote.profiles || []).forEach(function(p){
-      if(byId[p.id]) byId[p.id].name = p.name;
-      else{ byId[p.id] = { id:p.id, name:p.name, createdAt:p.createdAt }; order.push(p.id); }
-    });
-    var archive = {};
-    order.forEach(function(id){
-      var localBlob = local.archive && local.archive[id];
-      var remoteBlob = remote.archive && remote.archive[id];
-      if(localBlob && remoteBlob) archive[id] = mergeProfileBlob(localBlob, remoteBlob);
-      else archive[id] = remoteBlob || localBlob || clone(DEFAULTS);
-    });
-    var activeId = (local.activeProfileId && byId[local.activeProfileId]) ? local.activeProfileId : order[0];
-    // sanitiza no final também: se um dos dois lados ainda tinha um perfil
-    // quebrado de antes desse reparo existir, é aqui que ele é corrigido
-    return sanitizeProfiles({ activeProfileId: activeId, profiles: order.map(function(id){ return byId[id]; }), archive: archive });
   }
 
   // união por id: quem chega primeiro na lista vence, e nada duplica.
@@ -2555,10 +2401,9 @@
   var SYNCED_ARRAYS = ["tasks","sessions","habits","books","readLog","capsules",
     "media","watchLog","seasons","milestones","builds","duckNotes","goals","noteFolders","notePages","pdi","reviews","meetings","studyTopics"];
 
-  // funde um blob de perfil recebido (de outra aba, do servidor, ou de outro
-  // perfil na fusão do container inteiro) com um blob local, sem perder nada
-  // dos dois lados — pura, não depende de qual é o S/perfil ativo agora
-  function mergeProfileBlob(localBlob, remoteBlob){
+  // funde um estado recebido (de outra aba ou do servidor) com o local, sem
+  // perder nada dos dois lados — pura, não depende de qual é o S de agora
+  function mergeState(localBlob, remoteBlob){
     var locais = {};
     SYNCED_ARRAYS.forEach(function(k){ locais[k] = localBlob[k]; });
     var novo = adopt(clone(DEFAULTS), remoteBlob);
@@ -2568,10 +2413,8 @@
     return novo;
   }
 
-  // atalho usado pela sincronização entre abas, que sempre funde contra o
-  // perfil ativo (S) — a fusão do container inteiro (perfil por perfil) usa
-  // mergeProfileBlob direto, ver mergeProfilesContainer
-  function mergeIncoming(d){ return mergeProfileBlob(S, d); }
+  // atalho usado pela sincronização entre abas, que sempre funde contra o S atual
+  function mergeIncoming(d){ return mergeState(S, d); }
 
   function save(){
     try{
@@ -2579,7 +2422,6 @@
       S.savedAt = Date.now();
       localStorage.setItem(KEY, JSON.stringify(S));
       REV = S.rev;
-      saveProfiles();   // S e o arquivo do perfil ativo são o mesmo objeto — só falta gravar
     }catch(e){
       toast("Não deu para salvar: armazenamento do navegador indisponível");
     }
@@ -2595,7 +2437,6 @@
     if((d.rev || 0) <= REV) return;         // revisão já conhecida ou mais antiga
 
     S = mergeIncoming(d);
-    PROFILES.archive[PROFILES.activeProfileId] = S;
     REV = S.rev || 0;
 
     applyTheme();
@@ -2637,9 +2478,7 @@
 
   function pushToServer(){
     if(!SERVER_OK || !AUTH.email) return;
-    // manda o container inteiro, não só o perfil ativo — mandar só o S de
-    // agora sobrescreveria (e apagaria) os outros perfis no servidor
-    api("/api/state", { method:"PUT", body:PROFILES }).then(function(){
+    api("/api/state", { method:"PUT", body:S }).then(function(){
       setSyncNote("sincronizado agora há pouco");
     }).catch(function(){
       setSyncNote("não deu para sincronizar agora — tentando de novo em breve");
@@ -2680,21 +2519,25 @@
           );
           if(!misturar){
             S = clone(DEFAULTS);
-            PROFILES.archive[PROFILES.activeProfileId] = S;
             REV = 0;
           }
         }
       }
 
       if(remoto){
-        PROFILES = mergeProfilesContainer(PROFILES, normalizeProfilesContainer(remoto));
-        S = PROFILES.archive[PROFILES.activeProfileId];
+        // contas antigas guardaram o estado no formato com perfis (essa
+        // funcionalidade foi removida) — usa o que estava ativo lá como o
+        // estado de verdade, em vez de simplesmente perder os dados dela
+        var remotoBlob = (remoto.profiles && remoto.archive && remoto.activeProfileId)
+          ? (remoto.archive[remoto.activeProfileId] || remoto.archive[Object.keys(remoto.archive)[0]] || clone(DEFAULTS))
+          : remoto;
+        S = mergeState(S, remotoBlob);
       }
       REV = S.rev || 0;
       try{ localStorage.setItem(LAST_ACCOUNT_KEY, AUTH.email); }catch(e){}
 
       save();               // grava local com a revisão nova e já agenda o push de reconciliação
-      applyTheme(); render(); renderEmbed(); syncAmbient(); renderProfileTag();
+      applyTheme(); render(); renderEmbed(); syncAmbient();
       setSyncNote("sincronizado com sua conta");
     }).catch(function(){
       pulling = false;
@@ -2702,147 +2545,6 @@
     });
   }
 
-  function activeProfileMeta(){ return findProfileMeta(PROFILES.activeProfileId); }
-
-  // mesma sequência que toda troca de estado inteiro no app já usa
-  // (pullFromServer, importar backup, apagar tudo): troca o S, salva,
-  // e roda o mesmo cascata de renderização
-  function switchProfile(id){
-    if(id === PROFILES.activeProfileId) return;
-    if(S.timer.running){ toast("Pare o timer antes de trocar de perfil"); return; }
-    var blob = PROFILES.archive[id];
-    PROFILES.activeProfileId = id;
-    S = blob ? adopt(clone(DEFAULTS), blob) : clone(DEFAULTS);
-    PROFILES.archive[id] = S;
-    REV = 0;
-    save();
-    applyTheme(); render(); renderEmbed(); syncAmbient();
-    renderProfileTag(); renderProfilesDialog();
-    var meta = findProfileMeta(id);
-    toast("Perfil “" + (meta ? meta.name : "") + "” ativado");
-  }
-
-  function createProfile(name){
-    var trimmed = (name || "").trim().slice(0, 30);
-    if(!trimmed){ toast("Dê um nome ao perfil"); return; }
-    var meta = newProfileMeta(trimmed);
-    PROFILES.profiles.push(meta);
-    PROFILES.archive[meta.id] = clone(DEFAULTS);
-    switchProfile(meta.id);
-  }
-
-  function renameProfile(id, name){
-    var trimmed = (name || "").trim().slice(0, 30);
-    if(!trimmed) return;
-    var meta = findProfileMeta(id);
-    if(!meta || meta.name === trimmed) return;
-    meta.name = trimmed;
-    save();
-    renderProfileTag(); renderProfilesDialog();
-  }
-
-  async function deleteProfile(id){
-    if(PROFILES.profiles.length <= 1){ toast("Não dá pra excluir o único perfil"); return; }
-    var meta = findProfileMeta(id);
-    if(!meta) return;
-    if(id === PROFILES.activeProfileId && S.timer.running){
-      toast("Pare o timer antes de excluir o perfil ativo");
-      return;
-    }
-    var ok = await askConfirm("Excluir o perfil “" + meta.name + "” e todos os dados dele? Não tem volta.", { danger:true });
-    if(!ok) return;
-
-    PROFILES.profiles = PROFILES.profiles.filter(function(p){ return p.id !== id; });
-    delete PROFILES.archive[id];
-
-    if(id === PROFILES.activeProfileId){
-      var next = PROFILES.profiles[0];
-      PROFILES.activeProfileId = next.id;
-      var blob = PROFILES.archive[next.id];
-      S = blob ? adopt(clone(DEFAULTS), blob) : clone(DEFAULTS);
-      PROFILES.archive[next.id] = S;
-      REV = 0;
-      save();
-      applyTheme(); render(); renderEmbed(); syncAmbient();
-    }else{
-      saveProfiles();
-    }
-    renderProfileTag(); renderProfilesDialog();
-    toast("Perfil “" + meta.name + "” excluído");
-  }
-
-  function renderProfileTag(){
-    var btn = $("btn-profile-tag");
-    var logged = !!AUTH.email;
-    btn.hidden = !logged;
-    if(!logged) return;
-    var meta = activeProfileMeta();
-    btn.textContent = meta ? meta.name : "Perfil";
-  }
-
-  var editingProfileId = null;
-
-  function renderProfilesDialog(){
-    var list = $("profile-list");
-    list.innerHTML = "";
-    PROFILES.profiles.forEach(function(p){
-      var li = document.createElement("li");
-      li.className = "prof-row" + (p.id === PROFILES.activeProfileId ? " active" : "");
-
-      if(editingProfileId === p.id){
-        var inp = document.createElement("input");
-        inp.type = "text";
-        inp.value = p.name;
-        inp.maxLength = 30;
-        inp.style.cssText = "flex:1;min-width:80px";
-        inp.setAttribute("aria-label", "Renomear perfil " + p.name);
-        var settled = false;
-        function commit(){
-          if(settled) return;
-          settled = true;
-          renameProfile(p.id, inp.value);
-          editingProfileId = null;
-        }
-        inp.addEventListener("blur", commit);
-        inp.addEventListener("keydown", function(e){
-          if(e.key === "Enter") commit();
-          if(e.key === "Escape"){ settled = true; editingProfileId = null; renderProfilesDialog(); }
-        });
-        li.appendChild(inp);
-        setTimeout(function(){ inp.focus(); inp.select(); }, 0);
-      }else{
-        var name = document.createElement("button");
-        name.className = "prof-name";
-        name.textContent = p.name;
-        name.title = "Clique para renomear";
-        name.onclick = function(){ editingProfileId = p.id; renderProfilesDialog(); };
-        li.appendChild(name);
-      }
-
-      if(p.id === PROFILES.activeProfileId){
-        var badge = document.createElement("span");
-        badge.className = "prof-badge";
-        badge.textContent = "ativo";
-        li.appendChild(badge);
-      }else{
-        var use = document.createElement("button");
-        use.className = "mini";
-        use.textContent = "Usar";
-        use.onclick = function(){ switchProfile(p.id); };
-        li.appendChild(use);
-      }
-
-      var del = document.createElement("button");
-      del.className = "kill";
-      del.textContent = "×";
-      del.setAttribute("aria-label", "Excluir perfil " + p.name);
-      del.disabled = PROFILES.profiles.length <= 1;
-      del.onclick = function(){ deleteProfile(p.id); };
-      li.appendChild(del);
-
-      list.appendChild(li);
-    });
-  }
 
   function applyAccountUI(){
     var logged = !!AUTH.email;
@@ -2856,12 +2558,12 @@
     if(logged) $("account-email").textContent = AUTH.email;
 
     if(logged) $("account-username").value = AUTH.username || "";
-    renderProfileTag();
 
-    // notas em markdown/pastas só faz sentido pra quem está logado (sincroniza
-    // entre aparelhos como o resto) — sem conta, o botão nem aparece
-    $("btn-notes-page").hidden = !logged;
-    if(!logged && !$("page-notes").hidden) closeNotesPage();
+    // notas em markdown/pastas só faz sentido pra quem está logada (sincroniza
+    // entre aparelhos como o resto) — sem conta, a aba nem aparece
+    $("tab-btn-notas").hidden = !logged;
+    if(!logged && S.activeTab === "notas") selectTab("foco");
+    applyTabs();
   }
 
   function onAuthSuccess(res){
@@ -3261,9 +2963,9 @@
     renderEyebrow(); applyPanels();
     renderGoals(); renderPdi(); renderDevWatch(); renderDuckSummary(); renderStudyTopics();
     renderPatterns();
-    // só atualiza a página de notas se ela for a tela ativa agora — mais
+    // só atualiza a página de notas se a aba dela for a ativa agora — mais
     // barato, e renderNoteEditor() já protege o que estiver sendo digitado
-    if(!$("page-notes").hidden) renderNotesPage();
+    if(S.activeTab === "notas") renderNotesPage();
   }
 
   function paintClock(){
@@ -3507,9 +3209,9 @@
         function commit(){
           if(settled) return;
           settled = true;
-          // busca a tarefa vida por id em vez de reusar "t" fechado no escopo:
+          // busca a tarefa viva por id em vez de reusar "t" fechado no escopo:
           // se S foi trocado por inteiro enquanto essa textarea ficou aberta
-          // (pull do servidor, sincronia entre abas, troca de perfil), "t"
+          // (pull do servidor, sincronia entre abas, restaurar backup), "t"
           // vira uma cópia órfã e escrever nela não salva nada de verdade
           var atual = findTask(taskId);
           if(atual){
@@ -6714,16 +6416,6 @@
     return out.join("\n");
   }
 
-  function openNotesPage(){
-    $("main").hidden = true;
-    $("page-notes").hidden = false;
-    renderNotesPage();
-  }
-  function closeNotesPage(){
-    $("page-notes").hidden = true;
-    $("main").hidden = false;
-  }
-
   function currentFolderNotes(){
     if(notesSelectedFolder === "all") return S.notePages;
     if(notesSelectedFolder === "none") return S.notePages.filter(function(p){ return !p.folderId; });
@@ -7600,12 +7292,77 @@
     $("panel-pdi").hidden = !S.panels.pdi;
     $("btn-season").hidden = !S.panels.temporada;
     $("btn-capsule").hidden = !S.panels.capsula;
+    $("section-marcos").hidden = !S.panels.temporada && !S.panels.capsula;
     $("panel-sound").hidden = !S.panels.musica;
     $("panel-dev").hidden = !S.dev;
-    // a nav flutuante só mostra atalhos pra seções que existem na tela agora
-    if($("nav-habitos")) $("nav-habitos").hidden = !S.panels.habitos;
-    if($("nav-leitura")) $("nav-leitura").hidden = !S.panels.leitura;
-    if($("nav-dev")) $("nav-dev").hidden = !S.dev;
+    applyTabs();
+  }
+
+  /* ---------- abas ---------- */
+  // agrupa os painéis (antes soltos numa página só) em abas — cada aba é um
+  // dos divs ".tab-panel" dentro de #main; os painéis em si continuam sendo
+  // os mesmos elementos, só mudam de pai (ver initTabs)
+  var TAB_GROUPS = {
+    foco: ["section-timer", "section-tarefas", "panel-sound"],
+    produtividade: ["panel-patterns", "panel-stats"],
+    metas: ["panel-goals", "panel-pdi"],
+    habitos: ["panel-habits"],
+    leitura: ["panel-reading", "panel-screen"],
+    ferramentas: ["panel-dev"],
+    notas: ["page-notes"]
+  };
+
+  function selectTab(tab){
+    document.querySelectorAll(".tabbar .tab-btn").forEach(function(b){
+      var active = b.getAttribute("data-tab") === tab;
+      b.setAttribute("aria-selected", active ? "true" : "false");
+      // no celular a barra rola na horizontal — sem isso, restaurar uma aba
+      // salva (ou cair no fallback) podia deixar o botão ativo fora da vista
+      if(active) b.scrollIntoView({ block:"nearest", inline:"nearest" });
+    });
+    document.querySelectorAll(".tab-panel").forEach(function(tp){
+      tp.hidden = tp.getAttribute("data-tab") !== tab;
+    });
+    if(S.activeTab !== tab){ S.activeTab = tab; save(); }
+    if(tab === "notas") renderNotesPage();
+  }
+
+  // esconde da barra as abas cujos painéis estão todos desligados nos
+  // Ajustes (Hábitos, Leitura, Ferramentas de dev...), e tira o usuário de
+  // uma aba que acabou de sumir assim
+  function applyTabs(){
+    document.querySelectorAll(".tab-panel").forEach(function(tp){
+      var tab = tp.getAttribute("data-tab");
+      // "notas" não depende dos filhos — ela é ligada/desligada por
+      // applyAccountUI conforme a conta está logada ou não
+      if(tab === "notas") return;
+      var btn = $("tab-btn-" + tab);
+      if(!btn) return;
+      var anyVisible = Array.prototype.some.call(tp.children, function(k){ return !k.hidden; });
+      btn.hidden = !anyVisible;
+    });
+    var fallback = null;
+    document.querySelectorAll(".tabbar .tab-btn").forEach(function(btn){
+      if(!fallback && !btn.hidden) fallback = btn.getAttribute("data-tab");
+    });
+    var current = S.activeTab || "foco";
+    var currentBtn = $("tab-btn-" + current);
+    if(!currentBtn || currentBtn.hidden) selectTab(fallback || "foco");
+  }
+
+  function initTabs(){
+    Object.keys(TAB_GROUPS).forEach(function(tab){
+      var container = $("tab-" + tab);
+      if(!container) return;
+      TAB_GROUPS[tab].forEach(function(id){
+        var el = $(id);
+        if(el) container.appendChild(el);
+      });
+    });
+    document.querySelectorAll(".tabbar .tab-btn").forEach(function(btn){
+      btn.addEventListener("click", function(){ selectTab(btn.getAttribute("data-tab")); });
+    });
+    selectTab(S.activeTab || "foco");
   }
 
   /* ---------- tema ---------- */
@@ -8071,19 +7828,8 @@
     if(e.key === "Enter"){ e.preventDefault(); $("account-username-save").click(); }
   });
 
-  $("btn-profile-tag").onclick = function(){ renderProfilesDialog(); $("profiles").showModal(); };
-  $("btn-manage-profiles").onclick = function(){ $("settings").close(); renderProfilesDialog(); $("profiles").showModal(); };
-  $("profiles-close").onclick = function(){ $("profiles").close(); };
-  $("profile-new-add").onclick = function(){
-    var inp = $("profile-new-name");
-    createProfile(inp.value);
-    inp.value = "";
-  };
-  $("profile-new-name").addEventListener("keydown", function(e){ if(e.key === "Enter") $("profile-new-add").click(); });
-
   // página de notas em markdown
-  $("btn-notes-page").onclick = function(){ openNotesPage(); };
-  $("notes-back").onclick = function(){ closeNotesPage(); };
+  $("notes-back").onclick = function(){ selectTab("foco"); };
   $("notes-folder-add-btn").onclick = function(){
     createNoteFolder($("notes-folder-name").value);
     $("notes-folder-name").value = "";
@@ -8331,7 +8077,6 @@
         var rev = S.rev || 0;
         var tumbasAntes = S.deletedIds;
         S = adopt(clone(DEFAULTS), d);
-        PROFILES.archive[PROFILES.activeProfileId] = S;
         if(mesclar){
           var tumbas = unionIds(tumbasAntes, S.deletedIds);
           S.deletedIds = tumbas;
@@ -8367,11 +8112,8 @@
   };
 
   $("btn-wipe").onclick = async function(){
-    // só o perfil ativo — com perfis existindo, "tudo" apagar os outros
-    // também seria uma surpresa e tanto
-    if(!(await askConfirm("Apagar todas as tarefas, sessões e ajustes deste perfil? Isso não tem volta.", { danger:true, confirmLabel:"Apagar tudo" }))) return;
+    if(!(await askConfirm("Apagar todas as tarefas, sessões e ajustes? Isso não tem volta.", { danger:true, confirmLabel:"Apagar tudo" }))) return;
     S = clone(DEFAULTS);
-    PROFILES.archive[PROFILES.activeProfileId] = S;
     save(); render(); dlg.close();
     toast("Tudo apagado");
   };
@@ -8413,62 +8155,8 @@
     render();
   }
 
-  /* ---------- nav flutuante: rola até a seção e marca o item ativo ---------- */
-  function initFloatNav(){
-    var items = Array.prototype.slice.call(document.querySelectorAll(".float-nav .nav-item"));
-    if(!items.length) return;
-    var reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
-
-    function setCurrent(item){
-      items.forEach(function(i){ i.removeAttribute("aria-current"); });
-      if(item) item.setAttribute("aria-current", "page");
-    }
-
-    items.forEach(function(item){
-      item.addEventListener("click", function(){
-        var target = $(item.getAttribute("data-nav-target"));
-        if(!target) return;
-        target.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
-        setCurrent(item);
-      });
-    });
-
-    // além do clique, o item ativo também acompanha a rolagem sozinho
-    var byTarget = {};
-    var targets = [];
-    items.forEach(function(item){
-      var id = item.getAttribute("data-nav-target");
-      var el = $(id);
-      if(!el) return;
-      byTarget[id] = item;
-      targets.push(el);
-    });
-    if(!targets.length || !("IntersectionObserver" in window)) return;
-
-    // "threshold: 0.5" exigia metade da seção inteira visível de uma vez —
-    // nunca acontece em seções mais altas que a tela (Hábitos, por exemplo),
-    // então o item ativo travava na primeira seção curta e nunca mais mudava.
-    // Em vez de medir proporção visível, marca como atual a última seção
-    // (na ordem da página) cujo topo já passou por uma linha de referência
-    // perto do topo da viewport — o observer só dispara o recálculo.
-    function recalc(){
-      var linha = window.innerHeight * 0.3;
-      var atual = null;
-      targets.forEach(function(el){
-        // seção desligada nos Ajustes (Hábitos/Leitura/Ferramentas de dev, por
-        // exemplo) continua no DOM com "hidden" e top:0 — sem esse filtro ela
-        // sempre "passava da linha" e travava o item ativo nela
-        if(el.hidden) return;
-        if(el.getBoundingClientRect().top <= linha) atual = el;
-      });
-      if(atual) setCurrent(byTarget[atual.id]);
-    }
-    var io = new IntersectionObserver(recalc, { rootMargin: "0px 0px -70% 0px", threshold: 0 });
-    targets.forEach(function(el){ io.observe(el); });
-    recalc();
-  }
-
   applyTheme();
+  initTabs();   // move os painéis pra dentro da aba certa antes do primeiro render()
   checkAuth();
   checkResetLink();
   if(S.build.running || S.review.running || S.meeting.running) devTick();
@@ -8476,7 +8164,6 @@
   renderHabitForm();
   resume();
   renderEmbed();
-  initFloatNav();
 })();
 </script>
 </body>
