@@ -6052,12 +6052,36 @@
   // YouTube usado pra playlists coladas manualmente) em vez de som
   // sintetizado — som gravado de verdade soa melhor que a simulação em Web Audio
   var AMB_EMBEDS = {
-    lofi: "https://www.youtube.com/embed/videoseries?list=PLW0OjBxVIag0",
     chuva: "https://www.youtube.com/embed/yYJ5WgqKLaM?rel=0",
     ondas: "https://www.youtube.com/embed/bn9F19Hi1Lk?rel=0",
     cafe: "https://www.youtube.com/embed/uiMXGIG_DQo?rel=0",
     fogueira: "https://www.youtube.com/embed/mSX3OyW9Rao?rel=0"
   };
+
+  // vídeos da playlist de lo-fi da usuária — cada clique em "Lo-fi" sorteia
+  // um diferente, em vez de sempre abrir a playlist do início
+  var LOFI_VIDEOS = [
+    "rQD-zqJfARg", "N22BLs4CXSk", "BjIDpxF0w9o", "yu3-J4MPAVM", "ox4doMgyW90",
+    "YR81HdZ_BtE", "kdsc0661tMc", "ULbikQSSRQ8", "ihKGGb_Lwmc"
+  ];
+
+  function lofiEmbedSrc(){
+    return "https://www.youtube.com/embed/" + pickLofiVideo() + "?rel=0";
+  }
+
+  // evita repetir o vídeo que já está tocando, quando dá pra evitar
+  function pickLofiVideo(){
+    var current = S.sound.embed && S.sound.embed.src;
+    var options = LOFI_VIDEOS.filter(function(id){
+      return "https://www.youtube.com/embed/" + id + "?rel=0" !== current;
+    });
+    if(!options.length) options = LOFI_VIDEOS;
+    return options[Math.floor(Math.random() * options.length)];
+  }
+
+  function isLofiEmbed(src){
+    return LOFI_VIDEOS.some(function(id){ return src === "https://www.youtube.com/embed/" + id + "?rel=0"; });
+  }
 
   // AudioContext usado pelo aviso sonoro do fim do pomodoro (beep)
   var AC = null;
@@ -6080,7 +6104,9 @@
     var e = S.sound.embed;
     for(var i = 0; i < btns.length; i++){
       var kind = btns[i].dataset.amb;
-      var pressed = kind === "off" ? !e : (e && e.src === AMB_EMBEDS[kind]);
+      var pressed = kind === "off" ? !e
+        : kind === "lofi" ? (e && isLofiEmbed(e.src))
+        : (e && e.src === AMB_EMBEDS[kind]);
       btns[i].setAttribute("aria-pressed", String(!!pressed));
     }
   }
@@ -8345,7 +8371,8 @@
   document.querySelectorAll("#amb button").forEach(function(b){
     b.onclick = function(){
       var next = b.dataset.amb;
-      S.sound.embed = AMB_EMBEDS[next] ? { src:AMB_EMBEDS[next], h:220, kind:"YouTube" } : null;
+      var src = next === "lofi" ? lofiEmbedSrc() : AMB_EMBEDS[next];
+      S.sound.embed = src ? { src:src, h:220, kind:"YouTube" } : null;
       save();
       renderSound();
       renderEmbed();
