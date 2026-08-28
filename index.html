@@ -1169,12 +1169,6 @@
   .embed-form{display:flex;gap:var(--sp);flex-wrap:wrap;align-items:center}
   .embed-form input[type=text]{flex:1;min-width:240px}
   .embed-presets{display:flex;gap:var(--sp);flex-wrap:wrap;align-items:center;margin-top:8px}
-  /* "display:contents" faz os botões de dentro fluírem direto na fileira do
-     pai, como se não houvesse wrapper — precisa do [hidden] explícito por
-     cima porque senão empata em especificidade com o [hidden] do navegador
-     (mesmo problema do .new-task/.tabbar/.grid, ver comentários deles) */
-  .embed-lofi-options{display:contents}
-  .embed-lofi-options[hidden]{display:none}
   .embed-frame{margin-top:calc(var(--sp)*2);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden}
   .embed-frame iframe{display:block;width:100%;border:0}
 
@@ -1930,17 +1924,8 @@
           <button class="btn-ghost" id="embed-clear">Remover</button>
         </div>
         <div class="embed-presets">
-          <button class="btn-ghost" id="embed-lofi-toggle" aria-expanded="false">Lo-fi</button>
-          <div class="embed-lofi-options" id="embed-lofi-options" hidden>
-            <button class="btn-ghost" id="embed-lofi-girl">Lofi Girl</button>
-            <button class="btn-ghost" id="embed-synthwave">Synthwave Radio</button>
-            <button class="btn-ghost" id="embed-chillhop">Chillhop Radio</button>
-            <button class="btn-ghost" id="embed-lofi-playlist">Playlist</button>
-          </div>
-          <button class="btn-ghost" id="embed-chuva">Chuva</button>
-          <button class="btn-ghost" id="embed-ondas">Ondas</button>
-          <button class="btn-ghost" id="embed-cafe">Café</button>
-          <button class="btn-ghost" id="embed-fogo">Fogo</button>
+          <button class="btn-ghost" id="embed-lofi-girl">Lofi Girl</button>
+          <button class="btn-ghost" id="embed-synthwave">Synthwave Radio</button>
           <span class="hint" style="margin:0">rádios ao vivo de verdade — se uma parar de tocar, é a transmissão que mudou; cole o link novo acima</span>
         </div>
         <p class="hint" id="embed-hint"></p>
@@ -2573,6 +2558,11 @@
     if(Array.isArray(d.collapsed)) s.collapsed = d.collapsed;
     if(d.topicColors) s.topicColors = d.topicColors;
     if(d.sound) Object.assign(s.sound, d.sound);
+    // o gerador de ruído sintetizado foi aposentado — chuva/ondas/café/
+    // fogueira agora abrem vídeo de verdade (ver AMB_VIDEOS), então um
+    // "ambient" antigo salvo (de antes dessa troca) não deve religar o
+    // gerador sozinho quando o app carregar
+    s.sound.ambient = "off";
     if(d.theme) s.theme = d.theme;
     if(typeof d.activeTab !== "undefined") s.activeTab = d.activeTab;
     if(d.rev) s.rev = d.rev;
@@ -6060,6 +6050,16 @@
   }
 
   /* ---------- som ambiente ---------- */
+  // chuva/ondas/café/fogueira abrem um vídeo de verdade no player (mesmo
+  // embed do YouTube usado pra playlists) em vez do ruído sintetizado —
+  // som gravado de verdade soa melhor que a simulação em Web Audio
+  var AMB_VIDEOS = {
+    chuva: "yYJ5WgqKLaM",
+    ondas: "bn9F19Hi1Lk",
+    cafe: "uiMXGIG_DQo",
+    fogueira: "mSX3OyW9Rao"
+  };
+
   // um único AudioContext para o aviso sonoro e para o ambiente
   var AC = null;
   function ac(){
@@ -6247,21 +6247,20 @@
   }
 
   function renderSound(){
+    // o botão "pressionado" reflete qual vídeo está carregado no player
+    // (não mais um gerador de ruído interno — ver AMB_VIDEOS)
     var btns = document.querySelectorAll("#amb button");
+    var e = S.sound.embed;
     for(var i = 0; i < btns.length; i++){
-      btns[i].setAttribute("aria-pressed", String(btns[i].dataset.amb === S.sound.ambient));
+      var kind = btns[i].dataset.amb;
+      var videoId = AMB_VIDEOS[kind];
+      var pressed = kind === "off" ? !e : (videoId && e && e.src === "https://www.youtube.com/embed/" + videoId + "?rel=0");
+      btns[i].setAttribute("aria-pressed", String(!!pressed));
     }
     $("amb-vol").value = S.sound.volume;
     $("amb-follow").checked = !!S.sound.follow;
     $("amb-fade").checked = !!S.sound.fade;
-
-    var label;
-    if(S.sound.ambient === "off") label = "";
-    else if(amb && S.sound.fade && fadeFactor() < 1) label = "diminuindo";
-    else if(amb) label = "tocando";
-    else if(S.sound.follow) label = "espera o foco começar";
-    else label = "pausado";
-    $("sound-state").textContent = label;
+    $("sound-state").textContent = "";
   }
 
   /* ---------- PDI ---------- */
@@ -8517,14 +8516,21 @@
   $("list-rename").onclick = renameList;
   $("list-delete").onclick = deleteList;
 
-  // som ambiente
+  // som ambiente — cada botão abre o vídeo correspondente no player;
+  // "Nenhum" fecha o que estiver tocando. O gerador sintetizado (stopAmbient/
+  // ambientWanted) não entra mais em jogo aqui, então S.sound.ambient fica
+  // sempre "off" e quem manda no play/pause é o próprio player do YouTube
   document.querySelectorAll("#amb button").forEach(function(b){
     b.onclick = function(){
       var next = b.dataset.amb;
-      // trocar de textura exige recriar a cadeia de áudio
-      if(next !== S.sound.ambient) stopAmbient();
-      S.sound.ambient = next;
-      save(); syncAmbient();
+      stopAmbient();
+      S.sound.ambient = "off";
+      S.sound.embed = AMB_VIDEOS[next]
+        ? { src:"https://www.youtube.com/embed/" + AMB_VIDEOS[next] + "?rel=0", h:220, kind:"YouTube" }
+        : null;
+      save();
+      renderSound();
+      renderEmbed();
     };
   });
 
@@ -8700,15 +8706,6 @@
     save(); renderEmbed();
   };
 
-  // as opções de lo-fi ficam escondidas até clicar em "Lo-fi" — quatro
-  // botões a mais sempre visíveis deixava a fileira de atalhos poluída
-  $("embed-lofi-toggle").onclick = function(){
-    var box = $("embed-lofi-options");
-    var willShow = box.hidden;
-    box.hidden = !willShow;
-    this.setAttribute("aria-expanded", String(willShow));
-  };
-
   // atalhos pra rádio de verdade tocando. Os ids de vídeo são fixos — a Lofi Girl
   // troca de stream de vez em quando (a "beats to relax/study to" original saiu
   // do ar em maio/2026 por questão de direitos autorais), então se um dia um
@@ -8723,42 +8720,6 @@
     S.sound.embed = { src:"https://www.youtube.com/embed/4xDzrJKXOOY?rel=0", h:220, kind:"YouTube" };
     save(); renderEmbed();
     toast("Synthwave Radio carregada");
-  };
-
-  $("embed-chillhop").onclick = function(){
-    S.sound.embed = { src:"https://www.youtube.com/embed/5yx6BWlEVcY?rel=0", h:220, kind:"YouTube" };
-    save(); renderEmbed();
-    toast("Chillhop Radio carregada");
-  };
-
-  $("embed-lofi-playlist").onclick = function(){
-    S.sound.embed = { src:"https://www.youtube.com/embed/videoseries?list=PLW0OjBxVIag0", h:220, kind:"YouTube" };
-    save(); renderEmbed();
-    toast("Playlist Lofi carregada");
-  };
-
-  $("embed-chuva").onclick = function(){
-    S.sound.embed = { src:"https://www.youtube.com/embed/yYJ5WgqKLaM?rel=0", h:220, kind:"YouTube" };
-    save(); renderEmbed();
-    toast("Chuva carregada");
-  };
-
-  $("embed-ondas").onclick = function(){
-    S.sound.embed = { src:"https://www.youtube.com/embed/bn9F19Hi1Lk?rel=0", h:220, kind:"YouTube" };
-    save(); renderEmbed();
-    toast("Ondas carregadas");
-  };
-
-  $("embed-cafe").onclick = function(){
-    S.sound.embed = { src:"https://www.youtube.com/embed/uiMXGIG_DQo?rel=0", h:220, kind:"YouTube" };
-    save(); renderEmbed();
-    toast("Café carregado");
-  };
-
-  $("embed-fogo").onclick = function(){
-    S.sound.embed = { src:"https://www.youtube.com/embed/mSX3OyW9Rao?rel=0", h:220, kind:"YouTube" };
-    save(); renderEmbed();
-    toast("Fogo carregado");
   };
 
   $("task-add").onclick = addTask;
