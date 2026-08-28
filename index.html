@@ -1911,12 +1911,12 @@
 
       <div class="sound-row">
         <div class="seg" id="amb" role="group" aria-label="Som ambiente">
-          <button data-amb="off" aria-pressed="true">Nenhum</button>
-          <button data-amb="lofi">Lo-fi</button>
-          <button data-amb="chuva">Chuva</button>
-          <button data-amb="ondas">Ondas</button>
-          <button data-amb="cafe">Café</button>
-          <button data-amb="fogueira">Fogueira</button>
+          <button data-amb="off" aria-pressed="true">🔇 Nenhum</button>
+          <button data-amb="lofi">🎧 Lo-fi</button>
+          <button data-amb="chuva">🌧️ Chuva</button>
+          <button data-amb="ondas">🌊 Ondas</button>
+          <button data-amb="cafe">☕ Café</button>
+          <button data-amb="fogueira">🔥 Fogueira</button>
         </div>
       </div>
 
@@ -6058,30 +6058,12 @@
     fogueira: "https://www.youtube.com/embed/mSX3OyW9Rao?rel=0"
   };
 
-  // vídeos da playlist de lo-fi da usuária — cada clique em "Lo-fi" sorteia
-  // um diferente, em vez de sempre abrir a playlist do início
-  var LOFI_VIDEOS = [
-    "rQD-zqJfARg", "N22BLs4CXSk", "BjIDpxF0w9o", "yu3-J4MPAVM", "ox4doMgyW90",
-    "YR81HdZ_BtE", "kdsc0661tMc", "ULbikQSSRQ8", "ihKGGb_Lwmc"
+  // as duas opções por trás do "Lo-fi" — usado só pra saber se o botão
+  // deve aparecer marcado (ver renderSound)
+  var LOFI_OPTION_SRCS = [
+    "https://www.youtube.com/embed/XVFUtEh9zrY?rel=0",
+    "https://www.youtube.com/embed/4xDzrJKXOOY?rel=0"
   ];
-
-  function lofiEmbedSrc(){
-    return "https://www.youtube.com/embed/" + pickLofiVideo() + "?rel=0";
-  }
-
-  // evita repetir o vídeo que já está tocando, quando dá pra evitar
-  function pickLofiVideo(){
-    var current = S.sound.embed && S.sound.embed.src;
-    var options = LOFI_VIDEOS.filter(function(id){
-      return "https://www.youtube.com/embed/" + id + "?rel=0" !== current;
-    });
-    if(!options.length) options = LOFI_VIDEOS;
-    return options[Math.floor(Math.random() * options.length)];
-  }
-
-  function isLofiEmbed(src){
-    return LOFI_VIDEOS.some(function(id){ return src === "https://www.youtube.com/embed/" + id + "?rel=0"; });
-  }
 
   // AudioContext usado pelo aviso sonoro do fim do pomodoro (beep)
   var AC = null;
@@ -6105,7 +6087,7 @@
     for(var i = 0; i < btns.length; i++){
       var kind = btns[i].dataset.amb;
       var pressed = kind === "off" ? !e
-        : kind === "lofi" ? (e && isLofiEmbed(e.src))
+        : kind === "lofi" ? (e && LOFI_OPTION_SRCS.indexOf(e.src) >= 0)
         : (e && e.src === AMB_EMBEDS[kind]);
       btns[i].setAttribute("aria-pressed", String(!!pressed));
     }
@@ -8364,19 +8346,22 @@
   $("list-rename").onclick = renameList;
   $("list-delete").onclick = deleteList;
 
-  // som ambiente — cada botão abre o vídeo/playlist correspondente no
-  // player; "Nenhum" fecha o que estiver tocando. "Lo-fi" também revela as
-  // outras opções de lo-fi (só aparecem depois desse primeiro clique, pra
-  // não poluir a fileira de baixo com botão de playlist de cara)
+  // som ambiente — cada botão abre o vídeo correspondente no player;
+  // "Nenhum" fecha o que estiver tocando. "Lo-fi" não tem vídeo próprio:
+  // só alterna a visibilidade de "Lofi Girl"/"Synthwave Radio", que é
+  // quem de fato escolhe o que toca
   document.querySelectorAll("#amb button").forEach(function(b){
     b.onclick = function(){
       var next = b.dataset.amb;
-      var src = next === "lofi" ? lofiEmbedSrc() : AMB_EMBEDS[next];
-      S.sound.embed = src ? { src:src, h:220, kind:"YouTube" } : null;
+      if(next === "lofi"){
+        var box = $("embed-lofi-extra");
+        box.hidden = !box.hidden;
+        return;
+      }
+      S.sound.embed = AMB_EMBEDS[next] ? { src:AMB_EMBEDS[next], h:220, kind:"YouTube" } : null;
       save();
       renderSound();
       renderEmbed();
-      if(next === "lofi") $("embed-lofi-extra").hidden = false;
     };
   });
 
@@ -8540,13 +8525,13 @@
   // desses parar de tocar, é só colar o link da transmissão atual na caixa acima
   $("embed-lofi-girl").onclick = function(){
     S.sound.embed = { src:"https://www.youtube.com/embed/XVFUtEh9zrY?rel=0", h:220, kind:"YouTube" };
-    save(); renderEmbed();
+    save(); renderSound(); renderEmbed();
     toast("Lofi Girl carregada");
   };
 
   $("embed-synthwave").onclick = function(){
     S.sound.embed = { src:"https://www.youtube.com/embed/4xDzrJKXOOY?rel=0", h:220, kind:"YouTube" };
-    save(); renderEmbed();
+    save(); renderSound(); renderEmbed();
     toast("Synthwave Radio carregada");
   };
 
