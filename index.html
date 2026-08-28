@@ -1169,6 +1169,12 @@
   .embed-form{display:flex;gap:var(--sp);flex-wrap:wrap;align-items:center}
   .embed-form input[type=text]{flex:1;min-width:240px}
   .embed-presets{display:flex;gap:var(--sp);flex-wrap:wrap;align-items:center;margin-top:8px}
+  /* "display:contents" faz os botões de dentro fluírem direto na fileira do
+     pai, como se não houvesse wrapper — precisa do [hidden] explícito por
+     cima porque senão empata em especificidade com o [hidden] do navegador
+     (mesmo problema do .new-task/.tabbar/.grid, ver comentários deles) */
+  .embed-lofi-extra{display:contents}
+  .embed-lofi-extra[hidden]{display:none}
   .embed-frame{margin-top:calc(var(--sp)*2);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden}
   .embed-frame iframe{display:block;width:100%;border:0}
 
@@ -1906,6 +1912,7 @@
       <div class="sound-row">
         <div class="seg" id="amb" role="group" aria-label="Som ambiente">
           <button data-amb="off" aria-pressed="true">Nenhum</button>
+          <button data-amb="lofi">Lo-fi</button>
           <button data-amb="chuva">Chuva</button>
           <button data-amb="ondas">Ondas</button>
           <button data-amb="cafe">Café</button>
@@ -1920,8 +1927,10 @@
           <button class="btn-ghost" id="embed-clear">Remover</button>
         </div>
         <div class="embed-presets">
-          <button class="btn-ghost" id="embed-lofi-girl">Lofi Girl</button>
-          <button class="btn-ghost" id="embed-synthwave">Synthwave Radio</button>
+          <div class="embed-lofi-extra" id="embed-lofi-extra" hidden>
+            <button class="btn-ghost" id="embed-lofi-girl">Lofi Girl</button>
+            <button class="btn-ghost" id="embed-synthwave">Synthwave Radio</button>
+          </div>
           <span class="hint" style="margin:0">rádios ao vivo de verdade — se uma parar de tocar, é a transmissão que mudou; cole o link novo acima</span>
         </div>
         <p class="hint" id="embed-hint"></p>
@@ -6039,14 +6048,15 @@
   }
 
   /* ---------- som ambiente ---------- */
-  // chuva/ondas/café/fogueira abrem um vídeo de verdade no player (mesmo
-  // embed do YouTube usado pra playlists) em vez do ruído sintetizado —
-  // som gravado de verdade soa melhor que a simulação em Web Audio
-  var AMB_VIDEOS = {
-    chuva: "yYJ5WgqKLaM",
-    ondas: "bn9F19Hi1Lk",
-    cafe: "uiMXGIG_DQo",
-    fogueira: "mSX3OyW9Rao"
+  // cada opção abre um vídeo/playlist de verdade no player (mesmo embed do
+  // YouTube usado pra playlists coladas manualmente) em vez de som
+  // sintetizado — som gravado de verdade soa melhor que a simulação em Web Audio
+  var AMB_EMBEDS = {
+    lofi: "https://www.youtube.com/embed/videoseries?list=PLW0OjBxVIag0",
+    chuva: "https://www.youtube.com/embed/yYJ5WgqKLaM?rel=0",
+    ondas: "https://www.youtube.com/embed/bn9F19Hi1Lk?rel=0",
+    cafe: "https://www.youtube.com/embed/uiMXGIG_DQo?rel=0",
+    fogueira: "https://www.youtube.com/embed/mSX3OyW9Rao?rel=0"
   };
 
   // AudioContext usado pelo aviso sonoro do fim do pomodoro (beep)
@@ -6065,13 +6075,12 @@
 
   function renderSound(){
     // o botão "pressionado" reflete qual vídeo está carregado no player
-    // (não mais um gerador de ruído interno — ver AMB_VIDEOS)
+    // (não mais um gerador de ruído interno — ver AMB_EMBEDS)
     var btns = document.querySelectorAll("#amb button");
     var e = S.sound.embed;
     for(var i = 0; i < btns.length; i++){
       var kind = btns[i].dataset.amb;
-      var videoId = AMB_VIDEOS[kind];
-      var pressed = kind === "off" ? !e : (videoId && e && e.src === "https://www.youtube.com/embed/" + videoId + "?rel=0");
+      var pressed = kind === "off" ? !e : (e && e.src === AMB_EMBEDS[kind]);
       btns[i].setAttribute("aria-pressed", String(!!pressed));
     }
   }
@@ -8329,17 +8338,18 @@
   $("list-rename").onclick = renameList;
   $("list-delete").onclick = deleteList;
 
-  // som ambiente — cada botão abre o vídeo correspondente no player;
-  // "Nenhum" fecha o que estiver tocando
+  // som ambiente — cada botão abre o vídeo/playlist correspondente no
+  // player; "Nenhum" fecha o que estiver tocando. "Lo-fi" também revela as
+  // outras opções de lo-fi (só aparecem depois desse primeiro clique, pra
+  // não poluir a fileira de baixo com botão de playlist de cara)
   document.querySelectorAll("#amb button").forEach(function(b){
     b.onclick = function(){
       var next = b.dataset.amb;
-      S.sound.embed = AMB_VIDEOS[next]
-        ? { src:"https://www.youtube.com/embed/" + AMB_VIDEOS[next] + "?rel=0", h:220, kind:"YouTube" }
-        : null;
+      S.sound.embed = AMB_EMBEDS[next] ? { src:AMB_EMBEDS[next], h:220, kind:"YouTube" } : null;
       save();
       renderSound();
       renderEmbed();
+      if(next === "lofi") $("embed-lofi-extra").hidden = false;
     };
   });
 
