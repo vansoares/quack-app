@@ -1169,6 +1169,12 @@
   .embed-form{display:flex;gap:var(--sp);flex-wrap:wrap;align-items:center}
   .embed-form input[type=text]{flex:1;min-width:240px}
   .embed-presets{display:flex;gap:var(--sp);flex-wrap:wrap;align-items:center;margin-top:8px}
+  /* "display:contents" faz os botões de dentro fluírem direto na fileira do
+     pai, como se não houvesse wrapper — precisa do [hidden] explícito por
+     cima porque senão empata em especificidade com o [hidden] do navegador
+     (mesmo problema do .new-task/.tabbar/.grid, ver comentários deles) */
+  .embed-lofi-options{display:contents}
+  .embed-lofi-options[hidden]{display:none}
   .embed-frame{margin-top:calc(var(--sp)*2);border:1px solid var(--line);border-radius:var(--r-md);overflow:hidden}
   .embed-frame iframe{display:block;width:100%;border:0}
 
@@ -1908,7 +1914,6 @@
         <div class="seg" id="amb" role="group" aria-label="Som ambiente">
           <button data-amb="off" aria-pressed="true">Nenhum</button>
           <button data-amb="chuva">Chuva</button>
-          <button data-amb="ruido">Ruído</button>
           <button data-amb="ondas">Ondas</button>
           <button data-amb="cafe">Café</button>
           <button data-amb="fogueira">Fogueira</button>
@@ -1925,11 +1930,17 @@
           <button class="btn-ghost" id="embed-clear">Remover</button>
         </div>
         <div class="embed-presets">
-          <button class="btn-ghost" id="embed-lofi-girl">Lofi Girl</button>
-          <button class="btn-ghost" id="embed-synthwave">Synthwave Radio</button>
-          <button class="btn-ghost" id="embed-chillhop">Chillhop Radio</button>
-          <button class="btn-ghost" id="embed-lofi-playlist">Lofi</button>
+          <button class="btn-ghost" id="embed-lofi-toggle" aria-expanded="false">Lo-fi</button>
+          <div class="embed-lofi-options" id="embed-lofi-options" hidden>
+            <button class="btn-ghost" id="embed-lofi-girl">Lofi Girl</button>
+            <button class="btn-ghost" id="embed-synthwave">Synthwave Radio</button>
+            <button class="btn-ghost" id="embed-chillhop">Chillhop Radio</button>
+            <button class="btn-ghost" id="embed-lofi-playlist">Playlist</button>
+          </div>
           <button class="btn-ghost" id="embed-chuva">Chuva</button>
+          <button class="btn-ghost" id="embed-ondas">Ondas</button>
+          <button class="btn-ghost" id="embed-cafe">Café</button>
+          <button class="btn-ghost" id="embed-fogo">Fogo</button>
           <span class="hint" style="margin:0">rádios ao vivo de verdade — se uma parar de tocar, é a transmissão que mudou; cole o link novo acima</span>
         </div>
         <p class="hint" id="embed-hint"></p>
@@ -8689,6 +8700,15 @@
     save(); renderEmbed();
   };
 
+  // as opções de lo-fi ficam escondidas até clicar em "Lo-fi" — quatro
+  // botões a mais sempre visíveis deixava a fileira de atalhos poluída
+  $("embed-lofi-toggle").onclick = function(){
+    var box = $("embed-lofi-options");
+    var willShow = box.hidden;
+    box.hidden = !willShow;
+    this.setAttribute("aria-expanded", String(willShow));
+  };
+
   // atalhos pra rádio de verdade tocando. Os ids de vídeo são fixos — a Lofi Girl
   // troca de stream de vez em quando (a "beats to relax/study to" original saiu
   // do ar em maio/2026 por questão de direitos autorais), então se um dia um
@@ -8721,6 +8741,24 @@
     S.sound.embed = { src:"https://www.youtube.com/embed/yYJ5WgqKLaM?rel=0", h:220, kind:"YouTube" };
     save(); renderEmbed();
     toast("Chuva carregada");
+  };
+
+  $("embed-ondas").onclick = function(){
+    S.sound.embed = { src:"https://www.youtube.com/embed/bn9F19Hi1Lk?rel=0", h:220, kind:"YouTube" };
+    save(); renderEmbed();
+    toast("Ondas carregadas");
+  };
+
+  $("embed-cafe").onclick = function(){
+    S.sound.embed = { src:"https://www.youtube.com/embed/uiMXGIG_DQo?rel=0", h:220, kind:"YouTube" };
+    save(); renderEmbed();
+    toast("Café carregado");
+  };
+
+  $("embed-fogo").onclick = function(){
+    S.sound.embed = { src:"https://www.youtube.com/embed/mSX3OyW9Rao?rel=0", h:220, kind:"YouTube" };
+    save(); renderEmbed();
+    toast("Fogo carregado");
   };
 
   $("task-add").onclick = addTask;
