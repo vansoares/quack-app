@@ -1901,7 +1901,6 @@
     <section class="panel sound" id="panel-sound">
       <div class="panel-head">
         <h2 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9v6h4l5 4V5L8 9Z"/><path d="M16.5 8.5a5 5 0 0 1 0 7M19 6a8.5 8.5 0 0 1 0 12"/></svg></span>Som</h2>
-        <span class="panel-title" id="sound-state"></span>
       </div>
 
       <div class="sound-row">
@@ -1912,9 +1911,6 @@
           <button data-amb="cafe">Café</button>
           <button data-amb="fogueira">Fogueira</button>
         </div>
-        <label class="ctl" for="amb-vol"><span class="k">Volume</span><input type="range" id="amb-vol" min="0" max="100" value="35"></label>
-        <label class="ctl" for="amb-follow"><input type="checkbox" id="amb-follow"><span class="k">Tocar só durante o foco</span></label>
-        <label class="ctl" for="amb-fade"><input type="checkbox" id="amb-fade"><span class="k">Silenciar nos últimos 30s</span></label>
       </div>
 
       <div class="embed-wrap">
@@ -2483,7 +2479,7 @@
     hideCompleted: false,
     collapsed: [],
     topicColors: {},
-    sound: { ambient:"off", volume:35, follow:true, fade:true, embed:null },
+    sound: { embed:null },
     theme: "auto",
     activeTab: "foco"
   };
@@ -2557,12 +2553,7 @@
     if(typeof d.hideCompleted !== "undefined") s.hideCompleted = !!d.hideCompleted;
     if(Array.isArray(d.collapsed)) s.collapsed = d.collapsed;
     if(d.topicColors) s.topicColors = d.topicColors;
-    if(d.sound) Object.assign(s.sound, d.sound);
-    // o gerador de ruído sintetizado foi aposentado — chuva/ondas/café/
-    // fogueira agora abrem vídeo de verdade (ver AMB_VIDEOS), então um
-    // "ambient" antigo salvo (de antes dessa troca) não deve religar o
-    // gerador sozinho quando o app carregar
-    s.sound.ambient = "off";
+    if(d.sound) s.sound.embed = d.sound.embed || null;
     if(d.theme) s.theme = d.theme;
     if(typeof d.activeTab !== "undefined") s.activeTab = d.activeTab;
     if(d.rev) s.rev = d.rev;
@@ -2648,7 +2639,6 @@
     applyTheme();
     render();
     renderEmbed();
-    syncAmbient();
     toast("Sincronizado com outra aba");
   });
 
@@ -2743,7 +2733,7 @@
       try{ localStorage.setItem(LAST_ACCOUNT_KEY, AUTH.email); }catch(e){}
 
       save();               // grava local com a revisão nova e já agenda o push de reconciliação
-      applyTheme(); render(); renderEmbed(); syncAmbient();
+      applyTheme(); render(); renderEmbed();
       setSyncNote("sincronizado com sua conta");
     }).catch(function(){
       pulling = false;
@@ -2934,7 +2924,7 @@
     if(S.timer.running) return;
     S.timer.endsAt = Date.now() + remaining();
     S.timer.running = true;
-    save(); render(); tick(); syncAmbient();
+    save(); render(); tick();
   }
 
   function pause(){
@@ -2942,7 +2932,7 @@
     S.timer.remaining = remaining();
     S.timer.running = false;
     S.timer.endsAt = null;
-    save(); render(); syncAmbient();
+    save(); render();
   }
 
   // encerra o bloco de foco antes do fim e ainda registra o tempo já feito
@@ -2978,7 +2968,7 @@
     S.timer.endsAt = null;
     S.timer.remaining = duration("foco");
     S.timer.interruptions = 0;
-    save(); render(); syncAmbient();
+    save(); render();
     toast(min + (min === 1 ? " minuto registrado" : " minutos registrados"));
   }
 
@@ -2996,7 +2986,7 @@
     S.timer.endsAt = null;
     S.timer.remaining = duration(mode);
     S.timer.interruptions = 0;
-    save(); render(); syncAmbient();
+    save(); render();
     if(autoRun && S.settings.auto) start();
   }
 
@@ -3054,7 +3044,6 @@
     ensureOrbit();
     var decorrido = duration("foco") - remaining();
     $("btn-partial").hidden = !(S.timer.mode === "foco" && decorrido >= 5000);
-    if(amb && S.sound.fade) applyAmbGain(0.4);
     if(S.timer.running) rafId = setTimeout(tick, 250);
   }
 
@@ -6060,7 +6049,7 @@
     fogueira: "mSX3OyW9Rao"
   };
 
-  // um único AudioContext para o aviso sonoro e para o ambiente
+  // AudioContext usado pelo aviso sonoro do fim do pomodoro (beep)
   var AC = null;
   function ac(){
     try{
@@ -6074,178 +6063,6 @@
     }catch(e){ return null; }
   }
 
-  // ruído em buffer longo, com crossfade nas pontas para o loop não estalar
-  function noiseBuffer(ctx, kind){
-    var L = Math.floor(ctx.sampleRate * 8);
-    var F = Math.floor(ctx.sampleRate * 0.4);
-    var raw = new Float32Array(L + F);
-    if(kind === "brown"){
-      var last = 0;
-      for(var i = 0; i < raw.length; i++){
-        var w = Math.random() * 2 - 1;
-        last = (last + 0.02 * w) / 1.02;
-        raw[i] = last * 3.5;
-      }
-    }else{
-      for(var j = 0; j < raw.length; j++) raw[j] = Math.random() * 2 - 1;
-    }
-    var buf = ctx.createBuffer(1, L, ctx.sampleRate);
-    var d = buf.getChannelData(0);
-    for(var k = 0; k < L; k++) d[k] = raw[k];
-    for(var f = 0; f < F; f++){
-      var g = f / F;
-      d[f] = raw[f] * g + raw[L + f] * (1 - g);
-    }
-    return buf;
-  }
-
-  var amb = null;
-
-  function ambVolume(){ return (S.sound.volume / 100) * 0.4; }
-
-  // estalo curto: ruído com decaimento rápido, filtrado numa faixa estreita
-  function burst(ctx, dest, freq, q, gain, dur){
-    var len = Math.max(1, Math.floor(ctx.sampleRate * dur));
-    var b = ctx.createBuffer(1, len, ctx.sampleRate);
-    var d = b.getChannelData(0);
-    for(var i = 0; i < len; i++){
-      d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 4);
-    }
-    var s = ctx.createBufferSource(); s.buffer = b;
-    var f = ctx.createBiquadFilter(); f.type = "bandpass"; f.frequency.value = freq; f.Q.value = q;
-    var g = ctx.createGain(); g.gain.value = gain;
-    s.connect(f); f.connect(g); g.connect(dest);
-    s.start();
-  }
-
-  function startAmbient(){
-    if(amb || S.sound.ambient === "off") return;
-    var ctx = ac();
-    if(!ctx) return;
-
-    var kind = S.sound.ambient === "chuva" ? "white" : "brown";
-    var src = ctx.createBufferSource();
-    src.buffer = noiseBuffer(ctx, kind);
-    src.loop = true;
-
-    var master = ctx.createGain();
-    master.gain.value = 0.0001;
-
-    var node = src;
-    var lfo = null;
-    var timer = null;
-
-    if(S.sound.ambient === "chuva"){
-      var hp = ctx.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 420;
-      var lp = ctx.createBiquadFilter(); lp.type = "lowpass";  lp.frequency.value = 2600;
-      node.connect(hp); hp.connect(lp); node = lp;
-
-    }else if(S.sound.ambient === "cafe"){
-      // murmúrio: faixa média estreita, longe da frequência da fala legível
-      var bp = ctx.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.value = 620; bp.Q.value = 0.7;
-      var sh = ctx.createBiquadFilter(); sh.type = "lowshelf"; sh.frequency.value = 200; sh.gain.value = 6;
-      node.connect(bp); bp.connect(sh); node = sh;
-
-    }else if(S.sound.ambient === "fogueira"){
-      var fl = ctx.createBiquadFilter(); fl.type = "lowpass"; fl.frequency.value = 700;
-      node.connect(fl); node = fl;
-
-    }else{
-      var lo = ctx.createBiquadFilter(); lo.type = "lowpass";
-      lo.frequency.value = S.sound.ambient === "ondas" ? 520 : 900;
-      node.connect(lo); node = lo;
-    }
-
-    if(S.sound.ambient === "ondas"){
-      // vai e volta lento, como respiração — evita o zumbido plano do ruído puro
-      var wave = ctx.createGain();
-      wave.gain.value = 0.55;
-      lfo = ctx.createOscillator();
-      lfo.frequency.value = 0.07;
-      var depth = ctx.createGain();
-      depth.gain.value = 0.45;
-      lfo.connect(depth); depth.connect(wave.gain);
-      lfo.start();
-      node.connect(wave); node = wave;
-    }
-
-    node.connect(master);
-    master.connect(ctx.destination);
-    src.start();
-
-    // eventos esparsos em intervalo irregular: em grade fixa o ouvido percebe o padrão
-    if(S.sound.ambient === "fogueira"){
-      timer = (function schedule(){
-        return setTimeout(function loop(){
-          if(!amb) return;
-          var n = 1 + Math.floor(Math.random() * 3);
-          for(var i = 0; i < n; i++){
-            setTimeout(function(){
-              if(amb) burst(ctx, master, 900 + Math.random() * 2600, 2.5, 0.25 + Math.random() * 0.5, 0.05 + Math.random() * 0.05);
-            }, Math.random() * 260);
-          }
-          amb.timer = setTimeout(loop, 220 + Math.random() * 900);
-        }, 300);
-      })();
-    }else if(S.sound.ambient === "cafe"){
-      timer = setTimeout(function loop(){
-        if(!amb) return;
-        // tilintar de louça, raro e discreto
-        burst(ctx, master, 2600 + Math.random() * 2200, 8, 0.10 + Math.random() * 0.12, 0.05);
-        amb.timer = setTimeout(loop, 1800 + Math.random() * 5200);
-      }, 2000 + Math.random() * 3000);
-    }
-
-    amb = { src:src, gain:master, lfo:lfo, timer:timer };
-    master.gain.setTargetAtTime(ambVolume(), ctx.currentTime, 0.5);
-  }
-
-  function stopAmbient(){
-    if(!amb) return;
-    var n = amb;
-    amb = null;
-    if(n.timer) clearTimeout(n.timer);
-    try{
-      var ctx = AC;
-      n.gain.gain.setTargetAtTime(0.0001, ctx.currentTime, 0.25);
-      setTimeout(function(){
-        try{ n.src.stop(); if(n.lfo) n.lfo.stop(); }catch(e){}
-      }, 900);
-    }catch(e){}
-  }
-
-  var FADE_MS = 30000;
-
-  // no fim do bloco o som se retira antes do sino: o silêncio já avisa
-  function fadeFactor(){
-    if(!S.sound.fade) return 1;
-    if(S.timer.mode !== "foco" || !S.timer.running) return 1;
-    var rem = remaining();
-    if(rem >= FADE_MS) return 1;
-    return Math.max(0.001, rem / FADE_MS);
-  }
-
-  function applyAmbGain(smooth){
-    if(!amb || !AC) return;
-    amb.gain.gain.setTargetAtTime(ambVolume() * fadeFactor(), AC.currentTime, smooth || 0.2);
-  }
-
-  function ambientWanted(){
-    if(S.sound.ambient === "off") return false;
-    if(!S.sound.follow) return true;
-    return S.timer.mode === "foco" && S.timer.running;
-  }
-
-  function syncAmbient(){
-    if(ambientWanted()){
-      if(amb) applyAmbGain(0.2);
-      else startAmbient();
-    }else{
-      stopAmbient();
-    }
-    renderSound();
-  }
-
   function renderSound(){
     // o botão "pressionado" reflete qual vídeo está carregado no player
     // (não mais um gerador de ruído interno — ver AMB_VIDEOS)
@@ -6257,10 +6074,6 @@
       var pressed = kind === "off" ? !e : (videoId && e && e.src === "https://www.youtube.com/embed/" + videoId + "?rel=0");
       btns[i].setAttribute("aria-pressed", String(!!pressed));
     }
-    $("amb-vol").value = S.sound.volume;
-    $("amb-follow").checked = !!S.sound.follow;
-    $("amb-fade").checked = !!S.sound.fade;
-    $("sound-state").textContent = "";
   }
 
   /* ---------- PDI ---------- */
@@ -8517,14 +8330,10 @@
   $("list-delete").onclick = deleteList;
 
   // som ambiente — cada botão abre o vídeo correspondente no player;
-  // "Nenhum" fecha o que estiver tocando. O gerador sintetizado (stopAmbient/
-  // ambientWanted) não entra mais em jogo aqui, então S.sound.ambient fica
-  // sempre "off" e quem manda no play/pause é o próprio player do YouTube
+  // "Nenhum" fecha o que estiver tocando
   document.querySelectorAll("#amb button").forEach(function(b){
     b.onclick = function(){
       var next = b.dataset.amb;
-      stopAmbient();
-      S.sound.ambient = "off";
       S.sound.embed = AMB_VIDEOS[next]
         ? { src:"https://www.youtube.com/embed/" + AMB_VIDEOS[next] + "?rel=0", h:220, kind:"YouTube" }
         : null;
@@ -8533,24 +8342,6 @@
       renderEmbed();
     };
   });
-
-  $("amb-vol").addEventListener("input", function(){
-    S.sound.volume = Math.min(100, Math.max(0, parseInt(this.value, 10) || 0));
-    if(amb && AC) amb.gain.gain.setTargetAtTime(ambVolume(), AC.currentTime, 0.1);
-    save();
-  });
-
-  $("amb-follow").onchange = function(){
-    S.sound.follow = this.checked;
-    save(); syncAmbient();
-  };
-
-  $("amb-fade").onchange = function(){
-    S.sound.fade = this.checked;
-    save();
-    applyAmbGain(0.3);
-    renderSound();
-  };
 
   // conta
   $("btn-account").onclick = function(){
