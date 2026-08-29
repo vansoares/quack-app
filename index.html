@@ -2249,17 +2249,19 @@
 
 <dialog id="cal-add-task">
   <div class="dlg-head">
-    <h2 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M8 3v3M16 3v3"/></svg></span>Nova tarefa</h2>
+    <h2 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M8 3v3M16 3v3"/></svg></span>Tarefas do dia</h2>
     <button class="btn-ghost icon-only" id="cal-task-close" aria-label="Fechar" title="Fechar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
   </div>
   <div class="dlg-body">
     <p class="hint" id="cal-task-date"></p>
+    <ul class="task-list" id="cal-day-task-list"></ul>
+    <p class="cap-meta" id="cal-day-new-label" style="margin-top:4px">Nova tarefa</p>
     <div class="field"><label for="cal-task-title">Título</label><input type="text" id="cal-task-title" maxlength="140" placeholder="O que você vai fazer?" aria-label="Título da tarefa"></div>
     <div class="field"><label for="cal-task-tag">Etiqueta</label><input type="text" id="cal-task-tag" list="tag-options" maxlength="24" placeholder="opcional" aria-label="Etiqueta"></div>
   </div>
   <div class="dlg-foot">
     <button class="btn-main" id="cal-task-save">Criar tarefa</button>
-    <button class="btn-ghost" id="cal-task-cancel">Cancelar</button>
+    <button class="btn-ghost" id="cal-task-cancel">Fechar</button>
   </div>
 </dialog>
 
@@ -3265,7 +3267,7 @@
                       done: 0, completed: false, createdAt: Date.now(), completedAt: null });
     input.value = "";
     // a etiqueta permanece no campo: quem trabalha em lote costuma repetir o projeto
-    save(); renderTasks(); renderStats(); refreshCalendarIfActive();
+    save(); renderTasks(); renderStats(); refreshCalendarIfActive(); refreshCalDialogIfOpen();
     input.focus();
   }
 
@@ -3275,7 +3277,7 @@
     t.completed = !t.completed;
     t.completedAt = t.completed ? Date.now() : null;
     if(t.completed && S.activeTaskId === id) S.activeTaskId = null;
-    save(); renderTasks(); renderTimer(); renderStats(); refreshCalendarIfActive();
+    save(); renderTasks(); renderTimer(); renderStats(); refreshCalendarIfActive(); refreshCalDialogIfOpen();
   }
 
   function selectTask(id){
@@ -3289,7 +3291,7 @@
     S.tasks = S.tasks.filter(function(t){ return t.id !== id; });
     markDeleted(id);
     if(S.activeTaskId === id) S.activeTaskId = null;
-    save(); renderTasks(); renderTimer(); refreshCalendarIfActive();
+    save(); renderTasks(); renderTimer(); refreshCalendarIfActive(); refreshCalDialogIfOpen();
   }
 
   /* ---------- render ---------- */
@@ -3834,7 +3836,7 @@
       if(settled) return;
       settled = true;
       task.due = inp.value || null;   // campo vazio remove o prazo
-      save(); renderTasks(); refreshCalendarIfActive();
+      save(); renderTasks(); refreshCalendarIfActive(); refreshCalDialogIfOpen();
     }
     inp.addEventListener("change", commit);
     inp.addEventListener("blur", commit);
@@ -4667,16 +4669,38 @@
     });
   }
 
+  // lista as tarefas do dia dentro do próprio popup, reaproveitando
+  // taskRow() (mesma linha com check/título/tags/prazo/nota/excluir que a
+  // aba Foco usa) — dá edição completa sem precisar de um componente novo
+  function renderCalDayTasks(dateKey){
+    var list = $("cal-day-task-list");
+    list.innerHTML = "";
+    S.tasks.filter(function(t){ return t.due === dateKey; }).forEach(function(t){
+      list.appendChild(taskRow(t));
+    });
+  }
+
+  // se o popup estiver aberto quando uma tarefa muda em outro lugar (ex.:
+  // marcar/excluir pela própria lista dentro do popup, que passa pelas
+  // mesmas funções da aba Foco), atualiza a lista ali dentro também
+  function refreshCalDialogIfOpen(){
+    var dlg = $("cal-add-task");
+    if(dlg.open && calAddDate) renderCalDayTasks(calAddDate);
+  }
+
   function openCalAddTask(dateKey){
     calAddDate = dateKey;
     var d = new Date(dateKey + "T00:00");
-    $("cal-task-date").textContent = "Prazo: " + d.toLocaleDateString("pt-BR", { weekday:"long", day:"numeric", month:"long" });
+    $("cal-task-date").textContent = d.toLocaleDateString("pt-BR", { weekday:"long", day:"numeric", month:"long" });
+    renderCalDayTasks(dateKey);
     $("cal-task-title").value = "";
     $("cal-task-tag").value = "";
     $("cal-add-task").showModal();
     $("cal-task-title").focus();
   }
 
+  // fica aberto depois de criar (em vez de fechar sozinho): a tarefa nova
+  // aparece na lista de cima, pronta pra criar mais uma se for o caso
   function submitCalTask(){
     var title = $("cal-task-title").value.trim();
     if(!title){ $("cal-task-title").focus(); return; }
@@ -4684,8 +4708,10 @@
     S.tasks.unshift({ id: uid(), title: title, tag: tag, due: calAddDate, est: 1, note: null, urgency: null,
                       done: 0, completed: false, createdAt: Date.now(), completedAt: null });
     save(); renderTasks(); renderStats(); renderCalendar();
-    $("cal-add-task").close();
-    toast("Tarefa criada para " + new Date(calAddDate + "T00:00").toLocaleDateString("pt-BR"));
+    renderCalDayTasks(calAddDate);
+    $("cal-task-title").value = "";
+    $("cal-task-tag").value = "";
+    $("cal-task-title").focus();
   }
 
   /* ---------- cor por tópico ---------- */
