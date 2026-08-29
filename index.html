@@ -1148,6 +1148,44 @@
      não escondia nada de verdade, mesmo bug que .grid/.tabbar já tinham */
   #new-list-item[hidden]{display:none}
 
+  /* ---------- calendário ---------- */
+  .cal-weekdays{
+    display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px;text-align:center;
+    font-family:var(--mono);font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-3);
+  }
+  .cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:6px}
+  .cal-day{
+    min-height:92px;min-width:0;border:1px solid var(--line);border-radius:var(--r-md);
+    padding:6px;display:flex;flex-direction:column;gap:4px;cursor:pointer;
+    background:var(--field);text-align:left;color:inherit;font:inherit;overflow:hidden;
+  }
+  .cal-day:hover{border-color:var(--ink-3)}
+  .cal-day.outside{opacity:.35;cursor:default}
+  .cal-day.outside:hover{border-color:var(--line)}
+  .cal-day.today{border-color:var(--signal);border-width:2px}
+  /* níveis de calor sobre o mesmo tom do painel — 0 pomodoros fica no
+     fundo padrão, sem precisar de uma cor "neutra" à parte */
+  .cal-day[data-heat="1"]{background:color-mix(in srgb, var(--signal) 14%, var(--field))}
+  .cal-day[data-heat="2"]{background:color-mix(in srgb, var(--signal) 32%, var(--field))}
+  .cal-day[data-heat="3"]{background:color-mix(in srgb, var(--signal) 52%, var(--field))}
+  .cal-day[data-heat="4"]{background:color-mix(in srgb, var(--signal) 74%, var(--field))}
+  .cal-day-num{font-family:var(--mono);font-size:11px;color:var(--ink-2);flex:none}
+  .cal-day[data-heat="3"] .cal-day-num, .cal-day[data-heat="4"] .cal-day-num{color:var(--on-ink)}
+  .cal-day-tasks{display:flex;flex-direction:column;gap:2px;overflow:hidden;min-height:0;min-width:0}
+  .cal-task{display:flex;align-items:center;gap:4px;min-width:0}
+  .cal-task input[type=checkbox]{width:12px;height:12px;flex:none}
+  .cal-task-title{
+    flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+    background:none;border:0;padding:0;font:inherit;font-size:11px;color:inherit;text-align:left;cursor:pointer;
+  }
+  .cal-task.done .cal-task-title{opacity:.6;text-decoration:line-through}
+  @media (max-width:560px){
+    .cal-day{min-height:64px;padding:4px;gap:2px;border-radius:8px}
+    .cal-day-num{font-size:10px}
+    .cal-task-title{font-size:10px}
+    .cal-weekdays{font-size:9px}
+  }
+
   /* ---------- som ---------- */
   .sound{grid-column:1 / -1}
   .sound-row{display:flex;flex-wrap:wrap;align-items:center;gap:calc(var(--sp)*2.5)}
@@ -1445,6 +1483,10 @@
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h6"/></svg>
       Listas
     </button>
+    <button type="button" role="tab" class="tab-btn" data-tab="calendario" id="tab-btn-calendario" aria-selected="false">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M8 3v3M16 3v3"/></svg>
+      Calendário
+    </button>
   </div>
 
   <main id="main">
@@ -1477,6 +1519,7 @@
     <div class="grid tab-panel" data-tab="ferramentas" id="tab-ferramentas" hidden></div>
     <div class="tab-panel" data-tab="notas" id="tab-notas" hidden></div>
     <div class="grid tab-panel" data-tab="listas" id="tab-listas" hidden></div>
+    <div class="tab-panel" data-tab="calendario" id="tab-calendario" hidden></div>
 
     <!-- TIMER -->
     <section class="panel" id="section-timer">
@@ -1714,6 +1757,23 @@
         <input type="text" id="list-name" placeholder="Nova lista (ex.: compras do mês)" maxlength="60" aria-label="Nome da lista">
         <button class="btn-ghost" id="list-add">Criar lista</button>
       </div>
+    </section>
+
+    <!-- CALENDÁRIO -->
+    <section class="panel calendar" id="panel-calendar">
+      <div class="panel-head">
+        <h2 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M8 3v3M16 3v3"/></svg></span>Calendário</h2>
+      </div>
+      <p class="hint" style="margin:0 0 14px">Clique num dia pra criar uma tarefa com aquele prazo. A cor de fundo mostra quantos pomodoros você fez naquele dia.</p>
+      <div class="week-nav">
+        <button class="btn-ghost" id="cal-prev" aria-label="Mês anterior">‹</button>
+        <span id="cal-label"></span>
+        <button class="btn-ghost" id="cal-next" aria-label="Próximo mês">›</button>
+      </div>
+      <div class="cal-weekdays">
+        <span>Seg</span><span>Ter</span><span>Qua</span><span>Qui</span><span>Sex</span><span>Sáb</span><span>Dom</span>
+      </div>
+      <div class="cal-grid" id="cal-grid"></div>
     </section>
 
     <!-- LEITURA -->
@@ -2184,6 +2244,22 @@
   <div class="dlg-foot">
     <button class="btn-main" id="man-save">Registrar</button>
     <button class="btn-ghost" id="man-cancel">Cancelar</button>
+  </div>
+</dialog>
+
+<dialog id="cal-add-task">
+  <div class="dlg-head">
+    <h2 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M8 3v3M16 3v3"/></svg></span>Nova tarefa</h2>
+    <button class="btn-ghost icon-only" id="cal-task-close" aria-label="Fechar" title="Fechar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="dlg-body">
+    <p class="hint" id="cal-task-date"></p>
+    <div class="field"><label for="cal-task-title">Título</label><input type="text" id="cal-task-title" maxlength="140" placeholder="O que você vai fazer?" aria-label="Título da tarefa"></div>
+    <div class="field"><label for="cal-task-tag">Etiqueta</label><input type="text" id="cal-task-tag" list="tag-options" maxlength="24" placeholder="opcional" aria-label="Etiqueta"></div>
+  </div>
+  <div class="dlg-foot">
+    <button class="btn-main" id="cal-task-save">Criar tarefa</button>
+    <button class="btn-ghost" id="cal-task-cancel">Cancelar</button>
   </div>
 </dialog>
 
@@ -3189,7 +3265,7 @@
                       done: 0, completed: false, createdAt: Date.now(), completedAt: null });
     input.value = "";
     // a etiqueta permanece no campo: quem trabalha em lote costuma repetir o projeto
-    save(); renderTasks(); renderStats();
+    save(); renderTasks(); renderStats(); refreshCalendarIfActive();
     input.focus();
   }
 
@@ -3199,7 +3275,7 @@
     t.completed = !t.completed;
     t.completedAt = t.completed ? Date.now() : null;
     if(t.completed && S.activeTaskId === id) S.activeTaskId = null;
-    save(); renderTasks(); renderTimer(); renderStats();
+    save(); renderTasks(); renderTimer(); renderStats(); refreshCalendarIfActive();
   }
 
   function selectTask(id){
@@ -3213,7 +3289,7 @@
     S.tasks = S.tasks.filter(function(t){ return t.id !== id; });
     markDeleted(id);
     if(S.activeTaskId === id) S.activeTaskId = null;
-    save(); renderTasks(); renderTimer();
+    save(); renderTasks(); renderTimer(); refreshCalendarIfActive();
   }
 
   /* ---------- render ---------- */
@@ -3227,6 +3303,7 @@
     // barato, e renderNoteEditor() já protege o que estiver sendo digitado
     if(S.activeTab === "notas") renderNotesPage();
     if(S.activeTab === "listas") renderLists();
+    if(S.activeTab === "calendario") renderCalendar();
   }
 
   function paintClock(){
@@ -3757,7 +3834,7 @@
       if(settled) return;
       settled = true;
       task.due = inp.value || null;   // campo vazio remove o prazo
-      save(); renderTasks();
+      save(); renderTasks(); refreshCalendarIfActive();
     }
     inp.addEventListener("change", commit);
     inp.addEventListener("blur", commit);
@@ -4488,6 +4565,127 @@
     S.listItems = S.listItems.filter(function(it){ return it.id !== id; });
     markDeleted(id);
     save(); renderLists();
+  }
+
+  /* ---------- calendário ---------- */
+  // mês em exibição — só de navegação, não sincroniza (mesmo espírito do
+  // weekOffset dos Hábitos): não faz sentido guardar em qual mês a pessoa
+  // parou de olhar
+  var calMonth = null;
+  var calAddDate = null;
+
+  function calMonthStart(){
+    return calMonth ? new Date(calMonth) : startOfMonth(new Date());
+  }
+
+  // só re-renderiza se a aba estiver mesmo aberta — chamado a partir de
+  // addTask/toggleTask/removeTask/editDue, que não passam pelo render()
+  // geral (por performance, ver comentário lá em cima)
+  function refreshCalendarIfActive(){
+    if(S.activeTab === "calendario") renderCalendar();
+  }
+
+  function pomosOnDay(k){
+    var n = 0;
+    S.sessions.forEach(function(s){ if(dayKey(s.end) === k) n++; });
+    return n;
+  }
+
+  // 5 níveis (0 a 4) bastam pra dar a sensação de mapa de calor sem exigir
+  // uma escala contínua — os cortes são arbitrários, ajuste se um dia a
+  // rotina mudar muito
+  function heatLevel(n){
+    if(!n) return 0;
+    if(n <= 1) return 1;
+    if(n <= 3) return 2;
+    if(n <= 6) return 3;
+    return 4;
+  }
+
+  function renderCalendar(){
+    var monthStart = calMonthStart();
+    $("cal-label").textContent = monthStart.toLocaleDateString("pt-BR", { month:"long", year:"numeric" });
+
+    var gridStart = startOfWeek(monthStart);
+    var lastDayOfMonth = addDays(new Date(monthStart.getFullYear(), monthStart.getMonth()+1, 1), -1);
+    var lastWeekStart = startOfWeek(lastDayOfMonth);
+    var totalDays = Math.round((addDays(lastWeekStart, 7).getTime() - gridStart.getTime()) / 86400000);
+
+    var days = [];
+    for(var i = 0; i < totalDays; i++) days.push(addDays(gridStart, i));
+
+    var todayKey = dayKey(Date.now());
+    var grid = $("cal-grid");
+    grid.innerHTML = "";
+
+    days.forEach(function(d){
+      var k = dayKey(d.getTime());
+      var outside = d.getMonth() !== monthStart.getMonth();
+      var n = pomosOnDay(k);
+
+      var cell = document.createElement("div");
+      cell.className = "cal-day" + (outside ? " outside" : "") + (k === todayKey ? " today" : "");
+      if(n) cell.setAttribute("data-heat", String(heatLevel(n)));
+      if(!outside){
+        cell.setAttribute("role", "button");
+        cell.setAttribute("tabindex", "0");
+        cell.setAttribute("aria-label", "Criar tarefa em " + d.toLocaleDateString("pt-BR", { day:"numeric", month:"long" }) +
+          (n ? " — " + n + (n === 1 ? " pomodoro" : " pomodoros") : ""));
+        cell.onclick = function(){ openCalAddTask(k); };
+        cell.addEventListener("keydown", function(e){
+          if(e.key === "Enter" || e.key === " "){ e.preventDefault(); openCalAddTask(k); }
+        });
+      }
+
+      var num = document.createElement("span");
+      num.className = "cal-day-num";
+      num.textContent = d.getDate();
+      cell.appendChild(num);
+
+      var tasksBox = document.createElement("div");
+      tasksBox.className = "cal-day-tasks";
+      S.tasks.filter(function(t){ return t.due === k; }).forEach(function(t){
+        var row = document.createElement("div");
+        row.className = "cal-task" + (t.completed ? " done" : "");
+        var chk = document.createElement("input");
+        chk.type = "checkbox";
+        chk.checked = t.completed;
+        chk.setAttribute("aria-label", (t.completed ? "Reabrir" : "Concluir") + " " + t.title);
+        chk.onclick = function(ev){ ev.stopPropagation(); toggleTask(t.id); };
+        var title = document.createElement("button");
+        title.type = "button";
+        title.className = "cal-task-title";
+        title.textContent = t.title;
+        title.title = t.title;
+        title.onclick = function(ev){ ev.stopPropagation(); };
+        row.appendChild(chk); row.appendChild(title);
+        tasksBox.appendChild(row);
+      });
+      cell.appendChild(tasksBox);
+
+      grid.appendChild(cell);
+    });
+  }
+
+  function openCalAddTask(dateKey){
+    calAddDate = dateKey;
+    var d = new Date(dateKey + "T00:00");
+    $("cal-task-date").textContent = "Prazo: " + d.toLocaleDateString("pt-BR", { weekday:"long", day:"numeric", month:"long" });
+    $("cal-task-title").value = "";
+    $("cal-task-tag").value = "";
+    $("cal-add-task").showModal();
+    $("cal-task-title").focus();
+  }
+
+  function submitCalTask(){
+    var title = $("cal-task-title").value.trim();
+    if(!title){ $("cal-task-title").focus(); return; }
+    var tag = normTag($("cal-task-tag").value);
+    S.tasks.unshift({ id: uid(), title: title, tag: tag, due: calAddDate, est: 1, note: null, urgency: null,
+                      done: 0, completed: false, createdAt: Date.now(), completedAt: null });
+    save(); renderTasks(); renderStats(); renderCalendar();
+    $("cal-add-task").close();
+    toast("Tarefa criada para " + new Date(calAddDate + "T00:00").toLocaleDateString("pt-BR"));
   }
 
   /* ---------- cor por tópico ---------- */
@@ -7893,7 +8091,8 @@
     leitura: ["panel-reading", "panel-screen"],
     ferramentas: ["panel-dev"],
     notas: ["page-notes"],
-    listas: ["panel-lists"]
+    listas: ["panel-lists"],
+    calendario: ["panel-calendar"]
   };
 
   function selectTab(tab){
@@ -7910,6 +8109,7 @@
     if(S.activeTab !== tab){ S.activeTab = tab; save(); }
     if(tab === "notas") renderNotesPage();
     if(tab === "listas") renderLists();
+    if(tab === "calendario") renderCalendar();
   }
 
   // esconde da barra as abas cujos painéis estão todos desligados nos
@@ -8389,6 +8589,22 @@
   $("list-item-text").addEventListener("keydown", function(e){ if(e.key === "Enter") addListItem(); });
   $("list-rename").onclick = renameList;
   $("list-delete").onclick = deleteList;
+
+  // calendário
+  $("cal-prev").onclick = function(){
+    var m = calMonthStart();
+    calMonth = new Date(m.getFullYear(), m.getMonth() - 1, 1);
+    renderCalendar();
+  };
+  $("cal-next").onclick = function(){
+    var m = calMonthStart();
+    calMonth = new Date(m.getFullYear(), m.getMonth() + 1, 1);
+    renderCalendar();
+  };
+  $("cal-task-save").onclick = submitCalTask;
+  $("cal-task-title").addEventListener("keydown", function(e){ if(e.key === "Enter") submitCalTask(); });
+  $("cal-task-cancel").onclick = function(){ $("cal-add-task").close(); };
+  $("cal-task-close").onclick = function(){ $("cal-add-task").close(); };
 
   // som ambiente — cada botão abre o vídeo correspondente no player;
   // "Nenhum" fecha o que estiver tocando. "Lo-fi" já toca a Lofi Girl de
