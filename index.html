@@ -919,6 +919,7 @@
   .profile-username-row{display:flex;gap:var(--sp)}
   .profile-username-row input{flex:1;min-width:0}
   #auth, #changepw, #deleteaccount{width:min(420px,92vw)}
+  #settings{width:min(600px,92vw)}
   #auth-google{text-decoration:none;justify-content:center;width:100%;box-sizing:border-box;margin-bottom:14px}
   #auth-google-row[hidden]{display:none}
   .auth-divider{display:flex;align-items:center;gap:10px;margin:0 0 14px;color:var(--ink-3);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
@@ -2795,9 +2796,29 @@
     applyTabs();
   }
 
+  // chave por conta — só existe entre um "Sair" e o próximo login da mesma
+  // conta neste navegador (ver account-logout). Não é o blob principal
+  // (KEY): é uma rede de segurança local pra ninguém perder dado só porque
+  // saiu da conta antes da sincronização terminar
+  function accountBackupKey(email){ return "foco.account." + email; }
+
+  function restoreAccountBackup(email){
+    var key = accountBackupKey(email);
+    try{
+      var raw = localStorage.getItem(key);
+      if(!raw) return;
+      var parsed = parseState(raw);
+      // funde em vez de substituir: se a pessoa usou o app sem conta no
+      // intervalo entre sair e entrar de novo, esse uso local também fica
+      if(parsed) S = mergeState(S, parsed);
+      localStorage.removeItem(key);
+    }catch(e){}
+  }
+
   function onAuthSuccess(res){
     AUTH.email = res.email;
     AUTH.username = res.username || null;
+    restoreAccountBackup(AUTH.email);
     applyAccountUI();
     pullFromServer(true);
     startAutoPull();
@@ -8370,18 +8391,15 @@
   $("list-delete").onclick = deleteList;
 
   // som ambiente — cada botão abre o vídeo correspondente no player;
-  // "Nenhum" fecha o que estiver tocando. "Lo-fi" não tem vídeo próprio:
-  // só alterna a visibilidade de "Lofi Girl"/"Synthwave Radio", que é
-  // quem de fato escolhe o que toca
+  // "Nenhum" fecha o que estiver tocando. "Lo-fi" já toca a Lofi Girl de
+  // cara e revela "Synthwave Radio" como alternativa — trocar pra qualquer
+  // outro tipo de som esconde essa opção extra de novo
   document.querySelectorAll("#amb button").forEach(function(b){
     b.onclick = function(){
       var next = b.dataset.amb;
-      if(next === "lofi"){
-        var box = $("embed-lofi-extra");
-        box.hidden = !box.hidden;
-        return;
-      }
-      S.sound.embed = AMB_EMBEDS[next] ? { src:AMB_EMBEDS[next], h:220, kind:"YouTube" } : null;
+      $("embed-lofi-extra").hidden = next !== "lofi";
+      var src = next === "lofi" ? LOFI_OPTION_SRCS[0] : AMB_EMBEDS[next];
+      S.sound.embed = src ? { src:src, h:220, kind:"YouTube" } : null;
       save();
       renderSound();
       renderEmbed();
@@ -8404,9 +8422,22 @@
 
   $("account-logout").onclick = function(){
     api("/api/auth/logout", { method:"POST" }).then(function(){
+      // guarda uma cópia de segurança local antes de zerar a tela — assim,
+      // se a sincronização com o servidor não tiver terminado a tempo, nada
+      // se perde: ela volta sozinha no próximo login dessa mesma conta
+      // (ver restoreAccountBackup)
+      if(AUTH.email){
+        try{ localStorage.setItem(accountBackupKey(AUTH.email), JSON.stringify(S)); }catch(e){}
+      }
+      try{ localStorage.removeItem(KEY); }catch(e){}
       AUTH.email = null; AUTH.username = null;
+      S = clone(DEFAULTS);
+      REV = 0;
       applyAccountUI();
-      toast("Você saiu — os dados continuam salvos neste navegador");
+      applyTheme();
+      render();
+      renderEmbed();
+      toast("Você saiu — seus dados ficam guardados neste navegador até você entrar de novo");
     });
   };
 
