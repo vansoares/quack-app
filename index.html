@@ -919,6 +919,10 @@
   .profile-username-row{display:flex;gap:var(--sp)}
   .profile-username-row input{flex:1;min-width:0}
   #auth, #changepw, #deleteaccount{width:min(420px,92vw)}
+  #auth-google{text-decoration:none;justify-content:center;width:100%;box-sizing:border-box;margin-bottom:14px}
+  #auth-google-row[hidden]{display:none}
+  .auth-divider{display:flex;align-items:center;gap:10px;margin:0 0 14px;color:var(--ink-3);font-size:11px;letter-spacing:.1em;text-transform:uppercase}
+  .auth-divider::before, .auth-divider::after{content:"";flex:1;height:1px;background:var(--line)}
   #auth .dlg-body input, #changepw .dlg-body input, #deleteaccount .dlg-body input{
     width:100%;margin-bottom:12px;
   }
@@ -2366,6 +2370,18 @@
   </div>
   <div class="dlg-body">
     <p class="hint" id="auth-hint">Entre com o e-mail e a senha da sua conta.</p>
+    <div id="auth-google-row">
+      <a class="btn-ghost" id="auth-google" href="/api/auth/google">
+        <svg viewBox="0 0 48 48" width="16" height="16" aria-hidden="true">
+          <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.9 2.4 30.4 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.1 17.7 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.5 3-2.2 5.5-4.7 7.2l7.4 5.7C43.9 37.5 46.5 31.5 46.5 24.5z"/>
+          <path fill="#FBBC05" d="M10.5 19.3c-.5 1.5-.8 3-.8 4.7s.3 3.2.8 4.7l-7.9 6.1C1 31.4 0 27.8 0 24s1-7.4 2.6-10.8l7.9 6.1z"/>
+          <path fill="#34A853" d="M24 48c6.4 0 11.9-2.1 15.8-5.8l-7.4-5.7c-2.1 1.4-4.9 2.3-8.4 2.3-6.3 0-11.6-3.6-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/>
+        </svg>
+        Continuar com Google
+      </a>
+      <div class="auth-divider"><span>ou</span></div>
+    </div>
     <div id="auth-email-row">
       <label class="k" for="auth-email">E-mail</label>
       <input type="email" id="auth-email" autocomplete="email" placeholder="voce@exemplo.com" aria-label="E-mail">
@@ -2809,10 +2825,10 @@
 
   var AUTH_COPY = {
     login: { title:"Entrar", hint:"Entre com o e-mail e a senha da sua conta.",
-      submit:"Entrar", showEmail:true, showPassword:true, passwordLabel:"Senha", showForgot:true,
+      submit:"Entrar", showEmail:true, showPassword:true, passwordLabel:"Senha", showForgot:true, showGoogle:true,
       toggleLabel:"Não tenho conta — criar uma", toggleTarget:"signup" },
     signup: { title:"Criar conta", hint:"Sua conta guarda os dados no servidor, para acessar de outros aparelhos.",
-      submit:"Criar conta", showEmail:true, showPassword:true, passwordLabel:"Senha", showForgot:false,
+      submit:"Criar conta", showEmail:true, showPassword:true, passwordLabel:"Senha", showForgot:false, showGoogle:true,
       toggleLabel:"Já tenho conta — entrar", toggleTarget:"login" },
     forgot: { title:"Redefinir senha", hint:"Informe seu e-mail e mandamos um link para escolher uma nova senha.",
       submit:"Enviar link", showEmail:true, showPassword:false, showForgot:false,
@@ -2830,6 +2846,7 @@
     $("auth-title").textContent = c.title;
     $("auth-hint").textContent = c.hint;
     $("auth-submit").textContent = c.submit;
+    $("auth-google-row").hidden = !c.showGoogle;
     $("auth-email-row").hidden = !c.showEmail;
     $("auth-password-row").hidden = !c.showPassword;
     if(c.showPassword) $("auth-password-label").textContent = c.passwordLabel;

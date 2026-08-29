@@ -81,6 +81,29 @@ node test/local-server.js
 Abre em `http://localhost:4020`. Os dados somem quando o processo para —
 serve só para testar o fluxo, não para uso de verdade.
 
+## Login com Google (opcional)
+
+O botão "Continuar com Google" só aparece funcional se essas variáveis
+estiverem configuradas — sem elas, a rota responde com erro claro em vez
+de travar silenciosamente. Passo a passo:
+
+1. Em [console.cloud.google.com](https://console.cloud.google.com), crie um
+   projeto (ou use um existente).
+2. **APIs e serviços → Tela de consentimento OAuth**: tipo "Externo",
+   preencha nome do app e e-mail de suporte. Pode ficar em modo "Teste"
+   para uso pessoal — nesse modo, só e-mails cadastrados como testador
+   conseguem logar; para liberar geral, publique o app depois.
+3. **Credenciais → Criar credenciais → ID do cliente OAuth**, tipo
+   "Aplicativo da Web".
+4. Em **URIs de redirecionamento autorizados**, adicione:
+   - `https://seu-projeto.vercel.app/api/auth/google/callback` (produção —
+     troque pelo domínio real do seu deploy)
+   - `http://localhost:4020/api/auth/google/callback` (se for testar local
+     com `node test/local-server.js`)
+5. Copie o **Client ID** e o **Client Secret** gerados.
+6. No Vercel, em **Settings → Environment Variables**, adicione as duas
+   variáveis abaixo e redeploy.
+
 ## Variáveis de ambiente
 
 | Variável | Obrigatória | De onde vem |
@@ -90,6 +113,8 @@ serve só para testar o fluxo, não para uso de verdade.
 | `UPSTASH_REDIS_REST_TOKEN` | sim | Idem |
 | `RESEND_API_KEY` | sim, para "esqueci minha senha" | Conta grátis em [resend.com](https://resend.com) → API Keys |
 | `RESEND_FROM` | não | Remetente dos e-mails de redefinição. Sem domínio verificado na Resend, só chega ao e-mail da própria conta Resend — para atender qualquer pessoa, verifique um domínio em resend.com/domains |
+| `GOOGLE_CLIENT_ID` | não, só para login com Google | Google Cloud Console → Credenciais (ver seção acima) |
+| `GOOGLE_CLIENT_SECRET` | não, só para login com Google | Idem |
 
 ## Limites do plano gratuito que valem saber
 
