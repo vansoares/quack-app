@@ -2701,8 +2701,14 @@
     if(!SERVER_OK || !AUTH.email) return;
     api("/api/state", { method:"PUT", body:S }).then(function(){
       setSyncNote("sincronizado agora há pouco");
-    }).catch(function(){
-      setSyncNote("não deu para sincronizar agora — tentando de novo em breve");
+    }).catch(function(err){
+      // antes disso a mensagem de verdade do servidor (ex.: "estado grande
+      // demais", limite de tentativas) ficava escondida atrás de um texto
+      // genérico — sem isso não dava pra saber por que uma sincronização
+      // específica falhou, só que "algo" falhou
+      console.warn("[sync] push falhou:", err && err.status, err && err.message);
+      var motivo = (err && err.message) ? " (" + err.message + ")" : "";
+      setSyncNote("não deu para sincronizar agora" + motivo + " — tentando de novo em breve");
     });
   }
 
