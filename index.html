@@ -668,6 +668,9 @@
   }
   #season, #card{width:min(560px,94vw)}
   #card-preview{width:100%;height:auto;display:block;border:1px solid var(--line);border-radius:var(--r-md);background:#171512}
+  .card-style-nav{display:flex;align-items:center;justify-content:center;gap:var(--sp);margin-bottom:calc(var(--sp)*1.5)}
+  .card-style-nav[hidden]{display:none}
+  .card-style-label{font-family:var(--mono);font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-2);min-width:80px;text-align:center}
 
   /* ---------- leitura ---------- */
   .reading{grid-column:1 / -1}
@@ -2380,6 +2383,15 @@
     <button class="btn-ghost icon-only" id="card-close" aria-label="Fechar" title="Fechar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
   </div>
   <div class="dlg-body">
+    <div class="card-style-nav" id="card-style-nav">
+      <button class="btn-ghost icon-only" id="card-style-prev" aria-label="Estilo anterior">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+      </button>
+      <span class="card-style-label" id="card-style-label">Escuro</span>
+      <button class="btn-ghost icon-only" id="card-style-next" aria-label="Próximo estilo">
+        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+      </button>
+    </div>
     <canvas id="card-preview" width="1080" height="1350" aria-label="Prévia do resumo da semana"></canvas>
   </div>
   <div class="dlg-foot">
@@ -2579,6 +2591,7 @@
     milestones: [],
     panels: { habitos:true, leitura:true, tela:true, objetivos:true, pdi:true, temporada:true, capsula:true, musica:true },
     cardFields: { season:true, numbers:true, chart:true, reading:true, highlight:true, dev:true },
+    cardStyle: "escuro",
     lists: [],
     listItems: [],
     goals: [],
@@ -2652,6 +2665,7 @@
     if(Array.isArray(d.milestones)) s.milestones = d.milestones;
     if(d.panels) Object.assign(s.panels, d.panels);
     if(d.cardFields) Object.assign(s.cardFields, d.cardFields);
+    if(d.cardStyle) s.cardStyle = d.cardStyle;
     if(Array.isArray(d.lists)) s.lists = d.lists;
     if(Array.isArray(d.listItems)) s.listItems = d.listItems;
     if(Array.isArray(d.goals)) s.goals = d.goals;
@@ -5125,6 +5139,17 @@
     signal:"#E0966F", green:"#8FBF9A", violet:"#B79FE0", line:"#3A362E"
   };
 
+  // paleta clara do estilo "Claro" — mesmos papéis (bg/ink/signal/...) da
+  // paleta escura acima, só com os valores do tema claro do próprio app
+  var CARD_LIGHT = {
+    bg:"#F2EFE8", grid:"#E4E0D6", grid2:"#EAE6DC",
+    ink:"#2B2A28", ink2:"#5B5850", ink3:"#66625A",
+    signal:"#9C4A2B", green:"#4C7A56", violet:"#7A5FB0", line:"rgba(43,42,40,.18)"
+  };
+
+  var CARD_STYLES = ["escuro", "claro", "poster", "recibo"];
+  var CARD_STYLE_LABELS = { escuro:"Escuro", claro:"Claro", poster:"Pôster", recibo:"Recibo" };
+
   function cardData(){
     var ini = addDays(startOfWeek(new Date()), cardOffset * 7);
     var days = [];
@@ -5206,45 +5231,62 @@
     };
   }
 
+  // texto com letter-spacing manual — canvas não suporta em todo navegador,
+  // então desenha caractere a caractere quando um espaçamento é pedido.
+  // Compartilhada pelos 4 estilos de card (e pelo card de temporada).
+  function cardText(g, s, x, y, size, color, fontFamily, align, spacing, weight){
+    g.fillStyle = color;
+    g.font = (weight || "500") + " " + size + "px " + fontFamily;
+    g.textAlign = align || "left";
+    g.textBaseline = "alphabetic";
+    if(spacing){
+      var total = 0, i;
+      for(i = 0; i < s.length; i++) total += g.measureText(s[i]).width + spacing;
+      var cx = align === "right" ? x - total : (align === "center" ? x - total/2 : x);
+      g.textAlign = "left";
+      for(i = 0; i < s.length; i++){
+        g.fillText(s[i], cx, y);
+        cx += g.measureText(s[i]).width + spacing;
+      }
+    }else{
+      g.fillText(s, x, y);
+    }
+  }
+
+  var CARD_MONO = '"Inter", ui-monospace, monospace';
+  var CARD_SANS = '"Inter", -apple-system, Segoe UI, sans-serif';
+
   function drawCard(){
     var cv = $("card-preview");
     var g = cv.getContext("2d");
     var W = cv.width, H = cv.height;
     var d = cardData();
     var cf = S.cardFields;
+    var style = S.cardStyle || "escuro";
+    if(style === "claro") drawCardPaper(g, W, H, d, cf, CARD_LIGHT);
+    else if(style === "poster") drawCardPoster(g, W, H, d, cf);
+    else if(style === "recibo") drawCardReceipt(g, W, H, d, cf);
+    else drawCardPaper(g, W, H, d, cf, CARD);
+  }
 
-    g.fillStyle = CARD.bg;
+  // estilo "Escuro"/"Claro": papel milimetrado + números grandes + gráfico
+  // de barras da semana + rodapé com destaques — mesma estrutura pros dois,
+  // só a paleta (PAL) muda
+  function drawCardPaper(g, W, H, d, cf, PAL){
+    function txt(s, x, y, size, color, font, align, spacing){
+      cardText(g, s, x, y, size, color, font === "mono" ? CARD_MONO : CARD_SANS, align, spacing);
+    }
+
+    g.fillStyle = PAL.bg;
     g.fillRect(0, 0, W, H);
 
     // papel milimetrado
-    g.strokeStyle = CARD.grid2;
+    g.strokeStyle = PAL.grid2;
     g.lineWidth = 1;
     for(var x = 0; x <= W; x += 45){ g.beginPath(); g.moveTo(x+.5, 0); g.lineTo(x+.5, H); g.stroke(); }
     for(var gy0 = 0; gy0 <= H; gy0 += 45){ g.beginPath(); g.moveTo(0, gy0+.5); g.lineTo(W, gy0+.5); g.stroke(); }
 
     var M = 80;                       // margem
-    var mono = '"Inter", ui-monospace, monospace';
-    var sans = '"Inter", -apple-system, Segoe UI, sans-serif';
-
-    function txt(s, x, y, size, color, font, align, spacing){
-      g.fillStyle = color;
-      g.font = (font === "mono" ? "500 " : "500 ") + size + "px " + (font === "mono" ? mono : sans);
-      g.textAlign = align || "left";
-      g.textBaseline = "alphabetic";
-      if(spacing){
-        // canvas não tem letter-spacing em todo navegador: desenha caractere a caractere
-        var total = 0, i;
-        for(i = 0; i < s.length; i++) total += g.measureText(s[i]).width + spacing;
-        var cx = align === "right" ? x - total : (align === "center" ? x - total/2 : x);
-        g.textAlign = "left";
-        for(i = 0; i < s.length; i++){
-          g.fillText(s[i], cx, y);
-          cx += g.measureText(s[i]).width + spacing;
-        }
-      }else{
-        g.fillText(s, x, y);
-      }
-    }
 
     // cursor vertical: cada bloco só avança o "y" se estiver ligado em
     // S.cardFields — assim desligar um pedaço não deixa buraco no meio do
@@ -5253,31 +5295,31 @@
 
     var sea = currentSeason();
     if(sea && cf.season){
-      txt(("TEMPORADA " + sea.name).toUpperCase(), M, y, 20, CARD.ink3, "mono", "left", 4);
+      txt(("TEMPORADA " + sea.name).toUpperCase(), M, y, 20, PAL.ink3, "mono", "left", 4);
       y += 60;
     }
 
     var mi = d.ini.toLocaleDateString("pt-BR", { month:"long" });
     var mf = d.fim.toLocaleDateString("pt-BR", { month:"long" });
     var periodo = d.ini.getDate() + " de " + mi + " – " + d.fim.getDate() + " de " + mf;
-    txt(periodo, M, y, 44, CARD.ink, "sans");
+    txt(periodo, M, y, 44, PAL.ink, "sans");
     y += 36;
 
-    g.strokeStyle = CARD.line;
+    g.strokeStyle = PAL.line;
     g.beginPath(); g.moveTo(M, y + .5); g.lineTo(W - M, y + .5); g.stroke();
     y += 116;
 
     // números principais
     function bloco(x, yy, valor, rotulo, cor){
       txt(String(valor), x, yy, 92, cor, "mono");
-      txt(rotulo.toUpperCase(), x, yy + 42, 18, CARD.ink3, "mono", "left", 3.5);
+      txt(rotulo.toUpperCase(), x, yy + 42, 18, PAL.ink3, "mono", "left", 3.5);
     }
     if(cf.numbers){
       var col = [M, W/2 + 10];
-      bloco(col[0], y, d.pomos, "pomodoros", CARD.signal);
-      bloco(col[1], y, fmtDuration(d.min * MIN), "de foco", CARD.ink);
-      bloco(col[0], y + 175, d.tarefas, "tarefas concluídas", CARD.ink);
-      bloco(col[1], y + 175, d.habitos.devidos ? d.habitos.feitos + "/" + d.habitos.devidos : "—", "hábitos", CARD.green);
+      bloco(col[0], y, d.pomos, "pomodoros", PAL.signal);
+      bloco(col[1], y, fmtDuration(d.min * MIN), "de foco", PAL.ink);
+      bloco(col[0], y + 175, d.tarefas, "tarefas concluídas", PAL.ink);
+      bloco(col[1], y + 175, d.habitos.devidos ? d.habitos.feitos + "/" + d.habitos.devidos : "—", "hábitos", PAL.green);
       y += 175 + 115;
     }
 
@@ -5287,17 +5329,17 @@
       var max = Math.max.apply(null, d.porDia.concat([1]));
       var slot = gw / 7;
       var bw = Math.min(64, slot * 0.5);
-      g.strokeStyle = CARD.line;
+      g.strokeStyle = PAL.line;
       g.beginPath(); g.moveTo(gx, gyc + gh + .5); g.lineTo(gx + gw, gyc + gh + .5); g.stroke();
 
       var nomes = ["seg","ter","qua","qui","sex","sáb","dom"];
       d.porDia.forEach(function(v, i){
         var h = v ? Math.max(6, (v / max) * gh) : 6;
         var xx = gx + i*slot + (slot - bw)/2;
-        g.fillStyle = v ? CARD.signal : CARD.grid;
+        g.fillStyle = v ? PAL.signal : PAL.grid;
         g.fillRect(xx, gyc + gh - h, bw, h);
-        txt(nomes[i], gx + i*slot + slot/2, gyc + gh + 36, 18, CARD.ink3, "mono", "center", 2);
-        if(v) txt(String(v), gx + i*slot + slot/2, gyc + gh - h - 16, 20, CARD.ink2, "mono", "center");
+        txt(nomes[i], gx + i*slot + slot/2, gyc + gh + 36, 18, PAL.ink3, "mono", "center", 2);
+        if(v) txt(String(v), gx + i*slot + slot/2, gyc + gh - h - 16, 20, PAL.ink2, "mono", "center");
       });
       y += gh + 110;
     }
@@ -5325,17 +5367,147 @@
     if(!linhas.length) linhas.push("uma semana em branco também conta");
 
     var fy = y;
-    g.strokeStyle = CARD.line;
+    g.strokeStyle = PAL.line;
     g.beginPath(); g.moveTo(M, fy + .5); g.lineTo(W - M, fy + .5); g.stroke();
 
     var maxLinhas = (S.dev && cf.dev) ? 6 : 4;
     var yy = fy + 58;
     linhas.slice(0, maxLinhas).forEach(function(l){
-      txt("·  " + l, M, yy, 30, CARD.ink2, "sans");
+      txt("·  " + l, M, yy, 30, PAL.ink2, "sans");
       yy += 42;
     });
 
-    txt("QUACK", W - M, H - 70, 20, CARD.ink3, "mono", "right", 6);
+    txt("QUACK", W - M, H - 70, 20, PAL.ink3, "mono", "right", 6);
+  }
+
+  // estilo "Pôster": fundo em gradiente na cor de destaque do app, um único
+  // número gigante (pomodoros) em vez do bloco de 4 números — pensado pra
+  // compartilhar como imagem, não pra ler os detalhes
+  function drawCardPoster(g, W, H, d, cf){
+    function txt(s, x, y, size, color, align, spacing, weight){
+      cardText(g, s, x, y, size, color, CARD_SANS, align, spacing, weight);
+    }
+    function txtMono(s, x, y, size, color, align, spacing){
+      cardText(g, s, x, y, size, color, CARD_MONO, align, spacing);
+    }
+
+    var grad = g.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, "#9C4A2B");
+    grad.addColorStop(1, "#E0966F");
+    g.fillStyle = grad;
+    g.fillRect(0, 0, W, H);
+
+    var white = "#FFFFFF", soft = "rgba(255,255,255,.85)", faint = "rgba(255,255,255,.6)";
+    var cx = W / 2;
+
+    var mi = d.ini.toLocaleDateString("pt-BR", { month:"short" }).replace(".", "");
+    var mf = d.fim.toLocaleDateString("pt-BR", { month:"short" }).replace(".", "");
+    var periodo = (d.ini.getDate() + " " + mi + " – " + d.fim.getDate() + " " + mf).toUpperCase();
+    txtMono(periodo, cx, 150, 22, soft, "center", 3);
+
+    txt(String(d.pomos), cx, 460, 280, white, "center", 0, "800");
+    txtMono("POMODOROS NESTA SEMANA", cx, 520, 24, soft, "center", 3);
+
+    var itens = [
+      { v: fmtDuration(d.min * MIN), l: "foco" },
+      { v: String(d.tarefas), l: "tarefas" },
+      { v: d.habitos.devidos ? d.habitos.feitos + "/" + d.habitos.devidos : "—", l: "hábitos" }
+    ];
+    var rowY = 660, slotW = (W - 160) / itens.length;
+    itens.forEach(function(it, i){
+      var ix = 80 + slotW * i + slotW / 2;
+      txt(it.v, ix, rowY, 52, white, "center", 0, "700");
+      txtMono(it.l.toUpperCase(), ix, rowY + 38, 18, faint, "center", 3);
+    });
+
+    var linhas = [];
+    if(cf.highlight && d.topo) linhas.push("mais tempo em " + d.topo);
+    if(cf.reading && d.paginas) linhas.push(d.paginas + " páginas lidas");
+    if(!linhas.length) linhas.push("uma semana em branco também conta");
+    txt(linhas.slice(0, 2).join("   ·   "), cx, H - 160, 28, soft, "center");
+
+    txtMono("QUACK", cx, H - 70, 22, faint, "center", 6);
+  }
+
+  // estilo "Recibo": lista compacta em monospace, divisórias tracejadas —
+  // mais denso, pensado pra caber tudo sem precisar de um gráfico grande
+  function drawCardReceipt(g, W, H, d, cf){
+    var PAL = CARD;
+    function txt(s, x, y, size, color, align, spacing, weight){
+      cardText(g, s, x, y, size, color, CARD_MONO, align, spacing, weight);
+    }
+    function dash(yy){
+      g.strokeStyle = PAL.line;
+      g.lineWidth = 2;
+      g.setLineDash([6, 8]);
+      g.beginPath(); g.moveTo(M, yy + .5); g.lineTo(W - M, yy + .5); g.stroke();
+      g.setLineDash([]);
+    }
+
+    g.fillStyle = PAL.bg;
+    g.fillRect(0, 0, W, H);
+
+    var M = 90;
+    var y = 130;
+    var mi = d.ini.toLocaleDateString("pt-BR", { month:"short" }).replace(".", "");
+    var mf = d.fim.toLocaleDateString("pt-BR", { month:"short" }).replace(".", "");
+    txt(("SEMANA · " + d.ini.getDate() + " " + mi + " – " + d.fim.getDate() + " " + mf).toUpperCase(), M, y, 26, PAL.ink, "left", 2);
+    y += 40;
+    dash(y);
+    y += 60;
+
+    function row(label, value){
+      txt(label.toUpperCase(), M, y, 24, PAL.ink3, "left", 1.5);
+      txt(String(value), W - M, y, 30, PAL.ink, "right");
+      y += 56;
+    }
+    if(cf.numbers){
+      row("Pomodoros", d.pomos);
+      row("Foco", fmtDuration(d.min * MIN));
+      row("Tarefas concluídas", d.tarefas);
+      row("Hábitos", d.habitos.devidos ? d.habitos.feitos + "/" + d.habitos.devidos : "—");
+      y += 20;
+      dash(y);
+      y += 60;
+    }
+
+    if(cf.chart){
+      var gw = W - M * 2, gh = 90;
+      var max = Math.max.apply(null, d.porDia.concat([1]));
+      var slot = gw / 7, bw = Math.min(40, slot * 0.4);
+      var nomes = ["S","T","Q","Q","S","S","D"];
+      d.porDia.forEach(function(v, i){
+        var h = v ? Math.max(4, (v / max) * gh) : 4;
+        var xx = M + i * slot + (slot - bw) / 2;
+        g.fillStyle = v ? PAL.signal : PAL.grid;
+        g.fillRect(xx, y + gh - h, bw, h);
+        txt(nomes[i], M + i * slot + slot / 2, y + gh + 28, 16, PAL.ink3, "center");
+      });
+      y += gh + 60;
+      dash(y);
+      y += 60;
+    }
+
+    var linhas = [];
+    if(cf.reading){
+      if(d.paginas) linhas.push(d.paginas + " páginas lidas");
+      if(d.eps) linhas.push(d.eps + (d.eps === 1 ? " episódio" : " episódios"));
+      if(d.livros.length) linhas.push(d.livros.length === 1 ? "1 livro terminado" : d.livros.length + " livros terminados");
+    }
+    if(cf.highlight && d.topo) linhas.push("mais tempo em " + d.topo + " (" + d.topoN + ")");
+    if(cf.dev && S.dev && d.dev.buildCount) linhas.push(fmtShort(d.dev.buildMin) + " esperando build (" + d.dev.buildCount + "x)");
+    if(cf.dev && S.dev && d.dev.duckCount) linhas.push(d.dev.duckCount + " sessão(ões) de patoterapia");
+    if(cf.dev && S.dev && d.dev.reviewCount) linhas.push(fmtShort(d.dev.reviewMin) + " revisando código");
+    if(cf.dev && S.dev && d.dev.meetingCount) linhas.push(fmtShort(d.dev.meetingMin) + " em reunião");
+    if(!linhas.length) linhas.push("uma semana em branco também conta");
+    linhas.slice(0, 5).forEach(function(l){
+      txt(l.toUpperCase(), M, y, 20, PAL.ink2, "left", 1);
+      y += 34;
+    });
+
+    y += 26;
+    dash(y);
+    txt("QUACK", W / 2, H - 70, 22, PAL.ink3, "center", 5);
   }
 
   function downloadCard(){
@@ -5598,6 +5770,19 @@
     else drawCard();
     $("card-prev-week").hidden = !!cardSeason;
     $("card-this-week").hidden = !!cardSeason;
+    // a temporada tem o visual dela própria (ver drawSeasonCard) — a troca
+    // de estilo é só pro resumo da semana
+    $("card-style-nav").hidden = !!cardSeason;
+    $("card-style-label").textContent = CARD_STYLE_LABELS[S.cardStyle || "escuro"];
+  }
+
+  function cycleCardStyle(dir){
+    var i = CARD_STYLES.indexOf(S.cardStyle || "escuro");
+    if(i < 0) i = 0;
+    i = (i + dir + CARD_STYLES.length) % CARD_STYLES.length;
+    S.cardStyle = CARD_STYLES[i];
+    save();
+    renderCard();
   }
 
   /* ---------- temporadas ---------- */
@@ -8677,6 +8862,8 @@
   $("card-download").onclick = downloadCard;
   $("card-prev-week").onclick = function(){ cardOffset--; renderCard(); };
   $("card-this-week").onclick = function(){ cardOffset = 0; renderCard(); };
+  $("card-style-prev").onclick = function(){ cycleCardStyle(-1); };
+  $("card-style-next").onclick = function(){ cycleCardStyle(1); };
   $("card-close").onclick = function(){ $("card").close(); };
 
   // cápsula do tempo
