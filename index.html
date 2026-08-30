@@ -1189,10 +1189,22 @@
     background:none;border:0;padding:0;font:inherit;font-size:11px;color:inherit;text-align:left;cursor:pointer;
   }
   .cal-task.done .cal-task-title{opacity:.6;text-decoration:line-through}
+  /* abaixo de 560px não sobra espaço nenhum pra mostrar título de tarefa
+     dentro da célula (7 colunas num telefone) — a lista virava uma coluna
+     bem mais alta que as outras na mesma semana, e o texto truncava pra
+     1-2 letras. Em vez disso, célula compacta e uniforme (só número +
+     cor de calor) com uma bolinha de contagem; ver o conteúdo do dia é
+     um toque de distância, no popup que já existe */
   @media (max-width:560px){
-    .cal-day{min-height:64px;padding:4px;gap:2px;border-radius:8px}
-    .cal-day-num{font-size:10px}
-    .cal-task-title{font-size:10px}
+    .cal-day{min-height:40px;padding:4px;gap:0;border-radius:8px;position:relative}
+    .cal-day-num{font-size:11px}
+    .cal-day-tasks{display:none}
+    .cal-day[data-tasks]:not([data-tasks="0"])::after{
+      content:attr(data-tasks);position:absolute;bottom:3px;right:3px;
+      min-width:13px;height:13px;padding:0 2px;border-radius:999px;
+      background:var(--ink);color:var(--on-ink);
+      font-family:var(--mono);font-size:8.5px;line-height:13px;text-align:center;
+    }
     .cal-weekdays{font-size:9px}
   }
 
@@ -4611,9 +4623,12 @@
       num.textContent = d.getDate();
       cell.appendChild(num);
 
+      var dayTasks = S.tasks.filter(function(t){ return t.due === k; });
+      cell.setAttribute("data-tasks", String(dayTasks.length));
+
       var tasksBox = document.createElement("div");
       tasksBox.className = "cal-day-tasks";
-      S.tasks.filter(function(t){ return t.due === k; }).forEach(function(t){
+      dayTasks.forEach(function(t){
         var row = document.createElement("div");
         row.className = "cal-task" + (t.completed ? " done" : "");
         var chk = document.createElement("input");
