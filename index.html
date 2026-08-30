@@ -1189,6 +1189,11 @@
       background:var(--ink);color:var(--on-ink);
       font-family:var(--mono);font-size:8.5px;line-height:13px;text-align:center;
     }
+    /* mesma bolinha de contagem, só muda de cor — sinaliza atraso sem
+       precisar de outro elemento na célula (que já é bem pequena aqui) */
+    .cal-day.overdue[data-tasks]:not([data-tasks="0"])::after{
+      background:var(--signal);color:var(--on-ink);
+    }
     .cal-weekdays{font-size:9px}
   }
 
@@ -4579,11 +4584,22 @@
       var cell = document.createElement("div");
       cell.className = "cal-day" + (outside ? " outside" : "") + (k === todayKey ? " today" : "");
       if(n) cell.setAttribute("data-heat", String(heatLevel(n)));
+
+      var dayTasks = S.tasks.filter(function(t){ return t.due === k; });
+      cell.setAttribute("data-tasks", String(dayTasks.length));
+      var temAtrasada = dayTasks.some(function(t){
+        if(t.completed) return false;
+        var info = dueInfo(t.due);
+        return info && info.state === "atrasada";
+      });
+      if(temAtrasada) cell.classList.add("overdue");
+
       if(!outside){
         cell.setAttribute("role", "button");
         cell.setAttribute("tabindex", "0");
         cell.setAttribute("aria-label", "Criar tarefa em " + d.toLocaleDateString("pt-BR", { day:"numeric", month:"long" }) +
-          (n ? " — " + n + (n === 1 ? " pomodoro" : " pomodoros") : ""));
+          (n ? " — " + n + (n === 1 ? " pomodoro" : " pomodoros") : "") +
+          (temAtrasada ? " — tem tarefa atrasada" : ""));
         cell.onclick = function(){ openCalAddTask(k); };
         cell.addEventListener("keydown", function(e){
           if(e.key === "Enter" || e.key === " "){ e.preventDefault(); openCalAddTask(k); }
@@ -4594,9 +4610,6 @@
       num.className = "cal-day-num";
       num.textContent = d.getDate();
       cell.appendChild(num);
-
-      var dayTasks = S.tasks.filter(function(t){ return t.due === k; });
-      cell.setAttribute("data-tasks", String(dayTasks.length));
 
       var tasksBox = document.createElement("div");
       tasksBox.className = "cal-day-tasks";
