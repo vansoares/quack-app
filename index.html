@@ -1142,22 +1142,6 @@
   #task-due{width:148px;font-family:var(--mono);font-size:12px;color:var(--ink-2)}
   .warn{color:var(--signal);font-weight:600}
 
-  /* ---------- listas ---------- */
-  .lists{grid-column:1 / -1}
-  .lists-nav{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:calc(var(--sp)*2)}
-  .lists-nav[hidden]{display:none}
-  .lists-nav button{
-    background:var(--field);border:1px solid var(--line);color:var(--ink-2);cursor:pointer;
-    font-family:var(--sans);font-size:13px;font-weight:600;padding:7px 14px;border-radius:var(--r-pill);
-  }
-  .lists-nav button[aria-selected="true"]{background:var(--ink);color:var(--on-ink);border-color:var(--ink)}
-  .list-actions{display:flex;gap:var(--sp);margin-bottom:calc(var(--sp)*2)}
-  .list-actions[hidden]{display:none}
-  /* .new-task já define display:flex com a mesma especificidade do [hidden]
-     do navegador — sem isso, esconder o campo de novo item (lista vazia)
-     não escondia nada de verdade, mesmo bug que .grid/.tabbar já tinham */
-  #new-list-item[hidden]{display:none}
-
   /* ---------- calendário ---------- */
   .cal-weekdays{
     display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px;text-align:center;
@@ -1291,6 +1275,15 @@
   .notes-sidebar-duck{width:22px;height:22px;flex:none}
   .notes-folder-list{list-style:none;margin:0 0 calc(var(--sp)*2);padding:0;display:flex;flex-direction:column;gap:2px}
   .notes-folder-row{display:flex;align-items:center;gap:4px}
+  .notes-folder-row input[type=text]{
+    flex:1;min-width:0;font-family:var(--sans);font-size:13px;padding:5px 8px;
+    background:var(--field);border:1px solid var(--signal);border-radius:var(--r-sm);color:var(--ink);
+  }
+  .folder-caret{
+    flex:none;width:18px;height:18px;padding:0;background:none;border:0;color:var(--ink-3);
+    display:flex;align-items:center;justify-content:center;min-height:0;transition:transform .15s var(--ease);
+  }
+  .folder-caret.collapsed{transform:rotate(-90deg)}
   .notes-folder-btn{
     flex:1;min-width:0;display:flex;align-items:center;gap:7px;text-align:left;background:none;border:0;border-radius:var(--r-sm);
     padding:7px 9px;font-size:13.5px;color:var(--ink-2);cursor:pointer;
@@ -1501,10 +1494,6 @@
       <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 3v5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="9.3" cy="16.3" rx="3.1" ry="2.1" fill="var(--signal)"/><circle cx="12.6" cy="13.7" r="2.3" fill="var(--signal)"/></svg>
       Notas
     </button>
-    <button type="button" role="tab" class="tab-btn" data-tab="listas" id="tab-btn-listas" aria-selected="false">
-      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h6"/></svg>
-      Listas
-    </button>
     <button type="button" role="tab" class="tab-btn" data-tab="calendario" id="tab-btn-calendario" aria-selected="false">
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M8 3v3M16 3v3"/></svg>
       Calendário
@@ -1540,7 +1529,6 @@
     <div class="grid tab-panel" data-tab="leitura" id="tab-leitura" hidden></div>
     <div class="grid tab-panel" data-tab="ferramentas" id="tab-ferramentas" hidden></div>
     <div class="tab-panel" data-tab="notas" id="tab-notas" hidden></div>
-    <div class="grid tab-panel" data-tab="listas" id="tab-listas" hidden></div>
     <div class="tab-panel" data-tab="calendario" id="tab-calendario" hidden></div>
 
     <!-- TIMER -->
@@ -1745,38 +1733,6 @@
         <div class="wd" id="habit-days" role="group" aria-label="Dias da semana" hidden></div>
         <input type="number" id="habit-target" min="1" max="7" value="3" title="Quantas vezes por semana" aria-label="Vezes por semana" hidden>
         <button class="btn-ghost" id="habit-add">Adicionar</button>
-      </div>
-    </section>
-
-    <!-- LISTAS -->
-    <section class="panel lists" id="panel-lists">
-      <div class="panel-head">
-        <h2 class="panel-title"><span class="panel-icon teal" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h6"/></svg></span>Listas</h2>
-        <span class="panel-title" id="lists-count"></span>
-      </div>
-
-      <div class="lists-nav" id="lists-nav" role="tablist" aria-label="Suas listas"></div>
-      <div class="empty-state" id="lists-empty" hidden>
-        Nenhuma lista ainda. Crie uma abaixo — compras, mala de viagem, o que for.
-      </div>
-
-      <div class="list-actions" id="list-actions" hidden>
-        <button class="btn-ghost" id="list-rename">Renomear</button>
-        <button class="btn-ghost danger" id="list-delete">Excluir lista</button>
-      </div>
-
-      <ul class="task-list" id="list-items"></ul>
-      <div class="empty-state" id="list-items-empty" hidden>
-        Lista vazia. Adicione o primeiro item abaixo.
-      </div>
-      <div class="new-task" id="new-list-item" hidden>
-        <input type="text" id="list-item-text" placeholder="Novo item" maxlength="120" aria-label="Novo item">
-        <button class="btn-ghost" id="list-item-add">Adicionar</button>
-      </div>
-
-      <div class="new-habit">
-        <input type="text" id="list-name" placeholder="Nova lista (ex.: compras do mês)" maxlength="60" aria-label="Nome da lista">
-        <button class="btn-ghost" id="list-add">Criar lista</button>
       </div>
     </section>
 
@@ -2091,6 +2047,9 @@
         </div>
         <div class="notes-main-head" id="notes-main-head">
           <span class="notes-current-folder" id="notes-current-folder"></span>
+          <button class="btn-ghost icon-only" id="notes-list-add" aria-label="Nova lista" title="Nova lista">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h6"/></svg>
+          </button>
           <button class="btn-main icon-only" id="notes-page-add" aria-label="Nova nota" title="Nova nota">
             <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
           </button>
@@ -2135,7 +2094,7 @@
               <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="none" aria-hidden="true"><path d="M12 2a4 4 0 0 1 4 4c0 2-1.5 3.2-2 4.5L18 15H6l4-4.5C9.5 9.2 8 8 8 6a4 4 0 0 1 4-4Z"/><rect x="11" y="15" width="2" height="7" rx="1"/></svg>
               <span id="notes-editor-pin-label">Fixar</span>
             </button>
-            <select id="notes-editor-link" aria-label="Vincular a uma tarefa ou tópico de estudo">
+            <select id="notes-editor-link" aria-label="Vincular a um tópico de estudo">
               <option value="">Sem vínculo</option>
             </select>
           </div>
@@ -2166,6 +2125,26 @@
           </div>
           <textarea id="notes-editor-body" class="notes-editor-body" placeholder="Escreva em Markdown…" aria-label="Corpo da nota"></textarea>
           <div class="notes-editor-preview markdown-body" id="notes-editor-preview" hidden></div>
+        </div>
+        <div class="notes-editor" id="notes-list-editor" hidden>
+          <div class="notes-editor-head">
+            <button class="btn-ghost" id="notes-list-editor-back">
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+            </button>
+            <input type="text" id="notes-list-editor-title" class="notes-editor-title" placeholder="Nome da lista" maxlength="60" aria-label="Nome da lista">
+            <span class="notes-current-folder" id="notes-list-editor-count"></span>
+            <button class="btn-ghost icon-only danger" id="notes-list-editor-delete" aria-label="Excluir lista" title="Excluir lista">
+              <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
+            </button>
+          </div>
+          <ul class="task-list" id="list-items"></ul>
+          <div class="empty-state" id="list-items-empty" hidden>
+            Lista vazia. Adicione o primeiro item abaixo.
+          </div>
+          <div class="new-task" id="new-list-item">
+            <input type="text" id="list-item-text" placeholder="Novo item" maxlength="120" aria-label="Novo item">
+            <button class="btn-ghost" id="list-item-add">Adicionar</button>
+          </div>
         </div>
       </div>
     </div>
@@ -2223,7 +2202,6 @@
     <div class="field"><label for="p-capsule">Cápsula do tempo</label><span class="switch"><input type="checkbox" id="p-capsule"></span></div>
     <div class="field"><label for="p-music">Música ambiente</label><span class="switch"><input type="checkbox" id="p-music"></span></div>
     <div class="field"><label for="p-dev">Ferramentas de dev</label><span class="switch"><input type="checkbox" id="p-dev"></span></div>
-    <div class="field"><label for="p-lists">Listas</label><span class="switch"><input type="checkbox" id="p-lists"></span></div>
     <p class="hint">Ocultar um painel não apaga nada: os registros continuam guardados e voltam quando você reativar.</p>
 
     <p class="cap-meta" style="margin-top:10px">O que entra no resumo da semana</p>
@@ -2571,11 +2549,10 @@
     watchLog: [],
     seasons: [],
     milestones: [],
-    panels: { habitos:true, leitura:true, tela:true, objetivos:true, pdi:true, temporada:true, capsula:true, musica:true, listas:true },
+    panels: { habitos:true, leitura:true, tela:true, objetivos:true, pdi:true, temporada:true, capsula:true, musica:true },
     cardFields: { season:true, numbers:true, chart:true, reading:true, highlight:true, dev:true },
     lists: [],
     listItems: [],
-    activeListId: null,
     goals: [],
     noteFolders: [],
     notePages: [],
@@ -2649,10 +2626,13 @@
     if(d.cardFields) Object.assign(s.cardFields, d.cardFields);
     if(Array.isArray(d.lists)) s.lists = d.lists;
     if(Array.isArray(d.listItems)) s.listItems = d.listItems;
-    if(typeof d.activeListId !== "undefined") s.activeListId = d.activeListId;
     if(Array.isArray(d.goals)) s.goals = d.goals;
     if(Array.isArray(d.noteFolders)) s.noteFolders = d.noteFolders;
     if(Array.isArray(d.notePages)) s.notePages = d.notePages;
+    // vínculo de nota com tarefa foi removido (só sobrou vínculo com tópico
+    // de estudo) — quem já tinha uma nota apontando pra uma tarefa perde só
+    // o vínculo, não a nota
+    s.notePages.forEach(function(p){ if(p.linkType === "task"){ p.linkType = null; p.linkId = null; } });
     if(Array.isArray(d.pdi)) s.pdi = d.pdi;
     if(typeof d.dev !== "undefined") s.dev = !!d.dev;
     if(d.build) Object.assign(s.build, d.build);
@@ -3327,7 +3307,6 @@
     // só atualiza a página de notas se a aba dela for a ativa agora — mais
     // barato, e renderNoteEditor() já protege o que estiver sendo digitado
     if(S.activeTab === "notas") renderNotesPage();
-    if(S.activeTab === "listas") renderLists();
     if(S.activeTab === "calendario") renderCalendar();
   }
 
@@ -4402,46 +4381,37 @@
     input.focus();
   }
 
-  /* ---------- listas ---------- */
-  function activeList(){
-    return S.lists.filter(function(l){ return l.id === S.activeListId; })[0] || null;
-  }
+  /* ---------- listas (dentro de Notas, ver renderNotePageList) ---------- */
+  var notesOpenListId = null;   // lista aberta no editor, ou null (mostra a listagem da pasta)
+
+  function findList(id){ return S.lists.filter(function(l){ return l.id === id; })[0] || null; }
 
   function listItemsFor(listId){
     return S.listItems.filter(function(it){ return it.listId === listId; });
   }
 
-  function renderLists(){
-    // a lista ativa pode ter sido apagada (em outro aparelho, por exemplo) —
-    // cai pra primeira disponível em vez de deixar a tela sem nada selecionado
-    if(S.activeListId && !activeList()) S.activeListId = null;
-    if(!S.activeListId && S.lists.length) S.activeListId = S.lists[0].id;
+  function currentFolderLists(){
+    if(notesSelectedFolder === "all") return S.lists;
+    if(notesSelectedFolder === "none") return S.lists.filter(function(l){ return !l.folderId; });
+    return S.lists.filter(function(l){ return l.folderId === notesSelectedFolder; });
+  }
 
-    var nav = $("lists-nav");
-    nav.innerHTML = "";
-    nav.hidden = !S.lists.length;
-    $("lists-empty").hidden = S.lists.length > 0;
+  function renderListEditor(){
+    var box = $("notes-list-editor");
+    if(!notesOpenListId){ box.hidden = true; return; }
+    var list = findList(notesOpenListId);
+    if(!list){ notesOpenListId = null; box.hidden = true; return; }
+    box.hidden = false;
 
-    S.lists.forEach(function(l){
-      var b = document.createElement("button");
-      b.type = "button";
-      b.setAttribute("role", "tab");
-      b.setAttribute("aria-selected", String(l.id === S.activeListId));
-      b.textContent = l.name;
-      b.onclick = function(){ S.activeListId = l.id; save(); renderLists(); };
-      nav.appendChild(b);
-    });
+    var titleInp = $("notes-list-editor-title");
+    if(document.activeElement !== titleInp) titleInp.value = list.name || "";
 
-    var list = activeList();
-    $("list-actions").hidden = !list;
-    $("new-list-item").hidden = !list;
-
-    var items = list ? listItemsFor(list.id) : [];
+    var items = listItemsFor(list.id);
     var ul = $("list-items");
     ul.innerHTML = "";
     items.forEach(function(it){ ul.appendChild(listItemRow(it)); });
-    $("list-items-empty").hidden = !list || items.length > 0;
-    $("lists-count").textContent = list && items.length
+    $("list-items-empty").hidden = items.length > 0;
+    $("notes-list-editor-count").textContent = items.length
       ? items.filter(function(it){ return it.checked; }).length + "/" + items.length
       : "";
   }
@@ -4471,67 +4441,46 @@
   }
 
   function createList(){
-    var input = $("list-name");
-    var name = input.value.trim();
-    if(!name){ input.focus(); return; }
-    var l = { id: uid(), name: name, createdAt: Date.now() };
-    S.lists.push(l);
-    S.activeListId = l.id;
-    input.value = "";
-    save(); renderLists();
-    input.focus();
+    var folderId = (notesSelectedFolder === "all" || notesSelectedFolder === "none") ? null : notesSelectedFolder;
+    var l = { id: uid(), name: "", folderId: folderId, createdAt: Date.now() };
+    S.lists.unshift(l);
+    notesOpenListId = l.id;
+    notesOpenPageId = null;
+    save(); renderNotesPage();
+    setTimeout(function(){ $("notes-list-editor-title").focus(); }, 0);
   }
 
-  function renameList(){
-    var list = activeList();
+  function commitListTitle(){
+    if(!notesOpenListId) return;
+    var list = findList(notesOpenListId);
     if(!list) return;
-    var btn = Array.prototype.filter.call($("lists-nav").children, function(b){
-      return b.getAttribute("aria-selected") === "true";
-    })[0];
-    if(!btn) return;
-    var inp = document.createElement("input");
-    inp.type = "text";
-    inp.value = list.name;
-    inp.maxLength = 60;
-    inp.setAttribute("aria-label", "Novo nome da lista");
-    btn.replaceWith(inp);
-    inp.focus(); inp.select();
-    var settled = false;
-    function commit(){
-      if(settled) return;
-      settled = true;
-      var v = inp.value.trim();
-      if(v) list.name = v;
-      save(); renderLists();
-    }
-    inp.addEventListener("blur", commit);
-    inp.addEventListener("keydown", function(e){
-      if(e.key === "Enter") commit();
-      if(e.key === "Escape"){ settled = true; renderLists(); }
-    });
+    var name = $("notes-list-editor-title").value.trim().slice(0, 60);
+    if(name === (list.name || "")) return;
+    list.name = name;
+    save();
   }
 
-  async function deleteList(){
-    var list = activeList();
+  async function deleteList(id){
+    var list = findList(id);
     if(!list) return;
-    if(!(await askConfirm("Excluir a lista “" + list.name + "”? Os itens dela vão junto.", { danger:true }))) return;
+    if(!(await askConfirm("Excluir a lista “" + (list.name || "Sem nome") + "”? Os itens dela vão junto.", { danger:true }))) return;
     var ids = listItemsFor(list.id).map(function(it){ return it.id; });
     S.listItems = S.listItems.filter(function(it){ return it.listId !== list.id; });
     S.lists = S.lists.filter(function(l){ return l.id !== list.id; });
     markDeletedMany(ids.concat([list.id]));
-    S.activeListId = null;
-    save(); renderLists();
+    if(notesOpenListId === id) notesOpenListId = null;
+    save(); renderNotesPage();
   }
 
   function addListItem(){
-    var list = activeList();
+    var list = findList(notesOpenListId);
     if(!list) return;
     var input = $("list-item-text");
     var text = input.value.trim();
     if(!text){ input.focus(); return; }
     S.listItems.push({ id: uid(), listId: list.id, text: text, checked: false, createdAt: Date.now() });
     input.value = "";
-    save(); renderLists();
+    save(); renderListEditor();
     input.focus();
   }
 
@@ -4539,13 +4488,13 @@
     var it = S.listItems.filter(function(x){ return x.id === id; })[0];
     if(!it) return;
     it.checked = !it.checked;
-    save(); renderLists();
+    save(); renderListEditor();
   }
 
   function removeListItem(id){
     S.listItems = S.listItems.filter(function(it){ return it.id !== id; });
     markDeleted(id);
-    save(); renderLists();
+    save(); renderListEditor();
   }
 
   /* ---------- calendário ---------- */
@@ -6793,6 +6742,8 @@
   /* ---------- página de notas em markdown (pastas) ---------- */
   var notesSelectedFolder = "all";  // "all" | "none" | id de uma pasta
   var notesOpenPageId = null;       // nota aberta no editor, ou null (mostra a lista)
+  // notesOpenListId (lista aberta) é declarada perto do resto do código de
+  // listas, mais abaixo — nunca fica com valor junto de notesOpenPageId
   var notesPreviewMode = false;
   var notesEditorLoadedId = null;   // id da nota cujo título/corpo estão carregados nos campos agora
   var notesSearch = "";             // busca ativa: quando preenchida, ignora a pasta selecionada e olha pra tudo
@@ -6804,13 +6755,13 @@
   var FOLDER_ICON_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg>';
   var FILE_ICON_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M15 3v5h5"/></svg>';
   var PIN_ICON_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" stroke="none" aria-hidden="true"><path d="M12 2a4 4 0 0 1 4 4c0 2-1.5 3.2-2 4.5L18 15H6l4-4.5C9.5 9.2 8 8 8 6a4 4 0 0 1 4-4Z"/><rect x="11" y="15" width="2" height="7" rx="1"/></svg>';
+  var LIST_ICON_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h6"/></svg>';
 
-  // nota vinculada a uma tarefa ou a um tópico de estudo — puramente
-  // informativo (não move nada de lugar), só pra achar de relance qual
-  // anotação pertence a qual pendência quando a lista crescer
+  // nota vinculada a um tópico de estudo — puramente informativo (não move
+  // nada de lugar), só pra achar de relance qual anotação pertence a qual
+  // tópico quando a lista crescer
   function noteLinkLabel(p){
     if(!p || !p.linkType || !p.linkId) return null;
-    if(p.linkType === "task"){ var t = findTask(p.linkId); return t ? t.title : null; }
     if(p.linkType === "topic"){ var s = findStudyTopic(p.linkId); return s ? s.title : null; }
     return null;
   }
@@ -7050,15 +7001,53 @@
     renderNoteFolderList();
     renderNotePageList();
     renderNoteEditor();
+    renderListEditor();
+  }
+
+  // agrupa as pastas por parentId (raiz = sem parentId) numa árvore — pastas
+  // antigas simplesmente não têm parentId, o que já as trata como raiz
+  function buildFolderTree(){
+    var byParent = {};
+    S.noteFolders.forEach(function(f){
+      var k = f.parentId || "__root";
+      if(!byParent[k]) byParent[k] = [];
+      byParent[k].push(f);
+    });
+    Object.keys(byParent).forEach(function(k){
+      byParent[k].sort(function(a, b){ return a.name.localeCompare(b.name, "pt-BR"); });
+    });
+    function build(parentKey){
+      return (byParent[parentKey] || []).map(function(f){
+        return { folder: f, children: build(f.id) };
+      });
+    }
+    return build("__root");
+  }
+
+  function folderItemCount(folderId){
+    return S.notePages.filter(function(p){ return p.folderId === folderId; }).length +
+           S.lists.filter(function(l){ return l.folderId === folderId; }).length;
   }
 
   function renderNoteFolderList(){
     var list = $("notes-folder-list");
     list.innerHTML = "";
 
-    function addRow(id, label, count, folder){
+    function addRow(id, label, count, folder, depth, hasChildren){
       var li = document.createElement("li");
       li.className = "notes-folder-row";
+      li.style.paddingLeft = (depth * 14) + "px";
+
+      if(hasChildren){
+        var collapsed = isCollapsed("pasta:" + id);
+        var caret = document.createElement("button");
+        caret.type = "button";
+        caret.className = "folder-caret" + (collapsed ? " collapsed" : "");
+        caret.setAttribute("aria-label", collapsed ? "Expandir pasta" : "Recolher pasta");
+        caret.innerHTML = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+        caret.onclick = function(ev){ ev.stopPropagation(); toggleCollapsed("pasta:" + id); renderNoteFolderList(); };
+        li.appendChild(caret);
+      }
 
       var btn = document.createElement("button");
       btn.className = "notes-folder-btn";
@@ -7071,6 +7060,7 @@
       btn.onclick = function(){
         notesSelectedFolder = id;
         notesOpenPageId = null;
+        notesOpenListId = null;
         notesEditorLoadedId = null;
         // busca ativa "vence" o filtro de pasta na lista (ver renderNotePageList)
         // — sem limpar aqui, clicar numa pasta pareceria não fazer nada
@@ -7081,6 +7071,15 @@
       li.appendChild(btn);
 
       if(folder){
+        var addSub = document.createElement("button");
+        addSub.type = "button";
+        addSub.className = "kill";
+        addSub.textContent = "+";
+        addSub.title = "Nova subpasta dentro de " + folder.name;
+        addSub.setAttribute("aria-label", "Nova subpasta dentro de " + folder.name);
+        addSub.onclick = function(ev){ ev.stopPropagation(); startNewSubfolder(li, folder.id, depth); };
+        li.appendChild(addSub);
+
         var swatch = document.createElement("button");
         swatch.type = "button";
         swatch.className = "swatch";
@@ -7100,11 +7099,54 @@
       list.appendChild(li);
     }
 
-    addRow("all", "Todas", S.notePages.length, null);
-    addRow("none", "Sem pasta", S.notePages.filter(function(p){ return !p.folderId; }).length, null);
-    S.noteFolders.slice().sort(function(a, b){ return a.name.localeCompare(b.name, "pt-BR"); }).forEach(function(f){
-      addRow(f.id, f.name, S.notePages.filter(function(p){ return p.folderId === f.id; }).length, f);
+    addRow("all", "Todas", S.notePages.length + S.lists.length, null, 0, false);
+    addRow("none", "Sem pasta",
+      S.notePages.filter(function(p){ return !p.folderId; }).length + S.lists.filter(function(l){ return !l.folderId; }).length,
+      null, 0, false);
+
+    function renderNode(node, depth){
+      addRow(node.folder.id, node.folder.name, folderItemCount(node.folder.id), node.folder, depth, node.children.length > 0);
+      if(node.children.length && !isCollapsed("pasta:" + node.folder.id)){
+        node.children.forEach(function(child){ renderNode(child, depth + 1); });
+      }
+    }
+    buildFolderTree().forEach(function(node){ renderNode(node, 0); });
+  }
+
+  // input inline pra nomear a subpasta, logo abaixo da pasta-mãe — mesmo
+  // padrão de "trocar nome sem abrir dialog" usado noutras partes do app
+  function startNewSubfolder(afterLi, parentId, depth){
+    var wrap = document.createElement("li");
+    wrap.className = "notes-folder-row";
+    wrap.style.paddingLeft = ((depth + 1) * 14) + "px";
+    var inp = document.createElement("input");
+    inp.type = "text";
+    inp.maxLength = 40;
+    inp.placeholder = "Nome da subpasta";
+    inp.setAttribute("aria-label", "Nome da nova subpasta");
+    wrap.appendChild(inp);
+    afterLi.insertAdjacentElement("afterend", wrap);
+    inp.focus();
+    var settled = false;
+    function commit(){
+      if(settled) return;
+      settled = true;
+      var name = inp.value.trim();
+      if(name) createSubfolder(parentId, name);
+      else renderNoteFolderList();
+    }
+    inp.addEventListener("blur", commit);
+    inp.addEventListener("keydown", function(e){
+      if(e.key === "Enter") commit();
+      if(e.key === "Escape"){ settled = true; renderNoteFolderList(); }
     });
+  }
+
+  function createSubfolder(parentId, name){
+    var trimmed = (name || "").trim().slice(0, 40);
+    if(!trimmed) return;
+    S.noteFolders.push({ id: uid(), name: trimmed, parentId: parentId, createdAt: Date.now() });
+    save(); renderNoteFolderList();
   }
 
   function renderNotePageList(){
@@ -7114,91 +7156,121 @@
     var searchRow = $("notes-search-row");
     var mainHead = $("notes-main-head");
 
-    // com uma nota aberta, o cabeçalho da lista (pasta atual + busca + "nova
-    // nota") só sobrava por cima do editor sem servir pra nada — a volta
-    // pra lista já é o botão de voltar do próprio editor
-    if(notesOpenPageId){ list.hidden = true; empty.hidden = true; searchRow.hidden = true; mainHead.hidden = true; return; }
+    // com uma nota ou lista aberta, o cabeçalho (pasta atual + busca + "nova
+    // nota"/"nova lista") só sobrava por cima do editor sem servir pra nada
+    // — a volta pra listagem já é o botão de voltar do próprio editor
+    if(notesOpenPageId || notesOpenListId){ list.hidden = true; empty.hidden = true; searchRow.hidden = true; mainHead.hidden = true; return; }
     searchRow.hidden = false;
     mainHead.hidden = false;
 
     var q = notesSearch.trim().toLowerCase();
-    var pages;
+    var items;
     if(q){
-      // busca olha pra todas as notas, não só a pasta selecionada — o ponto
-      // é achar rápido, e a pasta some da vista assim que a busca começa
-      pages = S.notePages.filter(function(p){
+      // busca olha pra tudo, não só a pasta selecionada — o ponto é achar
+      // rápido, e a pasta some da vista assim que a busca começa
+      var notas = S.notePages.filter(function(p){
         var hay = ((p.title || "") + " " + (p.body || "") + " " + (p.tags || []).join(" ")).toLowerCase();
         return hay.indexOf(q) >= 0;
-      });
+      }).map(function(p){ return { type:"nota", data:p }; });
+      var listas = S.lists.filter(function(l){
+        return (l.name || "").toLowerCase().indexOf(q) >= 0;
+      }).map(function(l){ return { type:"lista", data:l }; });
+      items = notas.concat(listas);
       head.textContent = "resultados para “" + notesSearch.trim() + "”";
     }else{
       var folder = notesSelectedFolder !== "all" && notesSelectedFolder !== "none" ? findNoteFolder(notesSelectedFolder) : null;
       head.textContent = notesSelectedFolder === "all" ? "todas as notas"
         : notesSelectedFolder === "none" ? "sem pasta"
         : (folder ? folder.name : "pasta");
-      pages = currentFolderNotes();
+      items = currentFolderNotes().map(function(p){ return { type:"nota", data:p }; })
+        .concat(currentFolderLists().map(function(l){ return { type:"lista", data:l }; }));
     }
 
-    // fixadas primeiro, e dentro de cada grupo a mais recente primeiro
-    pages = pages.slice().sort(function(a, b){
-      if(!!b.pinned !== !!a.pinned) return (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
-      return (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt);
+    // fixadas primeiro (só nota tem esse conceito — lista conta como não
+    // fixada), e dentro de cada grupo a mais recente primeiro
+    items = items.slice().sort(function(a, b){
+      var pa = a.type === "nota" && !!a.data.pinned, pb = b.type === "nota" && !!b.data.pinned;
+      if(pb !== pa) return (pb ? 1 : 0) - (pa ? 1 : 0);
+      return (b.data.updatedAt || b.data.createdAt) - (a.data.updatedAt || a.data.createdAt);
     });
 
     list.hidden = false;
     list.innerHTML = "";
-    empty.hidden = pages.length > 0;
+    empty.hidden = items.length > 0;
     $("notes-page-empty-text").textContent = q
-      ? "Nenhuma nota encontrada para “" + notesSearch.trim() + "”."
-      : "Nenhuma nota aqui ainda. Clique em \"Nova nota\" para começar.";
+      ? "Nada encontrado para “" + notesSearch.trim() + "”."
+      : "Nada por aqui ainda. Clique em \"Nova nota\" ou \"Nova lista\" para começar.";
 
-    pages.forEach(function(p){
+    items.forEach(function(item){
       var li = document.createElement("li");
 
-      var pinBtn = document.createElement("button");
-      pinBtn.type = "button";
-      pinBtn.className = "note-pin-btn" + (p.pinned ? " active" : "");
-      pinBtn.innerHTML = PIN_ICON_SVG;
-      pinBtn.setAttribute("aria-label", p.pinned ? "Desafixar nota" : "Fixar nota");
-      pinBtn.title = p.pinned ? "Desafixar" : "Fixar";
-      pinBtn.onclick = function(ev){ ev.stopPropagation(); toggleNotePin(p.id); };
-      li.appendChild(pinBtn);
+      if(item.type === "nota"){
+        var p = item.data;
+        var pinBtn = document.createElement("button");
+        pinBtn.type = "button";
+        pinBtn.className = "note-pin-btn" + (p.pinned ? " active" : "");
+        pinBtn.innerHTML = PIN_ICON_SVG;
+        pinBtn.setAttribute("aria-label", p.pinned ? "Desafixar nota" : "Fixar nota");
+        pinBtn.title = p.pinned ? "Desafixar" : "Fixar";
+        pinBtn.onclick = function(ev){ ev.stopPropagation(); toggleNotePin(p.id); };
+        li.appendChild(pinBtn);
 
-      var row = document.createElement("button");
-      row.type = "button";
-      row.className = "notes-page-row";
-      var title = document.createElement("span");
-      title.className = "notes-page-row-title";
-      title.innerHTML = FILE_ICON_SVG + "<span>" + escapeHtml(p.title || "Sem título") + "</span>";
-      var meta = document.createElement("span");
-      meta.className = "notes-page-row-meta";
-      var linkLabel = noteLinkLabel(p);
-      if(linkLabel){
-        var linkTag = document.createElement("span");
-        linkTag.className = "notes-page-row-link";
-        linkTag.textContent = linkLabel;
-        meta.appendChild(linkTag);
+        var row = document.createElement("button");
+        row.type = "button";
+        row.className = "notes-page-row";
+        var title = document.createElement("span");
+        title.className = "notes-page-row-title";
+        title.innerHTML = FILE_ICON_SVG + "<span>" + escapeHtml(p.title || "Sem título") + "</span>";
+        var meta = document.createElement("span");
+        meta.className = "notes-page-row-meta";
+        var linkLabel = noteLinkLabel(p);
+        if(linkLabel){
+          var linkTag = document.createElement("span");
+          linkTag.className = "notes-page-row-link";
+          linkTag.textContent = linkLabel;
+          meta.appendChild(linkTag);
+        }
+        if((p.tags || []).length){
+          var tagsWrap = document.createElement("span");
+          tagsWrap.className = "notes-page-row-tags";
+          p.tags.forEach(function(tag){
+            var t = document.createElement("span");
+            t.className = "tag";
+            t.textContent = tag;
+            tagsWrap.appendChild(t);
+          });
+          meta.appendChild(tagsWrap);
+        }
+        var date = document.createElement("span");
+        date.className = "notes-page-row-date";
+        date.textContent = new Date(p.updatedAt || p.createdAt).toLocaleDateString("pt-BR", { day:"numeric", month:"short" });
+        meta.appendChild(date);
+        row.appendChild(title); row.appendChild(meta);
+        // abre em modo de visualização — a pessoa clicou pra LER a nota, não
+        // necessariamente pra editar; "Editar" fica a um clique de distância
+        row.onclick = function(){ notesOpenPageId = p.id; notesOpenListId = null; notesPreviewMode = true; renderNotesPage(); };
+        li.appendChild(row);
+      }else{
+        var l = item.data;
+        var listItemsHere = listItemsFor(l.id);
+        var doneCount = listItemsHere.filter(function(it){ return it.checked; }).length;
+
+        var row2 = document.createElement("button");
+        row2.type = "button";
+        row2.className = "notes-page-row";
+        var title2 = document.createElement("span");
+        title2.className = "notes-page-row-title";
+        title2.innerHTML = LIST_ICON_SVG + "<span>" + escapeHtml(l.name || "Lista sem nome") + "</span>";
+        var meta2 = document.createElement("span");
+        meta2.className = "notes-page-row-meta";
+        var count2 = document.createElement("span");
+        count2.className = "notes-page-row-date";
+        count2.textContent = listItemsHere.length ? doneCount + "/" + listItemsHere.length : "vazia";
+        meta2.appendChild(count2);
+        row2.appendChild(title2); row2.appendChild(meta2);
+        row2.onclick = function(){ notesOpenListId = l.id; notesOpenPageId = null; renderNotesPage(); };
+        li.appendChild(row2);
       }
-      if((p.tags || []).length){
-        var tagsWrap = document.createElement("span");
-        tagsWrap.className = "notes-page-row-tags";
-        p.tags.forEach(function(tag){
-          var t = document.createElement("span");
-          t.className = "tag";
-          t.textContent = tag;
-          tagsWrap.appendChild(t);
-        });
-        meta.appendChild(tagsWrap);
-      }
-      var date = document.createElement("span");
-      date.className = "notes-page-row-date";
-      date.textContent = new Date(p.updatedAt || p.createdAt).toLocaleDateString("pt-BR", { day:"numeric", month:"short" });
-      meta.appendChild(date);
-      row.appendChild(title); row.appendChild(meta);
-      // abre em modo de visualização — a pessoa clicou pra LER a nota, não
-      // necessariamente pra editar; "Editar" fica a um clique de distância
-      row.onclick = function(){ notesOpenPageId = p.id; notesPreviewMode = true; renderNotesPage(); };
-      li.appendChild(row);
       list.appendChild(li);
     });
   }
@@ -7263,21 +7335,6 @@
     noneOpt.textContent = "Sem vínculo";
     select.appendChild(noneOpt);
 
-    // só tarefas em aberto — uma vez concluída, ela não é mais algo a que
-    // vale a pena vincular notas novas (mas a nota que já apontava pra ela
-    // continua mostrando o vínculo normalmente, ver noteLinkLabel)
-    var tarefasAbertas = S.tasks.filter(function(t){ return !t.completed || "task:" + t.id === current; });
-    if(tarefasAbertas.length){
-      var gt = document.createElement("optgroup");
-      gt.label = "Tarefas";
-      tarefasAbertas.forEach(function(t){
-        var o = document.createElement("option");
-        o.value = "task:" + t.id;
-        o.textContent = t.title;
-        gt.appendChild(o);
-      });
-      select.appendChild(gt);
-    }
     if(S.studyTopics.length){
       var gs = document.createElement("optgroup");
       gs.label = "Tópicos de estudo";
@@ -7308,22 +7365,33 @@
   function createNoteFolder(name){
     var trimmed = (name || "").trim().slice(0, 40);
     if(!trimmed){ toast("Dê um nome à pasta"); return; }
-    S.noteFolders.push({ id: uid(), name: trimmed, createdAt: Date.now() });
+    S.noteFolders.push({ id: uid(), name: trimmed, parentId: null, createdAt: Date.now() });
     save(); renderNoteFolderList();
+  }
+
+  function collectDescendantFolderIds(id){
+    var out = [];
+    S.noteFolders.filter(function(f){ return f.parentId === id; }).forEach(function(f){
+      out.push(f.id);
+      out = out.concat(collectDescendantFolderIds(f.id));
+    });
+    return out;
   }
 
   async function deleteNoteFolder(id){
     var f = findNoteFolder(id);
     if(!f) return;
-    var ok = await askConfirm(
-      "Excluir a pasta “" + f.name + "”? As notas dentro dela vão para “Sem pasta” — nada é apagado.",
-      { danger:true, confirmLabel:"Excluir pasta" }
-    );
+    var descendants = collectDescendantFolderIds(id);
+    var msg = "Excluir a pasta “" + f.name + "”" + (descendants.length ? " e suas subpastas" : "") +
+      "? As notas e listas dentro dela vão para “Sem pasta” — nada é apagado.";
+    var ok = await askConfirm(msg, { danger:true, confirmLabel:"Excluir pasta" });
     if(!ok) return;
-    S.notePages.forEach(function(p){ if(p.folderId === id) p.folderId = null; });
-    S.noteFolders = S.noteFolders.filter(function(x){ return x.id !== id; });
-    markDeleted(id);
-    if(notesSelectedFolder === id) notesSelectedFolder = "all";
+    var allIds = [id].concat(descendants);
+    S.notePages.forEach(function(p){ if(allIds.indexOf(p.folderId) >= 0) p.folderId = null; });
+    S.lists.forEach(function(l){ if(allIds.indexOf(l.folderId) >= 0) l.folderId = null; });
+    S.noteFolders = S.noteFolders.filter(function(x){ return allIds.indexOf(x.id) < 0; });
+    markDeletedMany(allIds);
+    if(allIds.indexOf(notesSelectedFolder) >= 0) notesSelectedFolder = "all";
     save(); renderNotesPage();
   }
 
@@ -7332,6 +7400,7 @@
     var p = { id: uid(), folderId: folderId, title: "", body: "", pinned: false, linkType: null, linkId: null, tags: [], createdAt: Date.now(), updatedAt: Date.now() };
     S.notePages.unshift(p);
     notesOpenPageId = p.id;
+    notesOpenListId = null;
     notesPreviewMode = false;
     notesEditorLoadedId = null;
     save(); renderNotesPage();
@@ -8083,7 +8152,6 @@
     $("section-capsule").hidden = !S.panels.capsula;
     $("panel-sound").hidden = !S.panels.musica;
     $("panel-dev").hidden = !S.dev;
-    $("panel-lists").hidden = !S.panels.listas;
     applyTabs();
   }
 
@@ -8099,7 +8167,6 @@
     leitura: ["panel-reading", "panel-screen"],
     ferramentas: ["panel-dev"],
     notas: ["page-notes"],
-    listas: ["panel-lists"],
     calendario: ["panel-calendar"]
   };
 
@@ -8116,7 +8183,6 @@
     });
     if(S.activeTab !== tab){ S.activeTab = tab; save(); }
     if(tab === "notas") renderNotesPage();
-    if(tab === "listas") renderLists();
     if(tab === "calendario") renderCalendar();
   }
 
@@ -8590,13 +8656,18 @@
   $("wk-prev").onclick = function(){ weekOffset--; renderHabits(); };
   $("wk-next").onclick = function(){ if(weekOffset < 0){ weekOffset++; renderHabits(); } };
 
-  // listas
-  $("list-add").onclick = createList;
-  $("list-name").addEventListener("keydown", function(e){ if(e.key === "Enter") createList(); });
+  // listas (dentro de Notas)
   $("list-item-add").onclick = addListItem;
   $("list-item-text").addEventListener("keydown", function(e){ if(e.key === "Enter") addListItem(); });
-  $("list-rename").onclick = renameList;
-  $("list-delete").onclick = deleteList;
+  $("notes-list-add").onclick = createList;
+  $("notes-list-editor-title").addEventListener("blur", commitListTitle);
+  $("notes-list-editor-title").addEventListener("keydown", function(e){ if(e.key === "Enter") $("notes-list-editor-title").blur(); });
+  $("notes-list-editor-delete").onclick = function(){ if(notesOpenListId) deleteList(notesOpenListId); };
+  $("notes-list-editor-back").onclick = function(){
+    commitListTitle();
+    notesOpenListId = null;
+    renderNotesPage();
+  };
 
   // calendário
   $("cal-prev").onclick = function(){
@@ -8878,7 +8949,6 @@
     $("p-capsule").checked = !!S.panels.capsula;
     $("p-music").checked = !!S.panels.musica;
     $("p-dev").checked = !!S.dev;
-    $("p-lists").checked = !!S.panels.listas;
     $("p-card-season").checked = !!S.cardFields.season;
     $("p-card-numbers").checked = !!S.cardFields.numbers;
     $("p-card-chart").checked = !!S.cardFields.chart;
@@ -8926,7 +8996,7 @@
     save(); applyPanels(); renderTasks(); renderTimer();   // o botão de branch aparece nas tarefas; "Estudando" some/aparece junto
   };
 
-  [["p-habits","habitos"], ["p-reading","leitura"], ["p-screen","tela"], ["p-goals","objetivos"], ["p-pdi","pdi"], ["p-season","temporada"], ["p-capsule","capsula"], ["p-music","musica"], ["p-lists","listas"]].forEach(function(par){
+  [["p-habits","habitos"], ["p-reading","leitura"], ["p-screen","tela"], ["p-goals","objetivos"], ["p-pdi","pdi"], ["p-season","temporada"], ["p-capsule","capsula"], ["p-music","musica"]].forEach(function(par){
     $(par[0]).onchange = function(){
       S.panels[par[1]] = this.checked;
       save(); applyPanels();
