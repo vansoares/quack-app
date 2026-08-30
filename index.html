@@ -476,6 +476,8 @@
   }
   .task:last-child{border-bottom:0}
   .task.active{background:linear-gradient(to right, var(--signal-soft), transparent 70%);margin:0 -8px;padding-left:8px;padding-right:8px}
+  .task.acc{border-left:3px solid hsl(var(--h) var(--topic-s) var(--topic-l));padding-left:9px}
+  .task.acc.active{padding-left:15px}
   .task.done .title{color:var(--ink-3);text-decoration:line-through}
   .check{
     position:relative;
@@ -1024,6 +1026,7 @@
     padding:0 2px 6px;text-align:left;color:var(--ink);
   }
   .group-head:hover .group-name{color:var(--signal)}
+  .group-head.acc{border-left:3px solid hsl(var(--h) var(--topic-s) var(--topic-l));padding-left:9px}
   .caret{font-size:9px;color:var(--ink-3);line-height:1}
   .group-name{
     font-family:var(--mono);font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;
@@ -1609,8 +1612,7 @@
           <span class="panel-title" id="tasks-open"></span>
           <div class="seg small" id="task-view" role="group" aria-label="Organização da lista">
             <button data-view="lista" aria-pressed="true">Lista</button>
-            <button data-view="grupos" aria-pressed="false">Tópicos</button>
-            <button data-view="dias" aria-pressed="false">Dias</button>
+            <button data-view="topicos" aria-pressed="false">Tópicos</button>
           </div>
         </div>
       </div>
@@ -2649,10 +2651,12 @@
     if(typeof d.activeTaskId !== "undefined") s.activeTaskId = d.activeTaskId;
     if(d.range) s.range = d.range;
     if(typeof d.filterTag !== "undefined") s.filterTag = d.filterTag;
-    // taskView substitui o antigo groupTasks (booleano) por três modos —
-    // quem só tinha o campo antigo salvo (versão anterior do app) migra pra
-    // "topicos" automaticamente em vez de voltar pra "lista"
-    if(d.taskView) s.taskView = d.taskView;
+    // taskView substitui o antigo groupTasks (booleano) por modos de
+    // organização da lista — quem só tinha o campo antigo salvo (versão
+    // anterior do app) migra pra "topicos" automaticamente em vez de voltar
+    // pra "lista"; quem tinha o extinto modo "dias" (removido depois que o
+    // Calendário passou a cobrir esse caso de uso) cai de volta pra "lista"
+    if(d.taskView) s.taskView = d.taskView === "dias" ? "lista" : d.taskView;
     else if(d.groupTasks) s.taskView = "topicos";
     if(typeof d.hideCompleted !== "undefined") s.hideCompleted = !!d.hideCompleted;
     if(Array.isArray(d.collapsed)) s.collapsed = d.collapsed;
@@ -3444,9 +3448,14 @@
   var editingNote = null;   // id da tarefa cuja nota está aberta para edição
   var expandedTasks = {};   // ids das tarefas com o painel de detalhe (prazo/nota/pomodoros) aberto
 
-  function taskRow(t){
+  function taskRow(t, accent){
     var li = document.createElement("li");
     li.className = "task" + (t.completed ? " done" : "") + (t.id === S.activeTaskId ? " active" : "");
+    // na visão por tópico, cada linha ganha a cor do próprio tópico na
+    // borda esquerda — como todas as tarefas de um grupo compartilham a
+    // mesma etiqueta, isso já "pinta" a coluna inteira sem precisar de um
+    // contêiner por grupo
+    if(accent && t.tag && paintTopic(li, t.tag)) li.classList.add("acc");
 
     var chk = document.createElement("button");
     chk.className = "check";
@@ -3534,9 +3543,7 @@
       detail.className = "task-detail";
       if(chip) detail.appendChild(chip);
       detail.appendChild(urgEl);
-      // agrupado por dia, o prazo já está no cabeçalho do grupo — repetir
-      // aqui é o mesmo ruído que o tópico é quando agrupado por tópico
-      if(S.taskView !== "dias") detail.appendChild(dueEl);
+      detail.appendChild(dueEl);
       detail.appendChild(estEl);
       detail.appendChild(nota);
 
@@ -3594,24 +3601,6 @@
     return 0;
   }
 
-  // sentinelas da visão "Dias" — texto simples basta, já que devidos de
-  // verdade são sempre "AAAA-MM-DD" e nunca colidem com isto
-  var SEM_PRAZO = "sem-prazo";
-  var DIAS_FEITAS = "dias-feitas";
-
-  // rótulo do cabeçalho de cada grupo de dia: relativo quando é hoje/amanhã/
-  // atrasado (mais rápido de escanear), data por extenso nos outros casos
-  function dayGroupLabel(dueStr){
-    var info = dueInfo(dueStr);
-    var d = new Date(dueStr + "T00:00");
-    var formatted = d.toLocaleDateString("pt-BR", { weekday:"long", day:"2-digit", month:"short" }).replace(".", "");
-    if(!info) return formatted;
-    if(info.state === "hoje") return "Hoje · " + formatted;
-    if(info.state === "atrasada") return formatted + " · atrasada";
-    if(info.days === 1) return "Amanhã · " + formatted;
-    return formatted;
-  }
-
   var SEM_TOPICO = "\u0000sem";
 
   function groupKey(t){ return t.tag ? t.tag.toLowerCase() : SEM_TOPICO; }
@@ -3646,6 +3635,7 @@
     var b = document.createElement("button");
     b.className = "group-head";
     b.setAttribute("aria-expanded", String(!isCollapsed(key)));
+    if(tag && paintTopic(b, tag)) b.classList.add("acc");
 
     var caret = document.createElement("span");
     caret.className = "caret";
@@ -3722,36 +3712,6 @@
       visible.forEach(function(t){
         list.appendChild(taskRow(t));
       });
-    }else if(S.taskView === "dias"){
-      // cada dia com prazo vira um grupo — "objetivos do dia" na prática,
-      // já que devidos hoje e devidos amanhã ficam em blocos separados
-      var diaGroups = {}, diaOrder = [];
-      pending.forEach(function(t){
-        var k = t.due || SEM_PRAZO;
-        if(!diaGroups[k]){ diaGroups[k] = { key:k, items: [] }; diaOrder.push(k); }
-        diaGroups[k].items.push(t);
-      });
-
-      diaOrder.sort(function(a, b){
-        if(a === SEM_PRAZO) return 1;
-        if(b === SEM_PRAZO) return -1;
-        return a < b ? -1 : (a > b ? 1 : 0);
-      });
-
-      diaOrder.forEach(function(k){
-        var g = diaGroups[k];
-        var label = k === SEM_PRAZO ? "Sem prazo" : dayGroupLabel(k);
-        list.appendChild(groupHeader(k, label, g.items, null));
-        if(isCollapsed(k)) return;
-        g.items.forEach(function(t){ list.appendChild(taskRow(t)); });
-      });
-
-      if(doneList.length && showDone){
-        list.appendChild(groupHeader(DIAS_FEITAS, "Concluídas", doneList, null));
-        if(!isCollapsed(DIAS_FEITAS)){
-          doneList.forEach(function(t){ list.appendChild(taskRow(t)); });
-        }
-      }
     }else{
       var groups = {}, order = [];
       pending.forEach(function(t){
@@ -3777,13 +3737,13 @@
         var g = groups[k];
         list.appendChild(groupHeader(k, g.label, g.items, k === SEM_TOPICO ? null : g.label));
         if(isCollapsed(k)) return;
-        g.items.slice().sort(byDue).forEach(function(t){ list.appendChild(taskRow(t)); });
+        g.items.slice().sort(byDue).forEach(function(t){ list.appendChild(taskRow(t, true)); });
       });
 
       if(doneList.length && showDone){
         list.appendChild(groupHeader("\u0000feitas", "Concluídas", doneList, null));
         if(!isCollapsed("\u0000feitas")){
-          doneList.forEach(function(t){ list.appendChild(taskRow(t)); });
+          doneList.forEach(function(t){ list.appendChild(taskRow(t, true)); });
         }
       }
     }
