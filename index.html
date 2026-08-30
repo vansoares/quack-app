@@ -1310,6 +1310,20 @@
   /* mesmo problema de especificidade do .grid[hidden] — ver comentário lá */
   .notes-main-head[hidden]{display:none}
   .notes-current-folder{font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+  .notes-add-wrap{position:relative;flex:none}
+  .notes-add-menu{
+    position:absolute;top:calc(100% + 6px);right:0;z-index:5;min-width:140px;
+    background:var(--card);border:1px solid var(--glass-border);border-radius:var(--r-md);
+    box-shadow:var(--glass-shadow);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);
+    padding:6px;display:flex;flex-direction:column;gap:2px;
+  }
+  .notes-add-menu[hidden]{display:none}
+  .notes-add-menu button{
+    display:flex;align-items:center;gap:8px;background:none;border:0;border-radius:var(--r-sm);
+    padding:8px 10px;font-size:13.5px;font-family:var(--sans);color:var(--ink);text-align:left;cursor:pointer;min-height:0;
+  }
+  .notes-add-menu button:hover{background:var(--grid-b)}
+  .notes-add-menu svg{flex:none;color:var(--ink-3)}
   .notes-page-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
   .notes-page-list[hidden]{display:none}
   .notes-page-list li{display:flex;align-items:center;gap:6px}
@@ -2047,12 +2061,21 @@
         </div>
         <div class="notes-main-head" id="notes-main-head">
           <span class="notes-current-folder" id="notes-current-folder"></span>
-          <button class="btn-ghost icon-only" id="notes-list-add" aria-label="Nova lista" title="Nova lista">
-            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h6"/></svg>
-          </button>
-          <button class="btn-main icon-only" id="notes-page-add" aria-label="Nova nota" title="Nova nota">
-            <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
-          </button>
+          <div class="notes-add-wrap">
+            <button class="btn-main icon-only" id="notes-page-add" aria-label="Criar nota ou lista" title="Criar nota ou lista" aria-haspopup="true" aria-expanded="false">
+              <svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+            </button>
+            <div class="notes-add-menu" id="notes-add-menu" role="menu" aria-label="Criar" hidden>
+              <button type="button" role="menuitem" id="notes-add-note">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M15 3v5h5"/></svg>
+                Nota
+              </button>
+              <button type="button" role="menuitem" id="notes-add-list">
+                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h6"/></svg>
+                Lista
+              </button>
+            </div>
+          </div>
         </div>
         <ul class="notes-page-list" id="notes-page-list"></ul>
         <div class="empty-state notes-page-empty" id="notes-page-empty" hidden>
@@ -8659,7 +8682,6 @@
   // listas (dentro de Notas)
   $("list-item-add").onclick = addListItem;
   $("list-item-text").addEventListener("keydown", function(e){ if(e.key === "Enter") addListItem(); });
-  $("notes-list-add").onclick = createList;
   $("notes-list-editor-title").addEventListener("blur", commitListTitle);
   $("notes-list-editor-title").addEventListener("keydown", function(e){ if(e.key === "Enter") $("notes-list-editor-title").blur(); });
   $("notes-list-editor-delete").onclick = function(){ if(notesOpenListId) deleteList(notesOpenListId); };
@@ -8761,7 +8783,28 @@
     $("notes-folder-name").value = "";
   };
   $("notes-folder-name").addEventListener("keydown", function(e){ if(e.key === "Enter") $("notes-folder-add-btn").click(); });
-  $("notes-page-add").onclick = function(){ createNotePage(); };
+  (function(){
+    var addBtn = $("notes-page-add");
+    var addMenu = $("notes-add-menu");
+    function closeAddMenu(){
+      addMenu.hidden = true;
+      addBtn.setAttribute("aria-expanded", "false");
+    }
+    addBtn.onclick = function(ev){
+      ev.stopPropagation();
+      var willOpen = addMenu.hidden;
+      addMenu.hidden = !willOpen;
+      addBtn.setAttribute("aria-expanded", String(willOpen));
+    };
+    $("notes-add-note").onclick = function(){ closeAddMenu(); createNotePage(); };
+    $("notes-add-list").onclick = function(){ closeAddMenu(); createList(); };
+    document.addEventListener("click", function(ev){
+      if(!addMenu.hidden && !addMenu.contains(ev.target) && ev.target !== addBtn) closeAddMenu();
+    });
+    document.addEventListener("keydown", function(ev){
+      if(ev.key === "Escape" && !addMenu.hidden) closeAddMenu();
+    });
+  })();
   $("notes-editor-back").onclick = function(){
     notesOpenPageId = null; notesEditorLoadedId = null;
     renderNotesPage();
