@@ -1394,6 +1394,11 @@
     resize:vertical;background:var(--card);border:1px solid var(--grid-a);border-radius:var(--r-md);
     padding:calc(var(--sp)*2);color:var(--ink)
   }
+  .snippet-code-input{
+    width:100%;min-height:220px;font-family:var(--mono);font-size:12.5px;line-height:1.55;white-space:pre;
+    resize:vertical;background:var(--field);border:1px solid var(--line);border-radius:var(--r-md);
+    padding:10px;color:var(--ink);
+  }
   .notes-editor-preview{
     min-height:min(70vh,620px);font-size:14px;line-height:1.7;color:var(--ink);
     background:var(--card);border:1px solid var(--grid-a);border-radius:var(--r-md);
@@ -1959,6 +1964,39 @@
         <div id="study-list"></div>
         <p class="empty-state" id="study-empty" hidden>Nada por aqui ainda. Adicione algo que você quer estudar.</p>
       </div>
+
+      <div class="sub-panel">
+        <div class="panel-head">
+          <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.1 2.1-2-2 2.1-2.1z"/></svg></span>Dívida técnica</h3>
+        </div>
+        <p class="hint">Aquilo que ficou "gambiarra, arrumar depois" — anote rápido e volte quando puder, sem interromper o que você está fazendo agora.</p>
+        <div class="new-task">
+          <input type="text" id="debt-title" placeholder="ex.: hardcoded o timeout, trocar por config" maxlength="140" aria-label="Descrição">
+          <select id="debt-priority" aria-label="Prioridade">
+            <option value="baixa">Baixa</option>
+            <option value="media" selected>Média</option>
+            <option value="alta">Alta</option>
+          </select>
+          <button class="btn-ghost" id="debt-add">Adicionar</button>
+        </div>
+        <ul class="task-list" id="debt-list"></ul>
+        <p class="empty-state" id="debt-empty" hidden>Nada pendente por aqui.</p>
+      </div>
+
+      <div class="sub-panel">
+        <div class="panel-head">
+          <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>Cofre de snippets</h3>
+          <button class="btn-main icon-only" id="snippet-add-btn" aria-label="Novo snippet" title="Novo snippet">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
+          </button>
+        </div>
+        <div class="notes-search-row">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+          <input type="text" id="snippet-search" placeholder="Buscar por título, etiqueta ou código…" aria-label="Buscar snippets">
+        </div>
+        <ul class="notes-page-list" id="snippet-list"></ul>
+        <p class="empty-state" id="snippet-empty" hidden>Nada guardado ainda. Clique em "+" pra salvar seu primeiro snippet.</p>
+      </div>
     </section>
 
     <!-- SOM -->
@@ -2472,6 +2510,23 @@
   </div>
 </dialog>
 
+<dialog id="snippet-editor">
+  <div class="dlg-head">
+    <h2 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>Snippet</h2>
+    <button class="btn-ghost icon-only" id="snippet-editor-close" aria-label="Fechar" title="Fechar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="dlg-body">
+    <div class="field"><label for="snippet-title">Título</label><input type="text" id="snippet-title" maxlength="80" placeholder="ex.: regex de e-mail" aria-label="Título do snippet"></div>
+    <div class="field"><label for="snippet-tag">Etiqueta</label><input type="text" id="snippet-tag" maxlength="24" placeholder="opcional" aria-label="Etiqueta"></div>
+    <textarea id="snippet-code" class="snippet-code-input" placeholder="Cole o código aqui…" spellcheck="false" aria-label="Código"></textarea>
+  </div>
+  <div class="dlg-foot">
+    <button class="btn-main" id="snippet-save">Salvar</button>
+    <button class="btn-ghost danger" id="snippet-delete" hidden>Excluir</button>
+    <button class="btn-ghost" id="snippet-cancel">Cancelar</button>
+  </div>
+</dialog>
+
 <dialog id="auth">
   <div class="dlg-head">
     <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg></span><span id="auth-title">Entrar</span></h2>
@@ -2598,6 +2653,8 @@
     meetings: [],
     devTab: "build",
     duckNotes: [],
+    techDebt: [],
+    snippets: [],
     // ids de itens apagados — sem isso, um item excluído aqui mas ainda
     // presente numa cópia desatualizada (outra aba, outro aparelho, ou o
     // servidor antes do push chegar) simplesmente volta na próxima fusão,
@@ -2676,6 +2733,8 @@
     if(Array.isArray(d.meetings)) s.meetings = d.meetings;
     if(d.devTab) s.devTab = d.devTab;
     if(Array.isArray(d.duckNotes)) s.duckNotes = d.duckNotes;
+    if(Array.isArray(d.techDebt)) s.techDebt = d.techDebt;
+    if(Array.isArray(d.snippets)) s.snippets = d.snippets;
     if(Array.isArray(d.deletedIds)) s.deletedIds = d.deletedIds;
     if(Array.isArray(d.studyTopics)) s.studyTopics = d.studyTopics;
     if(typeof d.activeStudyTopicId !== "undefined") s.activeStudyTopicId = d.activeStudyTopicId;
@@ -2736,7 +2795,7 @@
 
   var SYNCED_ARRAYS = ["tasks","sessions","habits","books","readLog","capsules",
     "media","watchLog","seasons","milestones","builds","duckNotes","goals","noteFolders","notePages","pdi","reviews","meetings","studyTopics",
-    "lists","listItems"];
+    "lists","listItems","techDebt","snippets"];
 
   // funde um estado recebido (de outra aba ou do servidor) com o local, sem
   // perder nada dos dois lados — pura, não depende de qual é o S de agora
@@ -3336,6 +3395,7 @@
     renderHabits(); renderBooks(); renderMedia(); renderCapsuleBanner();
     renderEyebrow(); applyPanels();
     renderGoals(); renderPdi(); renderDevWatch(); renderDuckSummary(); renderStudyTopics();
+    renderTechDebt(); renderSnippets();
     renderPatterns();
     // só atualiza a página de notas se a aba dela for a ativa agora — mais
     // barato, e renderNoteEditor() já protege o que estiver sendo digitado
@@ -5211,6 +5271,7 @@
     var reviewMin = reviewsSemana.reduce(function(a, x){ return a + x.ms; }, 0);
     var meetingsSemana = S.meetings.filter(function(x){ return x.end >= from && x.end < to; });
     var meetingMin = meetingsSemana.reduce(function(a, x){ return a + x.ms; }, 0);
+    var debtSemana = S.techDebt.filter(function(x){ return x.createdAt >= from && x.createdAt < to; });
 
     return {
       days:days, ini:ini, fim:days[6], porDia:porDia, pomos:pomos, min:min, ints:ints,
@@ -5218,7 +5279,8 @@
       topo:topo, topoN:topoN, livros:livros,
       dev: { buildMin:buildMin, buildCount:buildsSemana.length, duckCount:duckSemana.length, duckSolved:duckSolved,
              reviewMin:reviewMin, reviewCount:reviewsSemana.length,
-             meetingMin:meetingMin, meetingCount:meetingsSemana.length }
+             meetingMin:meetingMin, meetingCount:meetingsSemana.length,
+             debtCount:debtSemana.length }
     };
   }
 
@@ -5355,6 +5417,9 @@
     if(cf.dev && S.dev && d.dev.meetingCount){
       linhas.push(fmtShort(d.dev.meetingMin) + " em reunião (" + d.dev.meetingCount + "x)");
     }
+    if(cf.dev && S.dev && d.dev.debtCount){
+      linhas.push(d.dev.debtCount + (d.dev.debtCount === 1 ? " item de dívida técnica anotado" : " itens de dívida técnica anotados"));
+    }
     if(!linhas.length) linhas.push("uma semana em branco também conta");
 
     var fy = y;
@@ -5490,6 +5555,7 @@
     if(cf.dev && S.dev && d.dev.duckCount) linhas.push(d.dev.duckCount + " sessão(ões) de patoterapia");
     if(cf.dev && S.dev && d.dev.reviewCount) linhas.push(fmtShort(d.dev.reviewMin) + " revisando código");
     if(cf.dev && S.dev && d.dev.meetingCount) linhas.push(fmtShort(d.dev.meetingMin) + " em reunião");
+    if(cf.dev && S.dev && d.dev.debtCount) linhas.push(d.dev.debtCount + " item(ns) de dívida técnica anotados");
     if(!linhas.length) linhas.push("uma semana em branco também conta");
     linhas.slice(0, 5).forEach(function(l){
       txt(l.toUpperCase(), M, y, 20, PAL.ink2, "left", 1);
@@ -8060,6 +8126,197 @@
     S.studyTopics.forEach(function(item){ box.appendChild(studyTopicRow(item)); });
   }
 
+  /* ---------- dívida técnica ---------- */
+  // mesma escala/cores de urgência das tarefas (URGENCY_LEVELS/LABEL,
+  // ~L3266) — é o mesmo conceito (baixa/média/alta), sem inventar outra
+  function debtRow(item){
+    var li = document.createElement("li");
+    li.className = "task" + (item.resolved ? " done" : "");
+
+    var chk = document.createElement("button");
+    chk.className = "check";
+    chk.textContent = "✓";
+    chk.setAttribute("aria-label", item.resolved ? "Reabrir" : "Marcar como resolvida");
+    chk.onclick = function(){ toggleTechDebt(item.id); };
+
+    var title = document.createElement("span");
+    title.className = "title";
+    title.textContent = item.title;
+
+    var pr = document.createElement("button");
+    pr.className = "urgency " + item.priority;
+    pr.textContent = URGENCY_LABEL[item.priority] || item.priority;
+    pr.title = "Prioridade: " + (URGENCY_LABEL[item.priority] || item.priority) + " — clique para mudar";
+    pr.setAttribute("aria-label", "Prioridade de " + item.title);
+    pr.onclick = function(){ cycleDebtPriority(item); };
+
+    var del = document.createElement("button");
+    del.className = "kill";
+    del.textContent = "×";
+    del.setAttribute("aria-label", "Excluir");
+    del.onclick = function(){ removeTechDebt(item.id); };
+
+    li.appendChild(chk); li.appendChild(title); li.appendChild(pr); li.appendChild(del);
+    return li;
+  }
+
+  function renderTechDebt(){
+    var list = $("debt-list");
+    if(!list) return;
+    list.innerHTML = "";
+    var ordem = { alta:0, media:1, baixa:2 };
+    var items = S.techDebt.slice().sort(function(a, b){
+      if(!!a.resolved !== !!b.resolved) return a.resolved ? 1 : -1;
+      return (ordem[a.priority] || 1) - (ordem[b.priority] || 1);
+    });
+    items.forEach(function(it){ list.appendChild(debtRow(it)); });
+    $("debt-empty").hidden = items.length > 0;
+  }
+
+  function addTechDebt(){
+    var input = $("debt-title");
+    var title = input.value.trim();
+    if(!title){ input.focus(); return; }
+    var priority = $("debt-priority").value || "media";
+    S.techDebt.unshift({ id: uid(), title: title, priority: priority, resolved: false, createdAt: Date.now(), resolvedAt: null });
+    input.value = "";
+    save(); renderTechDebt();
+    input.focus();
+  }
+
+  function toggleTechDebt(id){
+    var it = S.techDebt.filter(function(x){ return x.id === id; })[0];
+    if(!it) return;
+    it.resolved = !it.resolved;
+    it.resolvedAt = it.resolved ? Date.now() : null;
+    save(); renderTechDebt();
+  }
+
+  function cycleDebtPriority(item){
+    var at = URGENCY_LEVELS.indexOf(item.priority);
+    item.priority = URGENCY_LEVELS[(at + 1) % URGENCY_LEVELS.length] || URGENCY_LEVELS[0];
+    save(); renderTechDebt();
+  }
+
+  function removeTechDebt(id){
+    S.techDebt = S.techDebt.filter(function(x){ return x.id !== id; });
+    markDeleted(id);
+    save(); renderTechDebt();
+  }
+
+  /* ---------- cofre de snippets ---------- */
+  var snippetSearch = "";
+  var snippetEditingId = null;   // id em edição, ou null (modo criar)
+
+  var COPY_ICON_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>';
+  var SNIPPET_ICON_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 6 3 12l5 6M16 6l5 6-5 6"/></svg>';
+
+  function findSnippet(id){ return S.snippets.filter(function(x){ return x.id === id; })[0] || null; }
+
+  function currentSnippets(){
+    var q = snippetSearch.trim().toLowerCase();
+    if(!q) return S.snippets;
+    return S.snippets.filter(function(sn){
+      var hay = ((sn.title || "") + " " + (sn.tag || "") + " " + (sn.code || "")).toLowerCase();
+      return hay.indexOf(q) >= 0;
+    });
+  }
+
+  function snippetRow(sn){
+    var li = document.createElement("li");
+    var row = document.createElement("button");
+    row.type = "button";
+    row.className = "notes-page-row";
+
+    var title = document.createElement("span");
+    title.className = "notes-page-row-title";
+    title.innerHTML = SNIPPET_ICON_SVG + "<span>" + escapeHtml(sn.title || "Sem título") + "</span>";
+
+    var meta = document.createElement("span");
+    meta.className = "notes-page-row-meta";
+    if(sn.tag){
+      var t = document.createElement("span");
+      t.className = "tag";
+      t.textContent = sn.tag;
+      meta.appendChild(t);
+    }
+    var copyBtn = document.createElement("button");
+    copyBtn.type = "button";
+    copyBtn.className = "note-pin-btn";
+    copyBtn.innerHTML = COPY_ICON_SVG;
+    copyBtn.title = "Copiar código";
+    copyBtn.setAttribute("aria-label", "Copiar código de " + (sn.title || "snippet"));
+    copyBtn.onclick = function(ev){ ev.stopPropagation(); copySnippet(sn.id); };
+    meta.appendChild(copyBtn);
+
+    row.appendChild(title); row.appendChild(meta);
+    row.onclick = function(){ openSnippetEditor(sn.id); };
+    li.appendChild(row);
+    return li;
+  }
+
+  function renderSnippets(){
+    var list = $("snippet-list");
+    if(!list) return;
+    list.innerHTML = "";
+    var items = currentSnippets().slice().sort(function(a, b){
+      return (b.updatedAt || b.createdAt) - (a.updatedAt || a.createdAt);
+    });
+    items.forEach(function(sn){ list.appendChild(snippetRow(sn)); });
+    $("snippet-empty").hidden = items.length > 0;
+    $("snippet-empty").textContent = snippetSearch
+      ? "Nada encontrado para “" + snippetSearch.trim() + "”."
+      : "Nada guardado ainda. Clique em \"+\" pra salvar seu primeiro snippet.";
+  }
+
+  function openSnippetEditor(id){
+    snippetEditingId = id || null;
+    var sn = id ? findSnippet(id) : null;
+    $("snippet-title").value = sn ? sn.title : "";
+    $("snippet-tag").value = sn ? (sn.tag || "") : "";
+    $("snippet-code").value = sn ? sn.code : "";
+    $("snippet-delete").hidden = !sn;
+    $("snippet-editor").showModal();
+    setTimeout(function(){ $("snippet-title").focus(); }, 0);
+  }
+
+  function saveSnippetEditor(){
+    var title = $("snippet-title").value.trim();
+    if(!title){ $("snippet-title").focus(); return; }
+    var tag = normTag($("snippet-tag").value);
+    var code = $("snippet-code").value;
+    if(snippetEditingId){
+      var sn = findSnippet(snippetEditingId);
+      if(sn){ sn.title = title; sn.tag = tag; sn.code = code; sn.updatedAt = Date.now(); }
+    }else{
+      S.snippets.unshift({ id: uid(), title: title, tag: tag, code: code, createdAt: Date.now(), updatedAt: Date.now() });
+    }
+    save(); renderSnippets();
+    $("snippet-editor").close();
+  }
+
+  async function deleteSnippetEditor(){
+    if(!snippetEditingId) return;
+    var sn = findSnippet(snippetEditingId);
+    if(!sn) return;
+    if(!(await askConfirm("Excluir o snippet “" + (sn.title || "sem título") + "”?", { danger:true }))) return;
+    S.snippets = S.snippets.filter(function(x){ return x.id !== snippetEditingId; });
+    markDeleted(snippetEditingId);
+    save(); renderSnippets();
+    $("snippet-editor").close();
+  }
+
+  function copySnippet(id){
+    var sn = findSnippet(id);
+    if(!sn) return;
+    if(!navigator.clipboard || !navigator.clipboard.writeText){ toast("Não foi possível copiar"); return; }
+    navigator.clipboard.writeText(sn.code || "").then(function(){
+      toast("Código copiado");
+    }).catch(function(){
+      toast("Não foi possível copiar");
+    });
+  }
+
   /* ---------- cronômetros de dev: mostrador único, dois trackers ---------- */
   function fmtClock(ms){
     var tot = Math.floor(ms / 1000);
@@ -8747,6 +9004,18 @@
   $("duck-open").onclick = function(){ openDuckPad(); };
   $("study-add").onclick = addStudyTopic;
   $("study-title").addEventListener("keydown", function(e){ if(e.key === "Enter") addStudyTopic(); });
+
+  // dívida técnica
+  $("debt-add").onclick = addTechDebt;
+  $("debt-title").addEventListener("keydown", function(e){ if(e.key === "Enter") addTechDebt(); });
+
+  // cofre de snippets
+  $("snippet-add-btn").onclick = function(){ openSnippetEditor(null); };
+  $("snippet-editor-close").onclick = function(){ $("snippet-editor").close(); };
+  $("snippet-cancel").onclick = function(){ $("snippet-editor").close(); };
+  $("snippet-save").onclick = saveSnippetEditor;
+  $("snippet-delete").onclick = deleteSnippetEditor;
+  $("snippet-search").addEventListener("input", function(){ snippetSearch = this.value; renderSnippets(); });
   $("dp-save").onclick = saveDuckNote;
   $("dp-cancel").onclick = closeDuckPad;
   $("dp-kind-tabs").addEventListener("click", function(e){
