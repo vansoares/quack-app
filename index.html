@@ -8129,6 +8129,9 @@
   /* ---------- dívida técnica ---------- */
   // mesma escala/cores de urgência das tarefas (URGENCY_LEVELS/LABEL,
   // ~L3266) — é o mesmo conceito (baixa/média/alta), sem inventar outra
+  var expandedDebt = {};   // ids com o painel de explicação aberto
+  var editingDebtNote = null;   // id do item cuja explicação está em edição
+
   function debtRow(item){
     var li = document.createElement("li");
     li.className = "task" + (item.resolved ? " done" : "");
@@ -8156,7 +8159,73 @@
     del.setAttribute("aria-label", "Excluir");
     del.onclick = function(){ removeTechDebt(item.id); };
 
-    li.appendChild(chk); li.appendChild(title); li.appendChild(pr); li.appendChild(del);
+    var temNota = !!(item.note && item.note.trim());
+    var nota = document.createElement("button");
+    nota.className = "note-btn" + (temNota ? " has" : "");
+    nota.textContent = temNota ? "nota ✎" : "nota";
+    nota.title = temNota ? "Editar a explicação" : "Escrever uma explicação";
+    nota.setAttribute("aria-expanded", String(editingDebtNote === item.id));
+    nota.onclick = function(){
+      editingDebtNote = (editingDebtNote === item.id) ? null : item.id;
+      renderTechDebt();
+    };
+
+    var expanded = !!expandedDebt[item.id] || editingDebtNote === item.id;
+    var toggle = document.createElement("button");
+    toggle.className = "task-toggle";
+    toggle.setAttribute("aria-label", expanded ? "Ocultar explicação" : "Mostrar explicação");
+    toggle.setAttribute("aria-expanded", String(expanded));
+    toggle.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+    toggle.onclick = function(){
+      expandedDebt[item.id] = !expanded;
+      renderTechDebt();
+    };
+
+    li.appendChild(chk); li.appendChild(title); li.appendChild(pr); li.appendChild(toggle); li.appendChild(del);
+
+    if(expanded){
+      var detail = document.createElement("div");
+      detail.className = "task-detail";
+      detail.appendChild(nota);
+
+      if(editingDebtNote === item.id){
+        var ta = document.createElement("textarea");
+        ta.className = "note-edit";
+        ta.value = item.note || "";
+        ta.placeholder = "Por que isso é gambiarra, o que fazer direito, links…";
+        ta.setAttribute("aria-label", "Explicação de " + item.title);
+        var debtId = item.id;
+        var settled = false;
+        function commit(){
+          if(settled) return;
+          settled = true;
+          var atual = S.techDebt.filter(function(x){ return x.id === debtId; })[0];
+          if(atual){
+            var v = ta.value.trim();
+            atual.note = v || null;
+          }
+          editingDebtNote = null;
+          save(); renderTechDebt();
+        }
+        ta.addEventListener("blur", commit);
+        ta.addEventListener("keydown", function(e){
+          if(e.key === "Escape"){ settled = true; editingDebtNote = null; renderTechDebt(); }
+          if(e.key === "Enter" && (e.ctrlKey || e.metaKey)){ e.preventDefault(); commit(); }
+        });
+        detail.appendChild(ta);
+        setTimeout(function(){ ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); }, 0);
+      }else if(temNota){
+        var view = document.createElement("button");
+        view.className = "note-view";
+        view.textContent = item.note;
+        view.title = "Clique para editar";
+        view.onclick = function(){ editingDebtNote = item.id; renderTechDebt(); };
+        detail.appendChild(view);
+      }
+
+      li.appendChild(detail);
+    }
+
     return li;
   }
 
@@ -8178,7 +8247,7 @@
     var title = input.value.trim();
     if(!title){ input.focus(); return; }
     var priority = $("debt-priority").value || "media";
-    S.techDebt.unshift({ id: uid(), title: title, priority: priority, resolved: false, createdAt: Date.now(), resolvedAt: null });
+    S.techDebt.unshift({ id: uid(), title: title, priority: priority, note: null, resolved: false, createdAt: Date.now(), resolvedAt: null });
     input.value = "";
     save(); renderTechDebt();
     input.focus();
