@@ -250,6 +250,17 @@
     background:var(--card);border:1px solid var(--glass-border);border-radius:var(--r-sm);
   }
   @media (max-width:520px){ .duck{width:26px;height:26px} }
+  .duck-btn{background:none;border:0;padding:0;margin:0;min-height:0;cursor:pointer;flex:none;border-radius:var(--r-sm)}
+  .duck-btn .duck{transition:transform .15s var(--ease)}
+  .duck-btn:hover .duck{transform:translateY(-1px)}
+  .duck-btn.quack .duck{animation:duck-wiggle .5s var(--ease)}
+  @keyframes duck-wiggle{
+    0%,100%{transform:rotate(0)}
+    20%{transform:rotate(-12deg)}
+    45%{transform:rotate(9deg)}
+    70%{transform:rotate(-5deg)}
+    88%{transform:rotate(3deg)}
+  }
 
   .brand h1{
     font-family:var(--sans);font-weight:800;font-size:20px;letter-spacing:-.02em;margin:0;
@@ -1435,19 +1446,21 @@
 
   <header class="top">
     <div class="brandwrap">
-      <svg class="duck" viewBox="0 0 32 32" role="img" aria-label="Patinho de borracha">
-        <ellipse cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>
-        <circle cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>
-        <path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>
-        <circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>
-        <circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>
-        <circle cx="18.4" cy="14.6" r="1.5" fill="#fff" opacity=".18"/>
-        <g stroke="var(--ink-3)" stroke-width="1.7" stroke-linecap="round">
-          <line x1="2" y1="28" x2="10" y2="28"/>
-          <line x1="13" y1="28" x2="22" y2="28"/>
-          <line x1="25" y1="28" x2="30" y2="28"/>
-        </g>
-      </svg>
+      <button type="button" class="duck-btn" id="mascot-duck" aria-label="Cutucar o pato">
+        <svg class="duck" viewBox="0 0 32 32" role="img" aria-label="Patinho de borracha">
+          <ellipse cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>
+          <circle cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>
+          <path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>
+          <circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>
+          <circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>
+          <circle cx="18.4" cy="14.6" r="1.5" fill="#fff" opacity=".18"/>
+          <g stroke="var(--ink-3)" stroke-width="1.7" stroke-linecap="round">
+            <line x1="2" y1="28" x2="10" y2="28"/>
+            <line x1="13" y1="28" x2="22" y2="28"/>
+            <line x1="25" y1="28" x2="30" y2="28"/>
+          </g>
+        </svg>
+      </button>
       <div class="brand">
       <p class="eyebrow" id="eyebrow" hidden>Temporada</p>
       <h1>Quack</h1>
@@ -9133,6 +9146,25 @@
     if(!atual){ toast("Nenhuma temporada em andamento"); return; }
     $("season").close();
     openCard(atual);
+  };
+
+  // pato do cabeçalho — sem função nenhuma além de ser fofo
+  var DUCK_QUACKS = [
+    "Quack!", "Quack quack! 🦆", "O pato acredita em você.",
+    "Um pato nunca desiste no meio do pomodoro.", "🦆 aprova sua produtividade.",
+    "Pausa pra fazer carinho no pato também conta.", "Quack de incentivo!",
+    "Patos não têm eco — mas você tem foco.", "Continue firme."
+  ];
+  var lastQuack = -1;
+  $("mascot-duck").onclick = function(){
+    var i;
+    do{ i = Math.floor(Math.random() * DUCK_QUACKS.length); }while(i === lastQuack && DUCK_QUACKS.length > 1);
+    lastQuack = i;
+    toast(DUCK_QUACKS[i]);
+    var btn = this;
+    btn.classList.remove("quack");
+    void btn.offsetWidth;   // força reflow pra reiniciar a animação em cliques seguidos
+    btn.classList.add("quack");
   };
 
   // cartão da semana
