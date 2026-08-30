@@ -1967,7 +1967,7 @@
 
       <div class="sub-panel">
         <div class="panel-head">
-          <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.1 2.1-2-2 2.1-2.1z"/></svg></span>Dívida técnica</h3>
+          <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.1 2.1-2-2 2.1-2.1z"/></svg></span>Débito técnico</h3>
         </div>
         <p class="hint">Aquilo que ficou "gambiarra, arrumar depois" — anote rápido e volte quando puder, sem interromper o que você está fazendo agora.</p>
         <div class="new-task">
@@ -5418,7 +5418,7 @@
       linhas.push(fmtShort(d.dev.meetingMin) + " em reunião (" + d.dev.meetingCount + "x)");
     }
     if(cf.dev && S.dev && d.dev.debtCount){
-      linhas.push(d.dev.debtCount + (d.dev.debtCount === 1 ? " item de dívida técnica anotado" : " itens de dívida técnica anotados"));
+      linhas.push(d.dev.debtCount + (d.dev.debtCount === 1 ? " item de débito técnico anotado" : " itens de débito técnico anotados"));
     }
     if(!linhas.length) linhas.push("uma semana em branco também conta");
 
@@ -5555,7 +5555,7 @@
     if(cf.dev && S.dev && d.dev.duckCount) linhas.push(d.dev.duckCount + " sessão(ões) de patoterapia");
     if(cf.dev && S.dev && d.dev.reviewCount) linhas.push(fmtShort(d.dev.reviewMin) + " revisando código");
     if(cf.dev && S.dev && d.dev.meetingCount) linhas.push(fmtShort(d.dev.meetingMin) + " em reunião");
-    if(cf.dev && S.dev && d.dev.debtCount) linhas.push(d.dev.debtCount + " item(ns) de dívida técnica anotados");
+    if(cf.dev && S.dev && d.dev.debtCount) linhas.push(d.dev.debtCount + " item(ns) de débito técnico anotados");
     if(!linhas.length) linhas.push("uma semana em branco também conta");
     linhas.slice(0, 5).forEach(function(l){
       txt(l.toUpperCase(), M, y, 20, PAL.ink2, "left", 1);
@@ -8126,7 +8126,7 @@
     S.studyTopics.forEach(function(item){ box.appendChild(studyTopicRow(item)); });
   }
 
-  /* ---------- dívida técnica ---------- */
+  /* ---------- débito técnico ---------- */
   // mesma escala/cores de urgência das tarefas (URGENCY_LEVELS/LABEL,
   // ~L3266) — é o mesmo conceito (baixa/média/alta), sem inventar outra
   var expandedDebt = {};   // ids com o painel de explicação aberto
@@ -9074,7 +9074,7 @@
   $("study-add").onclick = addStudyTopic;
   $("study-title").addEventListener("keydown", function(e){ if(e.key === "Enter") addStudyTopic(); });
 
-  // dívida técnica
+  // débito técnico
   $("debt-add").onclick = addTechDebt;
   $("debt-title").addEventListener("keydown", function(e){ if(e.key === "Enter") addTechDebt(); });
 
