@@ -1688,7 +1688,7 @@
       <div class="patterns-body">
         <div class="patterns-col">
           <p class="cap-meta">Por horário</p>
-          <svg class="chart" id="pattern-chart" viewBox="0 0 900 200" role="img" aria-label="Pomodoros por horário do dia"></svg>
+          <svg class="chart" id="pattern-chart" viewBox="0 0 900 200" role="img" aria-label="Minutos de foco por horário do dia"></svg>
         </div>
         <div class="patterns-col">
           <p class="cap-meta" id="pattern-tags-title" hidden>Por etiqueta</p>
@@ -2092,7 +2092,7 @@
         <div class="fig"><div class="n" id="f-avg">0</div><div class="l">Média por dia ativo</div></div>
       </div>
 
-      <svg class="chart" id="chart" viewBox="0 0 900 200" role="img" aria-label="Pomodoros por dia"></svg>
+      <svg class="chart" id="chart" viewBox="0 0 900 200" role="img" aria-label="Minutos de foco por dia"></svg>
       <p class="note" id="stats-note"></p>
 
       <div id="timeline-wrap" hidden>
@@ -4004,9 +4004,9 @@
       b.title = semTemporada ? "Nenhuma temporada em andamento" : "";
     });
 
-    var b = buildSeries(r, counts);
+    var b = buildSeries(r, minutes);
     var hueFiltro = (S.filterTag && S.filterTag !== "__sem__") ? topicHue(S.filterTag) : null;
-    drawChart($("chart"), b.series, { hue: hueFiltro, marks: seasonMarks(r, b.series) });
+    drawChart($("chart"), b.series, { hue: hueFiltro, marks: seasonMarks(r, b.series), unit:["minuto","minutos"] });
     renderTimeline();
 
     var todayKey = dayKey(Date.now());
@@ -7003,7 +7003,7 @@
 
     var buckets = new Array(24);
     for(var i=0;i<24;i++) buckets[i] = 0;
-    sess.forEach(function(s){ buckets[new Date(s.end).getHours()]++; });
+    sess.forEach(function(s){ buckets[new Date(s.end).getHours()] += s.min; });
 
     var idxs = [];
     for(i=0;i<24;i++) idxs.push(i);
@@ -7023,10 +7023,10 @@
         today: i === melhorHora
       });
     }
-    drawChart($("pattern-chart"), series, { unit:["pomodoro","pomodoros"] });
+    drawChart($("pattern-chart"), series, { unit:["minuto","minutos"] });
 
     var melhores = top.slice(0, 3).map(function(h){ return hourLabel(h) + "–" + hourLabel((h+1) % 24); });
-    $("pattern-note").textContent = "Você concentra mais pomodoros entre " +
+    $("pattern-note").textContent = "Você concentra mais tempo de foco entre " +
       (melhores.length > 1 ? melhores.slice(0,-1).join(", ") + " e " + melhores.slice(-1) : melhores[0]) + ".";
 
     var byTag = {};
