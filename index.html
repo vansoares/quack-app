@@ -524,6 +524,10 @@
     flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp);
     margin:2px 0 0 26px;padding-top:8px;border-top:1px dashed var(--line);
   }
+  .repeat-editor{display:inline-flex;align-items:center;flex-wrap:wrap;gap:6px}
+  .repeat-editor select{font-family:var(--mono);font-size:11px;padding:4px 6px}
+  .repeat-editor .wd{font-size:10px}
+  .repeat-editor .wd button{padding:5px 8px}
 
   .empty-state{
     border:1px dashed var(--line);border-radius:var(--r-md);padding:calc(var(--sp)*3);text-align:center;
@@ -3452,7 +3456,7 @@
     // prazo e estimativa de pomodoros não entram na criação — dá pra
     // definir depois no detalhamento da tarefa, sem sobrecarregar aqui
     S.tasks.unshift({ id: uid(), title: title, tag: tag, due: null, est: 1, note: null, urgency: null,
-                      done: 0, completed: false, createdAt: Date.now(), completedAt: null });
+                      repeat: null, done: 0, completed: false, createdAt: Date.now(), completedAt: null });
     input.value = "";
     // a etiqueta permanece no campo: quem trabalha em lote costuma repetir o projeto
     save(); renderTasks(); renderStats(); refreshCalendarIfActive(); refreshCalDialogIfOpen();
@@ -3462,10 +3466,33 @@
   function toggleTask(id){
     var t = findTask(id);
     if(!t) return;
+    var estavaConcluida = t.completed;
     t.completed = !t.completed;
     t.completedAt = t.completed ? Date.now() : null;
     if(t.completed && S.activeTaskId === id) S.activeTaskId = null;
+    // só na transição pra concluída, nunca ao reabrir — senão fechar e abrir
+    // de novo a mesma tarefa geraria um clone novo a cada vez
+    if(t.completed && !estavaConcluida && t.repeat){
+      var novaData = nextDueDate(t.due, t.repeat);
+      S.tasks.unshift({ id: uid(), title: t.title, tag: t.tag, due: novaData, est: t.est, note: null,
+                         urgency: t.urgency, repeat: t.repeat, done: 0, completed: false,
+                         createdAt: Date.now(), completedAt: null });
+      toast("Próxima ocorrência criada para " + new Date(novaData + "T00:00").toLocaleDateString("pt-BR"));
+    }
     save(); renderTasks(); renderTimer(); renderStats(); refreshCalendarIfActive(); refreshCalDialogIfOpen();
+  }
+
+  // avança a data de prazo de uma tarefa recorrente, a partir do prazo atual
+  // (ou de hoje, se ela não tinha prazo) até o próximo dia que casa com o padrão
+  function nextDueDate(fromKey, repeat){
+    var base = fromKey ? startOfDay(new Date(fromKey + "T00:00")) : startOfDay(new Date());
+    if(repeat.type === "diaria") return dayKey(addDays(base, 1).getTime());
+    var d = addDays(base, 1), guard = 0;
+    while(guard++ < 14){
+      if(repeat.days.indexOf(wdIndex(d)) >= 0) return dayKey(d.getTime());
+      d = addDays(d, 1);
+    }
+    return dayKey(addDays(base, 1).getTime());
   }
 
   function selectTask(id){
@@ -3739,6 +3766,12 @@
     estEl.title = "Pomodoros estimados — clique para mudar";
     estEl.onclick = function(){ editEst(t, estEl); };
 
+    var repeatEl = document.createElement("button");
+    repeatEl.className = "due" + (t.repeat ? "" : " vazio");
+    repeatEl.textContent = repeatLabel(t.repeat);
+    repeatEl.title = "Repetição — clique para mudar";
+    repeatEl.onclick = function(){ editRepeat(t, repeatEl); };
+
     var del = document.createElement("button");
     del.className = "kill";
     del.textContent = "×";
@@ -3794,6 +3827,7 @@
       detail.appendChild(urgEl);
       detail.appendChild(dueEl);
       detail.appendChild(estEl);
+      detail.appendChild(repeatEl);
       detail.appendChild(nota);
 
       if(editingNote === t.id){
@@ -4116,6 +4150,73 @@
       if(e.key === "Escape"){ settled = true; renderTasks(); }
       if(e.key === "Enter"){ commit(); }
     });
+  }
+
+  function repeatLabel(r){
+    if(!r) return "não repete";
+    if(r.type === "diaria") return "repete: todo dia";
+    return "repete: " + r.days.slice().sort().map(function(i){ return WD[i]; }).join(", ");
+  }
+
+  // troca o selo por um select + (se "dias específicos") um seletor de dias
+  // da semana no lugar, no mesmo espírito de editDue/editEst — só que aqui
+  // com mais de um controle, então o commit acontece ao sair do conjunto
+  // inteiro (focusout), não de um único campo
+  function editRepeat(task, anchor){
+    var wrap = document.createElement("span");
+    wrap.className = "repeat-editor";
+
+    var sel = document.createElement("select");
+    sel.setAttribute("aria-label", "Repetição de " + task.title);
+    [["nao","não repete"], ["diaria","todo dia"], ["semanal","dias específicos"]].forEach(function(opt){
+      var o = document.createElement("option");
+      o.value = opt[0]; o.textContent = opt[1];
+      sel.appendChild(o);
+    });
+    sel.value = !task.repeat ? "nao" : task.repeat.type;
+    wrap.appendChild(sel);
+
+    var days = (task.repeat && task.repeat.type === "semanal") ? task.repeat.days.slice() : [];
+    var dayBox = document.createElement("div");
+    dayBox.className = "wd";
+    // os botões são criados uma única vez — alternar só troca aria-pressed
+    // do próprio botão clicado, sem recriar nada. Recriar a cada clique
+    // (como o seletor de dias de hábito faz) destruía o botão que acabou de
+    // ganhar foco no clique real, disparando um blur fantasma que fechava
+    // este editor depois de escolher só um dia
+    WD.forEach(function(lbl, i){
+      var b = document.createElement("button");
+      b.type = "button";
+      b.textContent = lbl;
+      b.setAttribute("aria-pressed", String(days.indexOf(i) >= 0));
+      b.onclick = function(){
+        var at = days.indexOf(i);
+        if(at >= 0){ days.splice(at, 1); b.setAttribute("aria-pressed", "false"); }
+        else{ days.push(i); b.setAttribute("aria-pressed", "true"); }
+      };
+      dayBox.appendChild(b);
+    });
+    dayBox.hidden = sel.value !== "semanal";
+    wrap.appendChild(dayBox);
+    anchor.replaceWith(wrap);
+
+    sel.addEventListener("change", function(){ dayBox.hidden = sel.value !== "semanal"; });
+
+    var settled = false;
+    function commit(){
+      if(settled) return;
+      settled = true;
+      if(sel.value === "nao") task.repeat = null;
+      else if(sel.value === "diaria") task.repeat = { type: "diaria" };
+      else if(!days.length){ toast("Escolha pelo menos um dia da semana"); task.repeat = null; }
+      else task.repeat = { type: "semanal", days: days.slice() };
+      save(); renderTasks();
+    }
+    wrap.addEventListener("focusout", function(e){
+      if(wrap.contains(e.relatedTarget)) return;
+      setTimeout(commit, 0);
+    });
+    sel.addEventListener("keydown", function(e){ if(e.key === "Escape"){ settled = true; renderTasks(); } });
   }
 
   function renderTagOptions(){
@@ -4960,7 +5061,7 @@
     if(!title){ $("cal-task-title").focus(); return; }
     var tag = normTag($("cal-task-tag").value);
     S.tasks.unshift({ id: uid(), title: title, tag: tag, due: calAddDate, est: 1, note: null, urgency: null,
-                      done: 0, completed: false, createdAt: Date.now(), completedAt: null });
+                      repeat: null, done: 0, completed: false, createdAt: Date.now(), completedAt: null });
     save(); renderTasks(); renderStats(); renderCalendar();
     renderCalDayTasks(calAddDate);
     $("cal-task-title").value = "";
