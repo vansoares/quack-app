@@ -1253,7 +1253,11 @@
      continua carregando a intensidade, só a forma muda: fill:currentColor
      no SVG e "color" no botão, pra reaproveitar os mesmos seletores de
      data-heat de antes sem precisar de uma regra à parte pro SVG */
-  .heat-cell{width:100%;height:15px;color:var(--grid-a);cursor:pointer;border:0;padding:0;background:none}
+  /* min-height:0 sobrescreve a regra global "button{min-height:36px}" —
+     sem isso, cada patinho virava 36px de altura em vez dos 15px da trilha
+     da grade, transbordando por cima das linhas seguintes (por isso "nem
+     todos os patos aparecem" — os de baixo ficavam cobertos) */
+  .heat-cell{width:100%;height:15px;min-height:0;color:var(--grid-a);cursor:pointer;border:0;padding:0;background:none}
   .heat-cell svg{width:100%;height:100%;display:block;fill:currentColor}
   /* 53 colunas espremidas na largura de um celular ficam pequenas demais
      pra ver ou tocar, e o rótulo de dezembro (a última coluna) vazava pra
@@ -1269,7 +1273,13 @@
   .heat-cell[data-heat="2"]{color:color-mix(in srgb, var(--signal) 32%, var(--field))}
   .heat-cell[data-heat="3"]{color:color-mix(in srgb, var(--signal) 52%, var(--field))}
   .heat-cell[data-heat="4"]{color:color-mix(in srgb, var(--signal) 74%, var(--field))}
-  .heat-month-label{font-family:var(--mono);font-size:9px;color:var(--ink-3);align-self:end}
+  /* o rótulo ocupa 3 colunas (grid-column: N / span 3, em JS) em vez de
+     uma só — dividido em 3 semanas ele já cabe sem precisar esticar
+     nenhuma coluna além da cota normal de 1fr. Uma única coluna larga o
+     bastante pro texto ("jan", "fev"...) puxava só ela pra ficar mais
+     larga que as vizinhas de patinho, e é por isso que os patos apareciam
+     em tamanhos diferentes */
+  .heat-month-label{font-family:var(--mono);font-size:9px;color:var(--ink-3);align-self:end;white-space:nowrap}
 
   /* ---------- som ---------- */
   .sound{grid-column:1 / -1}
@@ -5085,7 +5095,7 @@
         lastMonth = d.getMonth();
         var lbl = document.createElement("span");
         lbl.className = "heat-month-label";
-        lbl.style.gridColumn = String(col);
+        lbl.style.gridColumn = col + " / span 3";
         lbl.style.gridRow = "1";
         lbl.textContent = d.toLocaleDateString("pt-BR", { month:"short" }).replace(".", "");
         grid.appendChild(lbl);
