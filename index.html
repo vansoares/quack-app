@@ -2323,6 +2323,7 @@
     <div class="field"><label for="s-auto">Começar o próximo bloco sozinho</label><span class="switch"><input type="checkbox" id="s-auto"></span></div>
     <div class="field"><label for="s-sound">Tocar aviso sonoro no fim</label><span class="switch"><input type="checkbox" id="s-sound"></span></div>
     <div class="field"><label for="s-notify">Mostrar notificação do sistema</label><span class="switch"><input type="checkbox" id="s-notify"></span></div>
+    <div class="field"><label for="s-habit-hour">Lembrar hábitos pendentes às</label><input type="number" id="s-habit-hour" min="0" max="23"></div>
 
     <p class="cap-meta" style="margin-top:10px">Painéis visíveis</p>
     <div class="field"><label for="p-habits">Hábitos</label><span class="switch"><input type="checkbox" id="p-habits"></span></div>
@@ -2696,7 +2697,7 @@
 
   var DEFAULTS = {
     version: 1,
-    settings: { focus:25, short:5, long:15, longEvery:4, auto:false, sound:true, notify:false },
+    settings: { focus:25, short:5, long:15, longEvery:4, auto:false, sound:true, notify:false, habitReminderHour:20 },
     tasks: [],
     sessions: [],
     habits: [],
@@ -2745,7 +2746,8 @@
     topicColors: {},
     sound: { embed:null },
     theme: "auto",
-    activeTab: "foco"
+    activeTab: "foco",
+    lastHabitReminder: null
   };
 
   /* ---------- estado ---------- */
@@ -2829,6 +2831,7 @@
     if(d.sound) s.sound.embed = d.sound.embed || null;
     if(d.theme) s.theme = d.theme;
     if(typeof d.activeTab !== "undefined") s.activeTab = d.activeTab;
+    if(typeof d.lastHabitReminder !== "undefined") s.lastHabitReminder = d.lastHabitReminder;
     if(d.rev) s.rev = d.rev;
     return s;
   }
@@ -4714,6 +4717,29 @@
     var devidos = S.habits.filter(function(h){ return h.type === "semanal" || scheduled(h, today); });
     var feitosHoje = devidos.filter(function(h){ return doneOn(h, today); }).length;
     $("habits-today").textContent = devidos.length ? "hoje " + feitosHoje + "/" + devidos.length : "";
+  }
+
+  // lembrete de hábito pendente — só funciona com alguma aba aberta (sem
+  // backend de push, não dá pra avisar com o app fechado); checa ao focar a
+  // aba e uma vez no carregamento, e só avisa uma vez por dia (lastHabitReminder
+  // é sincronizado de propósito: um lembrete já dado num aparelho evita duplicar
+  // aviso no outro)
+  function checkHabitReminder(){
+    if(!S.habits.length) return;
+    var now = new Date();
+    var hora = (S.settings.habitReminderHour != null) ? S.settings.habitReminderHour : 20;
+    if(now.getHours() < hora) return;
+    var today = startOfDay(now), todayKey = dayKey(now.getTime());
+    if(S.lastHabitReminder === todayKey) return;
+    var devidos = S.habits.filter(function(h){ return h.type === "semanal" || scheduled(h, today); });
+    if(!devidos.length) return;
+    var feitos = devidos.filter(function(h){ return doneOn(h, today); }).length;
+    if(feitos >= devidos.length) return;
+    S.lastHabitReminder = todayKey;
+    save();
+    var faltam = devidos.length - feitos;
+    toast("Ainda faltam " + faltam + " hábito" + (faltam === 1 ? "" : "s") + " hoje");
+    notify("Hábitos pendentes", "Você ainda tem " + faltam + " hábito" + (faltam === 1 ? "" : "s") + " para marcar hoje.");
   }
 
   function renameHabit(h, anchor){
@@ -9822,6 +9848,7 @@
     $("s-auto").checked = !!S.settings.auto;
     $("s-sound").checked = !!S.settings.sound;
     $("s-notify").checked = !!S.settings.notify;
+    $("s-habit-hour").value = (S.settings.habitReminderHour != null) ? S.settings.habitReminderHour : DEFAULTS.settings.habitReminderHour;
     $("p-habits").checked = !!S.panels.habitos;
     $("p-reading").checked = !!S.panels.leitura;
     $("p-screen").checked = !!S.panels.tela;
@@ -9872,6 +9899,17 @@
     }
     S.settings.notify = on; save();
   };
+  // campo próprio em vez de bindNum(): bindNum também zera S.timer.remaining
+  // e chama renderTimer(), efeito colateral pensado só pros campos de
+  // duração do timer — não faz sentido pro horário do lembrete de hábito
+  $("s-habit-hour").addEventListener("change", function(){
+    var v = parseInt(this.value, 10);
+    if(isNaN(v)) v = DEFAULTS.settings.habitReminderHour;
+    v = Math.min(23, Math.max(0, v));
+    this.value = v;
+    S.settings.habitReminderHour = v;
+    save();
+  });
 
   $("p-dev").onchange = function(){
     S.dev = this.checked;
@@ -9984,6 +10022,7 @@
         }
       }
       devTick();
+      checkHabitReminder();
     }
   });
 
@@ -10016,6 +10055,7 @@
   renderHabitForm();
   resume();
   renderEmbed();
+  checkHabitReminder();
 })();
 </script>
 </body>
