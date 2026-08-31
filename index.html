@@ -1179,24 +1179,17 @@
   .cal-day[data-heat="4"]{background:color-mix(in srgb, var(--signal) 74%, var(--field))}
   .cal-day-num{font-family:var(--mono);font-size:11px;color:var(--ink-2);flex:none}
   .cal-day[data-heat="3"] .cal-day-num, .cal-day[data-heat="4"] .cal-day-num{color:var(--on-ink)}
-  .cal-day-tasks{display:flex;flex-direction:column;gap:2px;overflow:hidden;min-height:0;min-width:0}
-  .cal-task{display:flex;align-items:center;gap:4px;min-width:0}
-  .cal-task input[type=checkbox]{width:12px;height:12px;flex:none}
-  .cal-task-title{
-    flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-    background:none;border:0;padding:0;font:inherit;font-size:11px;color:inherit;text-align:left;cursor:pointer;
-  }
-  .cal-task.done .cal-task-title{opacity:.6;text-decoration:line-through}
-  /* abaixo de 560px não sobra espaço nenhum pra mostrar título de tarefa
-     dentro da célula (7 colunas num telefone) — a lista virava uma coluna
-     bem mais alta que as outras na mesma semana, e o texto truncava pra
-     1-2 letras. Em vez disso, célula compacta e uniforme (só número +
-     cor de calor) com uma bolinha de contagem; ver o conteúdo do dia é
-     um toque de distância, no popup que já existe */
+  .cal-day-summary{font-family:var(--mono);font-size:10.5px;color:var(--ink-3)}
+  .cal-day.overdue .cal-day-summary{color:var(--signal)}
+  .cal-day-summary.done{color:var(--rest)}
+  /* abaixo de 560px não sobra espaço nem pra "3 tarefas" por extenso
+     dentro da célula (7 colunas num telefone). Em vez disso, célula
+     compacta e uniforme (só número + cor de calor) com uma bolinha de
+     contagem; ver o conteúdo do dia é um toque de distância, no popup */
   @media (max-width:560px){
     .cal-day{min-height:40px;padding:4px;gap:0;border-radius:8px;position:relative}
     .cal-day-num{font-size:11px}
-    .cal-day-tasks{display:none}
+    .cal-day-summary{display:none}
     .cal-day[data-tasks]:not([data-tasks="0"])::after{
       content:attr(data-tasks);position:absolute;bottom:3px;right:3px;
       min-width:13px;height:13px;padding:0 2px;border-radius:999px;
@@ -4719,26 +4712,23 @@
       num.textContent = d.getDate();
       cell.appendChild(num);
 
-      var tasksBox = document.createElement("div");
-      tasksBox.className = "cal-day-tasks";
-      dayTasks.forEach(function(t){
-        var row = document.createElement("div");
-        row.className = "cal-task" + (t.completed ? " done" : "");
-        var chk = document.createElement("input");
-        chk.type = "checkbox";
-        chk.checked = t.completed;
-        chk.setAttribute("aria-label", (t.completed ? "Reabrir" : "Concluir") + " " + t.title);
-        chk.onclick = function(ev){ ev.stopPropagation(); toggleTask(t.id); };
-        var title = document.createElement("button");
-        title.type = "button";
-        title.className = "cal-task-title";
-        title.textContent = t.title;
-        title.title = t.title;
-        title.onclick = function(ev){ ev.stopPropagation(); };
-        row.appendChild(chk); row.appendChild(title);
-        tasksBox.appendChild(row);
-      });
-      cell.appendChild(tasksBox);
+      // só a contagem na própria célula (checkbox/título/etiqueta de cada
+      // tarefa ficam pro popup, que tem espaço de verdade pra isso — ver
+      // renderCalDayTasks) — "0 tarefas" não aparece, é só ausência de texto
+      if(dayTasks.length){
+        var doneCount = dayTasks.filter(function(t){ return t.completed; }).length;
+        var noun = dayTasks.length === 1 ? " tarefa" : " tarefas";
+        var summary = document.createElement("div");
+        summary.className = "cal-day-summary";
+        summary.textContent = dayTasks.length + noun;
+        cell.appendChild(summary);
+        if(doneCount > 0){
+          var doneLine = document.createElement("div");
+          doneLine.className = "cal-day-summary done";
+          doneLine.textContent = doneCount + (doneCount === 1 ? " concluída ✓" : " concluídas ✓");
+          cell.appendChild(doneLine);
+        }
+      }
 
       grid.appendChild(cell);
     });
@@ -4751,7 +4741,20 @@
     var list = $("cal-day-task-list");
     list.innerHTML = "";
     S.tasks.filter(function(t){ return t.due === dateKey; }).forEach(function(t){
-      list.appendChild(taskRow(t));
+      var row = taskRow(t);
+      // a etiqueta normalmente só aparece expandindo a linha (task-toggle) —
+      // aqui no popup do calendário ela já vem visível de cara, sem precisar
+      // desse clique extra; mexe só no <li> já pronto, taskRow() continua
+      // igual pra aba Foco
+      if(t.tag){
+        var tagEl = document.createElement("span");
+        tagEl.className = "tag";
+        tagEl.textContent = t.tag;
+        if(paintTopic(tagEl, t.tag)) tagEl.classList.add("colored");
+        var titleBtn = row.querySelector(".title");
+        if(titleBtn) titleBtn.insertAdjacentElement("afterend", tagEl);
+      }
+      list.appendChild(row);
     });
   }
 
