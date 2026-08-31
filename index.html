@@ -1708,7 +1708,7 @@
       <div class="patterns-body">
         <div class="patterns-col">
           <p class="cap-meta">Por horário</p>
-          <svg class="chart" id="pattern-chart" viewBox="0 0 900 200" role="img" aria-label="Minutos de foco por horário do dia"></svg>
+          <svg class="chart" id="pattern-chart" viewBox="0 0 900 200" role="img" aria-label="Horas de foco por horário do dia"></svg>
         </div>
         <div class="patterns-col">
           <p class="cap-meta" id="pattern-tags-title" hidden>Por etiqueta</p>
@@ -2112,7 +2112,7 @@
         <div class="fig"><div class="n" id="f-avg">0</div><div class="l">Média por dia ativo</div></div>
       </div>
 
-      <svg class="chart" id="chart" viewBox="0 0 900 200" role="img" aria-label="Minutos de foco por dia"></svg>
+      <svg class="chart" id="chart" viewBox="0 0 900 200" role="img" aria-label="Horas de foco por dia"></svg>
       <p class="note" id="stats-note"></p>
 
       <div id="timeline-wrap" hidden>
@@ -4049,9 +4049,11 @@
       b.title = semTemporada ? "Nenhuma temporada em andamento" : "";
     });
 
-    var b = buildSeries(r, minutes);
+    var horas = {};
+    Object.keys(minutes).forEach(function(k){ horas[k] = minutes[k] / 60; });
+    var b = buildSeries(r, horas);
     var hueFiltro = (S.filterTag && S.filterTag !== "__sem__") ? topicHue(S.filterTag) : null;
-    drawChart($("chart"), b.series, { hue: hueFiltro, marks: seasonMarks(r, b.series), unit:["minuto","minutos"] });
+    drawChart($("chart"), b.series, { hue: hueFiltro, marks: seasonMarks(r, b.series), unit:["hora","horas"], decimals:1 });
     renderTimeline();
 
     var todayKey = dayKey(Date.now());
@@ -4168,12 +4170,21 @@
     var barW = Math.max(3, Math.min(slot * (series.length <= 7 ? 0.44 : 0.6), 46));
     var parts = [];
 
-    var steps = Math.min(max, 4);
+    // valores contínuos (ex.: horas fracionadas) não cabem na mesma regra de
+    // "um degrau por unidade inteira" dos contadores (pomodoros, minutos) —
+    // um máximo de 0,7h faria o loop de graduação nem rodar uma vez
+    var decimals = opts.decimals || 0;
+    function fmtVal(v){
+      if(!decimals) return String(Math.round(v));
+      var f = Math.round(v * Math.pow(10, decimals)) / Math.pow(10, decimals);
+      return (Number.isInteger(f) ? String(f) : f.toFixed(decimals)).replace(".", ",");
+    }
+    var steps = decimals ? 4 : Math.min(max, 4);
     for(var g = 1; g <= steps; g++){
-      var val = Math.round(max * g / steps);
+      var val = max * g / steps;
       var y = padT + innerH - (val/max) * innerH;
       parts.push('<line class="axis" x1="'+padL+'" y1="'+y.toFixed(1)+'" x2="'+(W-padR)+'" y2="'+y.toFixed(1)+'" opacity="0.5"></line>');
-      parts.push('<text class="vlab" x="4" y="'+(y+3).toFixed(1)+'">'+val+'</text>');
+      parts.push('<text class="vlab" x="4" y="'+(y+3).toFixed(1)+'">'+fmtVal(val)+'</text>');
     }
     parts.push('<line class="axis base" x1="'+padL+'" y1="'+(padT+innerH)+'" x2="'+(W-padR)+'" y2="'+(padT+innerH)+'"></line>');
 
@@ -4199,8 +4210,9 @@
         estilo = ' style="fill:hsl(' + opts.hue + ' var(--topic-s) var(--topic-l))"';
       }
       var quando = b.date ? b.date.toLocaleDateString("pt-BR") : "";
+      var vDisp = fmtVal(v);
       parts.push('<rect class="'+cls+'"'+estilo+' x="'+x.toFixed(1)+'" y="'+y.toFixed(1)+'" width="'+barW.toFixed(1)+'" height="'+h.toFixed(1)+'"><title>'+
-        quando+': '+v+" "+(v===1?un[0]:un[1])+'</title></rect>');
+        quando+': '+vDisp+" "+(vDisp==="1"?un[0]:un[1])+'</title></rect>');
       if(b.label){
         parts.push('<text class="xlab'+(b.today?" today":"")+'" x="'+(padL+i*slot+slot/2).toFixed(1)+'" y="'+(H-8)+'" text-anchor="middle">'+b.label+'</text>');
       }
@@ -7068,12 +7080,12 @@
     var series = [];
     for(i=0;i<24;i++){
       series.push({
-        value: buckets[i],
+        value: buckets[i] / 60,
         label: (i % 3 === 0) ? hourLabel(i) : null,
         today: i === melhorHora
       });
     }
-    drawChart($("pattern-chart"), series, { unit:["minuto","minutos"] });
+    drawChart($("pattern-chart"), series, { unit:["hora","horas"], decimals:1 });
 
     var melhores = top.slice(0, 3).map(function(h){ return hourLabel(h) + "–" + hourLabel((h+1) % 24); });
     $("pattern-note").textContent = "Você concentra mais tempo de foco entre " +
