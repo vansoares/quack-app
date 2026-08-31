@@ -6,6 +6,9 @@
 <title>Quack — registro de sessões</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='14' cy='21' rx='9.4' ry='5.8' fill='%23E08A3C'/%3E%3Ccircle cx='20.5' cy='12.5' r='7' fill='%23E08A3C'/%3E%3Cpath d='M26.6 12.2 L31 13.6 L26.6 15.2 Z' fill='%23DBE3EF'/%3E%3Ccircle cx='22.4' cy='10.8' r='1.7' fill='%230F1621'/%3E%3Ccircle cx='23' cy='10.2' r='.6' fill='%23ffffff'/%3E%3Cg stroke='%2367788F' stroke-width='1.7' stroke-linecap='round'%3E%3Cline x1='2' y1='28' x2='10' y2='28'/%3E%3Cline x1='13' y1='28' x2='22' y2='28'/%3E%3Cline x1='25' y1='28' x2='30' y2='28'/%3E%3C/g%3E%3C/svg%3E">
 <link rel="manifest" href="/manifest.json">
+<!-- iOS ignora os ícones do manifest.json pra "adicionar à tela de início" —
+     sem esta tag específica, o app fica com um símbolo em branco no iPhone -->
+<link rel="apple-touch-icon" href="/icons/icon-192.png">
 <meta name="theme-color" content="#F2EFE8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1237,13 +1240,21 @@
      de misturar posicionamento automático com os rótulos de mês (que
      precisam de column-span variável): mais previsível que depender do
      algoritmo de auto-flow encaixar os dois ao mesmo tempo */
-  /* overflow-y precisa ficar hidden explícito: só setar overflow-x:auto e
-     deixar overflow-y no visible padrão faz o navegador forçar os dois pra
-     auto (regra da spec quando só um eixo é "visible"), abrindo uma barra de
-     rolagem vertical indesejada mesmo sem conteúdo vertical sobrando */
-  .heatmap-scroll{overflow-x:auto;overflow-y:hidden;padding-bottom:4px}
-  .heatmap-grid{display:grid;grid-auto-columns:11px;grid-template-rows:14px repeat(7,11px);gap:3px;width:max-content}
-  .heat-cell{width:11px;height:11px;border-radius:2px;background:var(--grid-a);cursor:pointer;border:0;padding:0}
+  .heatmap-scroll{overflow:hidden;padding-bottom:4px}
+  /* número de colunas (semanas do ano, 52 ou 53) fica numa custom property
+     setada em JS — a grade preenche 100% da largura do painel, em vez de
+     células de tamanho fixo com rolagem horizontal */
+  .heatmap-grid{display:grid;grid-template-columns:repeat(var(--weeks,53),1fr);grid-template-rows:14px repeat(7,11px);gap:3px;width:100%}
+  .heat-cell{width:100%;height:11px;border-radius:2px;background:var(--grid-a);cursor:pointer;border:0;padding:0}
+  /* 53 colunas espremidas na largura de um celular ficam pequenas demais
+     pra ver ou tocar, e o rótulo de dezembro (a última coluna) vazava pra
+     fora do painel. Abaixo disso, volta pro tamanho fixo de célula com
+     rolagem horizontal — mesma solução já usada pela grade de hábitos */
+  @media (max-width:560px){
+    .heatmap-scroll{overflow-x:auto;overflow-y:hidden}
+    .heatmap-grid{grid-template-columns:none;grid-auto-columns:11px;width:max-content}
+    .heat-cell{width:11px}
+  }
   .heat-cell.outside{visibility:hidden;cursor:default}
   .heat-cell[data-heat="1"]{background:color-mix(in srgb, var(--signal) 14%, var(--field))}
   .heat-cell[data-heat="2"]{background:color-mix(in srgb, var(--signal) 32%, var(--field))}
@@ -4016,7 +4027,10 @@
       li.appendChild(sw);
       li.style.display = "flex";
       li.style.alignItems = "center";
-      li.style.gap = "8px";
+      // 8px deixava a bolinha encostada na borda arredondada do pill ao
+      // lado — mesma cor nos dois, tão perto, lia como se estivessem
+      // sobrepostos mesmo sem overlap real (confirmado por medição)
+      li.style.gap = "12px";
     }
 
     var b = document.createElement("button");
@@ -5045,6 +5059,7 @@
     var gridStart = startOfWeek(new Date(heatmapYear, 0, 1));
     var gridEndExclusive = addDays(startOfWeek(new Date(heatmapYear, 11, 31)), 7);
     var totalDias = Math.round((gridEndExclusive.getTime() - gridStart.getTime()) / 86400000);
+    grid.style.setProperty("--weeks", String(totalDias / 7));
 
     var lastMonth = -1;
     for(var i = 0; i < totalDias; i++){
