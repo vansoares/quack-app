@@ -4536,7 +4536,10 @@
     var titleInp = $("notes-list-editor-title");
     if(document.activeElement !== titleInp) titleInp.value = list.name || "";
 
-    var items = listItemsFor(list.id);
+    // marcados vão pro final, sem embaralhar a ordem dentro de cada grupo
+    var items = listItemsFor(list.id).slice().sort(function(a, b){
+      return (a.checked ? 1 : 0) - (b.checked ? 1 : 0);
+    });
     var ul = $("list-items");
     ul.innerHTML = "";
     items.forEach(function(it){ ul.appendChild(listItemRow(it)); });
