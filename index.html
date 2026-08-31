@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Quack — registro de sessões</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cellipse cx='14' cy='21' rx='9.4' ry='5.8' fill='%23E08A3C'/%3E%3Ccircle cx='20.5' cy='12.5' r='7' fill='%23E08A3C'/%3E%3Cpath d='M26.6 12.2 L31 13.6 L26.6 15.2 Z' fill='%23DBE3EF'/%3E%3Ccircle cx='22.4' cy='10.8' r='1.7' fill='%230F1621'/%3E%3Ccircle cx='23' cy='10.2' r='.6' fill='%23ffffff'/%3E%3Cg stroke='%2367788F' stroke-width='1.7' stroke-linecap='round'%3E%3Cline x1='2' y1='28' x2='10' y2='28'/%3E%3Cline x1='13' y1='28' x2='22' y2='28'/%3E%3Cline x1='25' y1='28' x2='30' y2='28'/%3E%3C/g%3E%3C/svg%3E">
+<link rel="manifest" href="/manifest.json">
+<meta name="theme-color" content="#F2EFE8">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -10310,6 +10312,33 @@
   resume();
   renderEmbed();
   checkHabitReminder();
+
+  // PWA — só o "shell" fica em cache (ver sw.js); /api/* nunca passa pelo
+  // service worker, pra não arriscar servir uma resposta velha de
+  // login/sync. Perguntar antes de trocar de versão evita recarregar o
+  // app no meio de um pomodoro rodando.
+  if("serviceWorker" in navigator){
+    window.addEventListener("load", function(){
+      navigator.serviceWorker.register("/sw.js").then(function(reg){
+        reg.addEventListener("updatefound", function(){
+          var sw = reg.installing;
+          if(!sw) return;
+          sw.addEventListener("statechange", function(){
+            if(sw.state === "installed" && navigator.serviceWorker.controller){
+              askConfirm("Uma nova versão do Quack está disponível. Atualizar agora?", { confirmLabel:"Atualizar" })
+                .then(function(ok){ if(ok) sw.postMessage({ type:"SKIP_WAITING" }); });
+            }
+          });
+        });
+      }).catch(function(e){ console.warn("[sw] registro falhou:", e); });
+      var refreshing = false;
+      navigator.serviceWorker.addEventListener("controllerchange", function(){
+        if(refreshing) return;
+        refreshing = true;
+        location.reload();
+      });
+    });
+  }
 })();
 </script>
 </body>
