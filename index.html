@@ -1036,7 +1036,7 @@
   .group{list-style:none;margin:calc(var(--sp)*2) 0 0}
   .task-list > .group:first-child{margin-top:0}
   .group-head{
-    display:flex;align-items:center;gap:8px;width:100%;min-height:0;
+    display:flex;flex-wrap:wrap;row-gap:2px;align-items:center;gap:8px;width:100%;min-height:0;
     background:var(--grid-a);border:0;border-radius:var(--r-sm);
     padding:8px 10px;text-align:left;color:var(--ink);
   }
@@ -1052,10 +1052,20 @@
   .caret.collapsed{transform:rotate(-90deg)}
   .group-name{
     font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;font-weight:600;
+    white-space:nowrap;
   }
   .group-meta{
     margin-left:auto;font-family:var(--mono);font-size:9.5px;letter-spacing:.08em;
     color:var(--ink-3);white-space:nowrap;font-variant-numeric:tabular-nums;
+  }
+  /* tópico com nome comprido + "X atrasada(s)" não cabem lado a lado numa
+     tela estreita — o nome quebrava no meio da palavra (word-wrap acima)
+     e a contagem ficava cortada fora da pílula. Com flex-wrap, a contagem
+     desce pra uma segunda linha inteira; só falta zerar o margin-left:auto
+     pra ela ficar alinhada à esquerda embaixo do nome, e não empurrada
+     pro canto direito sozinha. */
+  @media (max-width:480px){
+    .group-meta{margin-left:0}
   }
 
   .tag.editable{cursor:pointer}
@@ -1433,6 +1443,11 @@
   @media (max-width:860px){
     .grid{grid-template-columns:1fr}
     .figures,.figures.four,.figures.three{grid-template-columns:repeat(2,1fr)}
+    /* com número ímpar de estatísticas (5 no Balanço, 3 na Patoterapia),
+       2 colunas deixam a última célula vazia (um retângulo cinza do fundo
+       do grid aparecendo sozinho) — a última, quando é a ímpar sobrando,
+       ocupa a linha toda em vez de deixar buraco ao lado */
+    .figures .fig:last-child:nth-child(odd){grid-column:1 / -1}
     .sheet{padding:calc(var(--sp)*3) calc(var(--sp)*2) calc(var(--sp)*6)}
     .notes-page{padding:calc(var(--sp)*2) calc(var(--sp)*1.5) calc(var(--sp)*6)}
     .notes-page-body{flex-direction:column}
