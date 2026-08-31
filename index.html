@@ -864,6 +864,7 @@
 
   #lib-detail{width:min(680px,94vw)}
   #duckpad{width:min(640px,94vw)}
+  #search-dlg{width:min(640px,94vw)}
   .lib-detail-top{display:flex;align-items:center;gap:8px;margin-bottom:14px;flex-wrap:wrap}
   .lib-q{margin:0 0 12px;font-size:14px;line-height:1.6;color:var(--ink-2)}
   .lib-q b{display:block;color:var(--ink-3);font-weight:600;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px}
@@ -1417,6 +1418,16 @@
   }
   .notes-page-row-folder svg{flex:none;width:11px;height:11px}
   .notes-page-row-folder span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+  /* ---------- busca global ---------- */
+  #search-results{display:flex;flex-direction:column;gap:6px;max-height:60vh;overflow-y:auto;margin-top:calc(var(--sp)*2)}
+  .search-group-title{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);margin:calc(var(--sp)*1.5) 0 4px}
+  .search-group-title:first-child{margin-top:0}
+  /* destaque temporário no item de destino, depois de pular pra ele a
+     partir da busca — dá tempo de achar a linha certa no meio da lista
+     antes de sumir sozinho */
+  .search-hit{outline:2px solid var(--signal);outline-offset:2px;transition:outline-color 1.2s ease}
+  .search-hit.fade{outline-color:transparent}
   .notes-editor{background:var(--panel);border:1px solid var(--glass-border);border-radius:var(--r-lg);padding:calc(var(--sp)*2);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
   .notes-editor-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:calc(var(--sp)*2)}
   .notes-editor-title{flex:1;min-width:160px;font-size:15px;font-weight:600;font-family:var(--sans)}
@@ -1535,6 +1546,9 @@
         </button>
       </div>
       <div class="account-group">
+        <button class="btn-ghost icon-only" id="btn-search" aria-label="Buscar" title="Buscar (Ctrl+K)">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg>
+        </button>
         <button class="btn-ghost icon-only" id="btn-account" aria-label="Entrar" title="Entrar">
           <svg id="btn-account-icon" viewBox="0 0 32 32" width="20" height="20" aria-hidden="true">
             <ellipse cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>
@@ -2593,6 +2607,18 @@
     <p class="hint">Os tópicos que mais voltam na sua Patoterapia — do que mais te pega para o mais raro.</p>
     <div id="glossary-list"></div>
     <p class="empty-state" id="glossary-empty" hidden>Ainda não há tópicos suficientes. Guarde algumas sessões na Patoterapia com um tópico preenchido, e o glossário aparece aqui.</p>
+  </div>
+</dialog>
+
+<dialog id="search-dlg">
+  <div class="dlg-head">
+    <h2 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/></svg></span>Buscar</h2>
+    <button class="btn-ghost icon-only" id="search-close" aria-label="Fechar" title="Fechar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="dlg-body">
+    <input type="text" id="search-input" placeholder="Buscar em tarefas, débito técnico, snippets e notas…" aria-label="Buscar">
+    <div id="search-results"></div>
+    <p class="empty-state" id="search-empty" hidden>Nada encontrado.</p>
   </div>
 </dialog>
 
@@ -3754,6 +3780,7 @@
   function taskRow(t, accent){
     var li = document.createElement("li");
     li.className = "task" + (t.completed ? " done" : "") + (t.id === S.activeTaskId ? " active" : "");
+    li.dataset.id = t.id;
     // na visão por tópico, cada linha ganha a cor do próprio tópico na
     // borda esquerda — como todas as tarefas de um grupo compartilham a
     // mesma etiqueta, isso já "pinta" a coluna inteira sem precisar de um
@@ -8592,6 +8619,7 @@
   function debtRow(item){
     var li = document.createElement("li");
     li.className = "task" + (item.resolved ? " done" : "");
+    li.dataset.id = item.id;
 
     var chk = document.createElement("button");
     chk.className = "check";
@@ -8697,6 +8725,118 @@
     });
     items.forEach(function(it){ list.appendChild(debtRow(it)); });
     $("debt-empty").hidden = items.length > 0;
+  }
+
+  /* ---------- busca global ---------- */
+  // mesmo critério simples da busca de notas (substring, sem pontuação por
+  // relevância) — o app não usa nada mais sofisticado em lugar nenhum
+  function hay(){
+    return Array.prototype.slice.call(arguments).filter(Boolean).join(" ").toLowerCase();
+  }
+
+  function searchAll(q){
+    q = q.trim().toLowerCase();
+    if(!q) return [];
+    var out = [];
+    S.tasks.forEach(function(t){
+      if(hay(t.title, t.tag, t.note).indexOf(q) >= 0) out.push({ type:"tarefa", data:t });
+    });
+    S.techDebt.forEach(function(it){
+      if(hay(it.title, it.note).indexOf(q) >= 0) out.push({ type:"debito", data:it });
+    });
+    S.snippets.forEach(function(sn){
+      if(hay(sn.title, sn.tag, sn.code).indexOf(q) >= 0) out.push({ type:"snippet", data:sn });
+    });
+    // sem conta, a aba de notas nem aparece — não faz sentido indexar o que
+    // a pessoa não teria como abrir a partir do resultado
+    if(!$("tab-btn-notas").hidden){
+      S.notePages.forEach(function(p){
+        if(hay(p.title, p.body, (p.tags || []).join(" ")).indexOf(q) >= 0) out.push({ type:"nota", data:p });
+      });
+    }
+    return out;
+  }
+
+  var SEARCH_GROUP_LABEL = { tarefa:"Tarefas", debito:"Débito técnico", snippet:"Snippets", nota:"Notas" };
+
+  function renderSearchResults(){
+    var q = $("search-input").value;
+    var box = $("search-results");
+    box.innerHTML = "";
+    var results = searchAll(q);
+    $("search-empty").hidden = !q.trim() || results.length > 0;
+
+    var porTipo = {};
+    results.forEach(function(r){ (porTipo[r.type] = porTipo[r.type] || []).push(r); });
+    ["tarefa", "debito", "snippet", "nota"].forEach(function(tipo){
+      var itens = porTipo[tipo];
+      if(!itens || !itens.length) return;
+      var h = document.createElement("p");
+      h.className = "search-group-title";
+      h.textContent = SEARCH_GROUP_LABEL[tipo] + " (" + itens.length + ")";
+      box.appendChild(h);
+      itens.forEach(function(r){ box.appendChild(searchResultRow(r)); });
+    });
+  }
+
+  function searchResultRow(r){
+    var btn = document.createElement("button");
+    btn.className = "notes-page-row";
+    var title = document.createElement("span");
+    title.className = "notes-page-row-title";
+    var span = document.createElement("span");
+    span.textContent = r.data.title || r.data.name || "(sem título)";
+    title.appendChild(span);
+    btn.appendChild(title);
+    btn.onclick = function(){ goToSearchResult(r); };
+    return btn;
+  }
+
+  // depois de trocar de aba/expandir o item, um pequeno destaque marca onde
+  // a busca levou — a lista pode ter dezenas de linhas parecidas
+  function flashSearchHit(container, id){
+    setTimeout(function(){
+      var el = container.querySelector('[data-id="' + id + '"]');
+      if(!el) return;
+      el.scrollIntoView({ block:"center" });
+      el.classList.add("search-hit");
+      setTimeout(function(){ el.classList.add("fade"); }, 30);
+      setTimeout(function(){ el.classList.remove("search-hit", "fade"); }, 1500);
+    }, 0);
+  }
+
+  function goToSearchResult(r){
+    $("search-dlg").close();
+    if(r.type === "tarefa"){
+      selectTab("foco");
+      var key = groupKey(r.data);
+      if(isCollapsed(key)) toggleCollapsed(key);
+      expandedTasks[r.data.id] = true;
+      renderTasks();
+      flashSearchHit($("task-list"), r.data.id);
+    }else if(r.type === "debito"){
+      selectTab("ferramentas");
+      expandedDebt[r.data.id] = true;
+      renderTechDebt();
+      flashSearchHit($("debt-list"), r.data.id);
+    }else if(r.type === "snippet"){
+      selectTab("ferramentas");
+      openSnippetEditor(r.data.id);
+    }else if(r.type === "nota"){
+      selectTab("notas");
+      notesOpenPageId = r.data.id;
+      notesOpenListId = null;
+      notesPreviewMode = true;
+      renderNotesPage();
+    }
+  }
+
+  function openSearch(){
+    if(document.querySelector("dialog[open]")) return;
+    $("search-input").value = "";
+    renderSearchResults();
+    $("search-dlg").showModal();
+    setTimeout(function(){ $("search-input").focus(); }, 0);
   }
 
   function addTechDebt(){
@@ -9938,6 +10078,19 @@
     if(e.key === "r" || e.key === "R"){ reset(); }
     if(e.key === "i" || e.key === "I"){ addInterruption(); }
   });
+
+  // Ctrl/Cmd+K precisa funcionar mesmo dentro de um campo de texto (busca
+  // global é assim em qualquer app que tem uma) — por isso um listener à
+  // parte do de cima, que já devolve cedo se o foco estiver num input
+  document.addEventListener("keydown", function(e){
+    if((e.ctrlKey || e.metaKey) && (e.key === "k" || e.key === "K")){
+      e.preventDefault();
+      openSearch();
+    }
+  });
+  $("btn-search").onclick = openSearch;
+  $("search-close").onclick = function(){ $("search-dlg").close(); };
+  $("search-input").addEventListener("input", renderSearchResults);
 
   // ajustes
   var dlg = $("settings");
