@@ -994,6 +994,15 @@
   .note-view:hover{border-left-color:var(--signal);background:var(--grid-b)}
   .note-view:hover::before{color:var(--signal)}
   .task.done .note-view{opacity:.6}
+
+  /* ---------- subtarefas ---------- */
+  .subtask-progress{
+    font-family:var(--mono);font-size:9.5px;color:var(--ink-3);flex:none;font-variant-numeric:tabular-nums;
+  }
+  .task.done .subtask-progress{opacity:.6}
+  .subtasks{flex-basis:100%;margin:4px 0 0 26px;width:calc(100% - 26px)}
+  .subtask-list{list-style:none;margin:0;padding:0}
+  .subtask-list:empty{display:none}
   textarea.note-edit{
     flex-basis:100%;margin:2px 0 0 26px;width:calc(100% - 26px);
     min-height:74px;font-size:13.5px;line-height:1.6;
@@ -2699,6 +2708,7 @@
     cardStyle: "escuro",
     lists: [],
     listItems: [],
+    subtasks: [],
     goals: [],
     noteFolders: [],
     notePages: [],
@@ -2775,6 +2785,7 @@
     if(d.cardStyle) s.cardStyle = d.cardStyle;
     if(Array.isArray(d.lists)) s.lists = d.lists;
     if(Array.isArray(d.listItems)) s.listItems = d.listItems;
+    if(Array.isArray(d.subtasks)) s.subtasks = d.subtasks;
     if(Array.isArray(d.goals)) s.goals = d.goals;
     if(Array.isArray(d.noteFolders)) s.noteFolders = d.noteFolders;
     if(Array.isArray(d.notePages)) s.notePages = d.notePages;
@@ -2854,7 +2865,7 @@
 
   var SYNCED_ARRAYS = ["tasks","sessions","habits","books","readLog","capsules",
     "media","watchLog","seasons","milestones","builds","duckNotes","goals","noteFolders","notePages","pdi","reviews","meetings","studyTopics",
-    "lists","listItems","techDebt","snippets"];
+    "lists","listItems","techDebt","snippets","subtasks"];
 
   // funde um estado recebido (de outra aba ou do servidor) com o local, sem
   // perder nada dos dois lados — pura, não depende de qual é o S de agora
@@ -3465,10 +3476,63 @@
   }
 
   function removeTask(id){
+    // subtarefas órfãs sobreviveriam localmente e ressuscitariam a tarefa
+    // "apagada" na próxima fusão com outra aba/aparelho — têm que morrer junto
+    var subIds = subtasksFor(id).map(function(st){ return st.id; });
+    S.subtasks = S.subtasks.filter(function(st){ return st.taskId !== id; });
     S.tasks = S.tasks.filter(function(t){ return t.id !== id; });
-    markDeleted(id);
+    markDeletedMany(subIds.concat([id]));
     if(S.activeTaskId === id) S.activeTaskId = null;
     save(); renderTasks(); renderTimer(); refreshCalendarIfActive(); refreshCalDialogIfOpen();
+  }
+
+  /* ---------- subtarefas ---------- */
+  function subtasksFor(taskId){
+    return S.subtasks.filter(function(st){ return st.taskId === taskId; });
+  }
+
+  function addSubtask(taskId, text){
+    text = (text || "").trim();
+    if(!text) return;
+    S.subtasks.push({ id: uid(), taskId: taskId, text: text, checked: false, createdAt: Date.now() });
+    save(); renderTasks();
+  }
+
+  function toggleSubtask(id){
+    var st = S.subtasks.filter(function(x){ return x.id === id; })[0];
+    if(!st) return;
+    st.checked = !st.checked;
+    save(); renderTasks();
+  }
+
+  function removeSubtask(id){
+    S.subtasks = S.subtasks.filter(function(st){ return st.id !== id; });
+    markDeleted(id);
+    save(); renderTasks();
+  }
+
+  function subtaskRow(st){
+    var li = document.createElement("li");
+    li.className = "task" + (st.checked ? " done" : "");
+
+    var chk = document.createElement("button");
+    chk.className = "check";
+    chk.textContent = "✓";
+    chk.setAttribute("aria-label", st.checked ? "Desmarcar subtarefa" : "Marcar subtarefa");
+    chk.onclick = function(){ toggleSubtask(st.id); };
+
+    var title = document.createElement("span");
+    title.className = "title";
+    title.textContent = st.text;
+
+    var del = document.createElement("button");
+    del.className = "kill";
+    del.textContent = "×";
+    del.setAttribute("aria-label", "Excluir subtarefa");
+    del.onclick = function(){ removeSubtask(st.id); };
+
+    li.appendChild(chk); li.appendChild(title); li.appendChild(del);
+    return li;
   }
 
   /* ---------- render ---------- */
@@ -3620,6 +3684,7 @@
 
   var editingNote = null;   // id da tarefa cuja nota está aberta para edição
   var expandedTasks = {};   // ids das tarefas com o painel de detalhe (prazo/nota/pomodoros) aberto
+  var subtaskDraftFocus = null;   // id da tarefa cujo campo "nova subtarefa" deve reganhar foco no próximo render
 
   function taskRow(t, accent){
     var li = document.createElement("li");
@@ -3707,7 +3772,18 @@
       renderTasks();
     };
 
+    var subs = subtasksFor(t.id);
+    var doneSubs = subs.filter(function(st){ return st.checked; }).length;
+    var subBadge = null;
+    if(subs.length){
+      subBadge = document.createElement("span");
+      subBadge.className = "subtask-progress";
+      subBadge.textContent = doneSubs + "/" + subs.length;
+      subBadge.title = "Subtarefas: " + doneSubs + " de " + subs.length + " concluídas";
+    }
+
     li.appendChild(chk); li.appendChild(title);
+    if(subBadge) li.appendChild(subBadge);
     li.appendChild(toggle);
     li.appendChild(del);
 
@@ -3759,6 +3835,43 @@
         view.title = "Clique para editar";
         view.onclick = function(){ editingNote = t.id; renderTasks(); };
         detail.appendChild(view);
+      }
+
+      var subWrap = document.createElement("div");
+      subWrap.className = "subtasks";
+      var subList = document.createElement("ul");
+      subList.className = "subtask-list";
+      subs.slice().sort(function(a, b){ return (a.checked?1:0) - (b.checked?1:0); })
+        .forEach(function(st){ subList.appendChild(subtaskRow(st)); });
+      subWrap.appendChild(subList);
+
+      var subAdd = document.createElement("div");
+      subAdd.className = "new-task";
+      var subInput = document.createElement("input");
+      subInput.type = "text";
+      subInput.placeholder = "Nova subtarefa";
+      subInput.setAttribute("aria-label", "Nova subtarefa de " + t.title);
+      var subBtn = document.createElement("button");
+      subBtn.className = "btn-ghost";
+      subBtn.textContent = "Adicionar";
+      var taskIdForSub = t.id;
+      function commitSubtask(){
+        var v = subInput.value.trim();
+        if(!v) return;
+        subtaskDraftFocus = taskIdForSub;
+        addSubtask(taskIdForSub, v);
+      }
+      subBtn.onclick = commitSubtask;
+      subInput.addEventListener("keydown", function(e){
+        if(e.key === "Enter"){ e.preventDefault(); commitSubtask(); }
+      });
+      subAdd.appendChild(subInput); subAdd.appendChild(subBtn);
+      subWrap.appendChild(subAdd);
+      detail.appendChild(subWrap);
+
+      if(subtaskDraftFocus === t.id){
+        subtaskDraftFocus = null;
+        setTimeout(function(){ subInput.focus(); }, 0);
       }
 
       li.appendChild(detail);
