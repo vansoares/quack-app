@@ -1240,26 +1240,35 @@
      de misturar posicionamento automático com os rótulos de mês (que
      precisam de column-span variável): mais previsível que depender do
      algoritmo de auto-flow encaixar os dois ao mesmo tempo */
+  /* mesma faixa das outras seções desta aba (Balanço, Padrões de
+     produtividade) — sem isso, na grade de 2 colunas do desktop o heatmap
+     ficava preso só na coluna esquerda, mais estreito que o Balanço */
+  .heatmap{grid-column:1 / -1}
   .heatmap-scroll{overflow:hidden;padding-bottom:4px}
   /* número de colunas (semanas do ano, 52 ou 53) fica numa custom property
      setada em JS — a grade preenche 100% da largura do painel, em vez de
      células de tamanho fixo com rolagem horizontal */
-  .heatmap-grid{display:grid;grid-template-columns:repeat(var(--weeks,53),1fr);grid-template-rows:14px repeat(7,11px);gap:3px;width:100%}
-  .heat-cell{width:100%;height:11px;border-radius:2px;background:var(--grid-a);cursor:pointer;border:0;padding:0}
+  .heatmap-grid{display:grid;grid-template-columns:repeat(var(--weeks,53),1fr);grid-template-rows:16px repeat(7,15px);gap:4px;width:100%}
+  /* cada célula é um patinho (não um quadrado como no GitHub) — a cor
+     continua carregando a intensidade, só a forma muda: fill:currentColor
+     no SVG e "color" no botão, pra reaproveitar os mesmos seletores de
+     data-heat de antes sem precisar de uma regra à parte pro SVG */
+  .heat-cell{width:100%;height:15px;color:var(--grid-a);cursor:pointer;border:0;padding:0;background:none}
+  .heat-cell svg{width:100%;height:100%;display:block;fill:currentColor}
   /* 53 colunas espremidas na largura de um celular ficam pequenas demais
      pra ver ou tocar, e o rótulo de dezembro (a última coluna) vazava pra
      fora do painel. Abaixo disso, volta pro tamanho fixo de célula com
      rolagem horizontal — mesma solução já usada pela grade de hábitos */
   @media (max-width:560px){
     .heatmap-scroll{overflow-x:auto;overflow-y:hidden}
-    .heatmap-grid{grid-template-columns:none;grid-auto-columns:11px;width:max-content}
-    .heat-cell{width:11px}
+    .heatmap-grid{grid-template-columns:none;grid-auto-columns:15px;width:max-content}
+    .heat-cell{width:15px}
   }
   .heat-cell.outside{visibility:hidden;cursor:default}
-  .heat-cell[data-heat="1"]{background:color-mix(in srgb, var(--signal) 14%, var(--field))}
-  .heat-cell[data-heat="2"]{background:color-mix(in srgb, var(--signal) 32%, var(--field))}
-  .heat-cell[data-heat="3"]{background:color-mix(in srgb, var(--signal) 52%, var(--field))}
-  .heat-cell[data-heat="4"]{background:color-mix(in srgb, var(--signal) 74%, var(--field))}
+  .heat-cell[data-heat="1"]{color:color-mix(in srgb, var(--signal) 14%, var(--field))}
+  .heat-cell[data-heat="2"]{color:color-mix(in srgb, var(--signal) 32%, var(--field))}
+  .heat-cell[data-heat="3"]{color:color-mix(in srgb, var(--signal) 52%, var(--field))}
+  .heat-cell[data-heat="4"]{color:color-mix(in srgb, var(--signal) 74%, var(--field))}
   .heat-month-label{font-family:var(--mono);font-size:9px;color:var(--ink-3);align-self:end}
 
   /* ---------- som ---------- */
@@ -5044,6 +5053,10 @@
 
   /* ---------- heatmap anual ---------- */
   var heatmapYear = new Date().getFullYear();
+  // silhueta simples (corpo + cabeça, sem bico/olho — em 15px de altura o
+  // detalhe não apareceria) reaproveitando as mesmas proporções do pato do
+  // cabeçalho, só que como uma forma só pra poder colorir com fill:currentColor
+  var HEAT_DUCK_SVG = '<svg viewBox="0 0 16 16" aria-hidden="true"><ellipse cx="6.5" cy="10.5" rx="5.5" ry="4"/><circle cx="10.5" cy="5.5" r="4"/></svg>';
 
   function renderHeatmap(){
     var grid = $("heatmap-grid");
@@ -5082,6 +5095,7 @@
       cell.type = "button";
       cell.style.gridColumn = String(col);
       cell.style.gridRow = String(row);
+      cell.innerHTML = HEAT_DUCK_SVG;
       if(!noAno){
         cell.className = "heat-cell outside";
         cell.tabIndex = -1;
