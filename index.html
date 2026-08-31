@@ -1368,6 +1368,12 @@
   .notes-page-row-title span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .notes-page-row-meta{display:flex;align-items:center;gap:6px;flex:none}
   .notes-page-row-date{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);flex:none}
+  .notes-page-row-folder{
+    display:flex;align-items:center;gap:3px;font-family:var(--mono);font-size:9.5px;color:var(--ink-3);
+    flex:none;max-width:110px;
+  }
+  .notes-page-row-folder svg{flex:none;width:11px;height:11px}
+  .notes-page-row-folder span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .notes-editor{background:var(--panel);border:1px solid var(--glass-border);border-radius:var(--r-lg);padding:calc(var(--sp)*2);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
   .notes-editor-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:calc(var(--sp)*2)}
   .notes-editor-title{flex:1;min-width:160px;font-size:15px;font-weight:600;font-family:var(--sans)}
@@ -7491,6 +7497,17 @@
       ? "Nada encontrado para “" + notesSearch.trim() + "”."
       : "Nada por aqui ainda. Clique em \"Nova nota\" ou \"Nova lista\" para começar.";
 
+    // pasta some da vista em "Todas" e na busca (itens de pastas diferentes
+    // ficam misturados) — só aí faz sentido mostrar onde cada um mora
+    var showLocation = !!q || notesSelectedFolder === "all";
+    function folderBadge(folderId){
+      var el = document.createElement("span");
+      el.className = "notes-page-row-folder";
+      var f = folderId ? findNoteFolder(folderId) : null;
+      el.innerHTML = FOLDER_ICON_SVG + "<span>" + escapeHtml(f ? f.name : "Sem pasta") + "</span>";
+      return el;
+    }
+
     items.forEach(function(item){
       var li = document.createElement("li");
 
@@ -7504,6 +7521,7 @@
         title.innerHTML = FILE_ICON_SVG + "<span>" + escapeHtml(p.title || "Sem título") + "</span>";
         var meta = document.createElement("span");
         meta.className = "notes-page-row-meta";
+        if(showLocation) meta.appendChild(folderBadge(p.folderId));
         if((p.tags || []).length){
           var tagsWrap = document.createElement("span");
           tagsWrap.className = "notes-page-row-tags";
@@ -7537,6 +7555,7 @@
         title2.innerHTML = LIST_ICON_SVG + "<span>" + escapeHtml(l.name || "Lista sem nome") + "</span>";
         var meta2 = document.createElement("span");
         meta2.className = "notes-page-row-meta";
+        if(showLocation) meta2.appendChild(folderBadge(l.folderId));
         var count2 = document.createElement("span");
         count2.className = "notes-page-row-date";
         count2.textContent = listItemsHere.length ? doneCount + "/" + listItemsHere.length : "vazia";
