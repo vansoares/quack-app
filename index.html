@@ -1358,7 +1358,6 @@
     display:flex;align-items:center;justify-content:center;cursor:pointer;min-height:0;
   }
   .note-pin-btn:hover{background:var(--card);color:var(--ink)}
-  .note-pin-btn.active{color:var(--amber-ink)}
   .notes-page-row{
     display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--grid-a);
     border-radius:var(--r-md);padding:11px 14px;cursor:pointer;text-align:left;flex:1;min-width:0;
@@ -1372,8 +1371,6 @@
   .notes-editor{background:var(--panel);border:1px solid var(--glass-border);border-radius:var(--r-lg);padding:calc(var(--sp)*2);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur)}
   .notes-editor-head{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:calc(var(--sp)*2)}
   .notes-editor-title{flex:1;min-width:160px;font-size:15px;font-weight:600;font-family:var(--sans)}
-  .notes-editor-meta{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:calc(var(--sp)*2)}
-  #notes-editor-pin.active{color:var(--amber-ink);border-color:var(--amber)}
   .notes-editor-tags{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-bottom:calc(var(--sp)*2)}
   .notes-tag-list{display:flex;flex-wrap:wrap;gap:6px}
   .note-tag-chip{
@@ -2187,12 +2184,6 @@
             <button class="btn-ghost" id="notes-editor-toggle">Visualizar</button>
             <button class="btn-ghost icon-only danger" id="notes-editor-delete" aria-label="Excluir nota" title="Excluir nota">
               <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1l1-13"/><line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/></svg>
-            </button>
-          </div>
-          <div class="notes-editor-meta">
-            <button type="button" class="btn-ghost" id="notes-editor-pin" aria-label="Fixar nota">
-              <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" stroke="none" aria-hidden="true"><path d="M12 2a4 4 0 0 1 4 4c0 2-1.5 3.2-2 4.5L18 15H6l4-4.5C9.5 9.2 8 8 8 6a4 4 0 0 1 4-4Z"/><rect x="11" y="15" width="2" height="7" rx="1"/></svg>
-              <span id="notes-editor-pin-label">Fixar</span>
             </button>
           </div>
           <div class="notes-editor-tags">
@@ -7082,15 +7073,7 @@
 
   var FOLDER_ICON_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7Z"/></svg>';
   var FILE_ICON_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M15 3v5h5"/></svg>';
-  var PIN_ICON_SVG = '<svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" stroke="none" aria-hidden="true"><path d="M12 2a4 4 0 0 1 4 4c0 2-1.5 3.2-2 4.5L18 15H6l4-4.5C9.5 9.2 8 8 8 6a4 4 0 0 1 4-4Z"/><rect x="11" y="15" width="2" height="7" rx="1"/></svg>';
   var LIST_ICON_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="4" width="14" height="17" rx="2.5"/><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1M9 11h6M9 15h6"/></svg>';
-
-  function toggleNotePin(id){
-    var p = findNotePage(id);
-    if(!p) return;
-    p.pinned = !p.pinned;
-    save(); renderNotesPage();
-  }
 
   function addNoteTag(id, raw){
     var tag = normTag(raw);
@@ -7496,11 +7479,8 @@
         .concat(currentFolderLists().map(function(l){ return { type:"lista", data:l }; }));
     }
 
-    // fixadas primeiro (só nota tem esse conceito — lista conta como não
-    // fixada), e dentro de cada grupo a mais recente primeiro
+    // mais recente primeiro
     items = items.slice().sort(function(a, b){
-      var pa = a.type === "nota" && !!a.data.pinned, pb = b.type === "nota" && !!b.data.pinned;
-      if(pb !== pa) return (pb ? 1 : 0) - (pa ? 1 : 0);
       return (b.data.updatedAt || b.data.createdAt) - (a.data.updatedAt || a.data.createdAt);
     });
 
@@ -7516,15 +7496,6 @@
 
       if(item.type === "nota"){
         var p = item.data;
-        var pinBtn = document.createElement("button");
-        pinBtn.type = "button";
-        pinBtn.className = "note-pin-btn" + (p.pinned ? " active" : "");
-        pinBtn.innerHTML = PIN_ICON_SVG;
-        pinBtn.setAttribute("aria-label", p.pinned ? "Desafixar nota" : "Fixar nota");
-        pinBtn.title = p.pinned ? "Desafixar" : "Fixar";
-        pinBtn.onclick = function(ev){ ev.stopPropagation(); toggleNotePin(p.id); };
-        li.appendChild(pinBtn);
-
         var row = document.createElement("button");
         row.type = "button";
         row.className = "notes-page-row";
@@ -7609,10 +7580,6 @@
     preview.hidden = !notesPreviewMode;
     if(notesPreviewMode) preview.innerHTML = mdToHtml(bodyTa.value);
 
-    var pinBtn = $("notes-editor-pin");
-    pinBtn.classList.toggle("active", !!p.pinned);
-    $("notes-editor-pin-label").textContent = p.pinned ? "Fixada" : "Fixar";
-
     var tagBox = $("notes-editor-tags");
     tagBox.innerHTML = "";
     (p.tags || []).forEach(function(tag){
@@ -7674,7 +7641,7 @@
 
   function createNotePage(){
     var folderId = (notesSelectedFolder === "all" || notesSelectedFolder === "none") ? null : notesSelectedFolder;
-    var p = { id: uid(), folderId: folderId, title: "", body: "", pinned: false, tags: [], createdAt: Date.now(), updatedAt: Date.now() };
+    var p = { id: uid(), folderId: folderId, title: "", body: "", tags: [], createdAt: Date.now(), updatedAt: Date.now() };
     S.notePages.unshift(p);
     notesOpenPageId = p.id;
     notesOpenListId = null;
@@ -7703,7 +7670,7 @@
     var folder = findOrCreateFolder("Reuniões");
     var label = meetingLabel();
     var p = {
-      id: uid(), folderId: folder.id, title: label, body: "", pinned: false,
+      id: uid(), folderId: folder.id, title: label, body: "",
       tags: [label], createdAt: Date.now(), updatedAt: Date.now()
     };
     S.notePages.unshift(p);
@@ -9363,7 +9330,6 @@
   $("notes-editor-delete").onclick = function(){ if(notesOpenPageId) deleteNotePage(notesOpenPageId); };
   $("notes-editor-title").addEventListener("blur", commitNoteEditor);
   $("notes-editor-body").addEventListener("blur", commitNoteEditor);
-  $("notes-editor-pin").onclick = function(){ if(notesOpenPageId) toggleNotePin(notesOpenPageId); };
   $("notes-editor-tag-input").addEventListener("keydown", function(e){
     if(e.key !== "Enter") return;
     e.preventDefault();
