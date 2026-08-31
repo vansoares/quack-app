@@ -1354,6 +1354,11 @@
   .notes-page-empty[hidden]{display:none}
   .notes-page-empty p{margin:0}
   .notes-empty-duck{width:100px;height:auto;opacity:.85}
+  .debt-empty-state,.snippet-empty-state{display:flex;flex-direction:column;align-items:center;gap:10px}
+  .debt-empty-state[hidden],.snippet-empty-state[hidden]{display:none}
+  .debt-empty-state p,.snippet-empty-state p{margin:0}
+  .debt-empty-duck{width:64px;height:auto;opacity:.85}
+  .snippet-empty-duck{width:110px;height:auto;opacity:.85}
   .note-pin-btn{
     flex:none;background:none;border:0;padding:6px;border-radius:var(--r-sm);color:var(--ink-3);
     display:flex;align-items:center;justify-content:center;cursor:pointer;min-height:0;
@@ -1980,7 +1985,7 @@
 
       <div class="sub-panel">
         <div class="panel-head">
-          <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.1 2.1-2-2 2.1-2.1z"/></svg></span>Débito técnico</h3>
+          <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14.5" r="6"/><circle cx="15.6" cy="8.6" r="3.4"/><path d="M18.7 8.1c1.2-.2 2.2.3 2.2 1s-1 1.2-2.2 1c-.5-.1-.9-.5-.9-1s.4-.9.9-1z"/><path d="M15.1 6.8l1.9 1.2M17.1 6.8l-1.9 1.2"/></svg></span>Débito técnico</h3>
         </div>
         <p class="hint">Aquilo que ficou "gambiarra, arrumar depois" — anote rápido e volte quando puder, sem interromper o que você está fazendo agora.</p>
         <div class="new-task">
@@ -1993,12 +1998,22 @@
           <button class="btn-ghost" id="debt-add">Adicionar</button>
         </div>
         <ul class="task-list" id="debt-list"></ul>
-        <p class="empty-state" id="debt-empty" hidden>Nada pendente por aqui.</p>
+        <div class="empty-state debt-empty-state" id="debt-empty" hidden>
+          <svg class="debt-empty-duck" viewBox="0 0 32 32" role="img" aria-hidden="true">
+            <ellipse cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>
+            <circle cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>
+            <path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>
+            <circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>
+            <circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>
+            <circle cx="18.4" cy="14.6" r="1.5" fill="#fff" opacity=".18"/>
+          </svg>
+          <p>Nenhuma gambiarra à vista — o pato está em paz.</p>
+        </div>
       </div>
 
       <div class="sub-panel">
         <div class="panel-head">
-          <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="10" width="16" height="10" rx="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg></span>Cofre de snippets</h3>
+          <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="14" width="17" height="7" rx="1.3"/><path d="M3 17.3h17"/><circle cx="9.3" cy="9.6" r="3.6"/><circle cx="14.6" cy="6" r="2.1"/><path d="M16.4 5.7c.8-.1 1.4.2 1.4.6s-.6.8-1.4.6c-.3 0-.5-.3-.5-.6s.2-.5.5-.6z"/><circle cx="15.4" cy="5.5" r=".4" fill="currentColor" stroke="none"/></svg></span>Cofre de snippets</h3>
           <button class="btn-main icon-only" id="snippet-add-btn" aria-label="Novo snippet" title="Novo snippet">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
           </button>
@@ -2008,7 +2023,22 @@
           <input type="text" id="snippet-search" placeholder="Buscar por título, etiqueta ou código…" aria-label="Buscar snippets">
         </div>
         <ul class="notes-page-list" id="snippet-list"></ul>
-        <p class="empty-state" id="snippet-empty" hidden>Nada guardado ainda. Clique em "+" pra salvar seu primeiro snippet.</p>
+        <div class="empty-state snippet-empty-state" id="snippet-empty" hidden>
+          <svg class="snippet-empty-duck" viewBox="0 0 46 32" role="img" aria-hidden="true">
+            <rect x="10" y="20" width="26" height="10" rx="2" fill="var(--card)" stroke="var(--ink-3)" stroke-width="1.4"/>
+            <line x1="10" y1="24.5" x2="36" y2="24.5" stroke="var(--ink-3)" stroke-width="1.2"/>
+            <rect x="21" y="22.3" width="4" height="3.4" rx="1" fill="var(--ink-3)"/>
+            <g transform="translate(13,3.4) scale(0.62)">
+              <ellipse cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>
+              <circle cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>
+              <path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>
+              <circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>
+              <circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>
+              <circle cx="18.4" cy="14.6" r="1.5" fill="#fff" opacity=".18"/>
+            </g>
+          </svg>
+          <p id="snippet-empty-text">Nada guardado ainda. Clique em "+" pra salvar seu primeiro snippet.</p>
+        </div>
       </div>
     </section>
 
@@ -8346,7 +8376,7 @@
     });
     items.forEach(function(sn){ list.appendChild(snippetRow(sn)); });
     $("snippet-empty").hidden = items.length > 0;
-    $("snippet-empty").textContent = snippetSearch
+    $("snippet-empty-text").textContent = snippetSearch
       ? "Nada encontrado para “" + snippetSearch.trim() + "”."
       : "Nada guardado ainda. Clique em \"+\" pra salvar seu primeiro snippet.";
   }
@@ -8393,7 +8423,7 @@
     if(!sn) return;
     if(!navigator.clipboard || !navigator.clipboard.writeText){ toast("Não foi possível copiar"); return; }
     navigator.clipboard.writeText(sn.code || "").then(function(){
-      toast("Código copiado");
+      toast("Copiado! 🦆");
     }).catch(function(){
       toast("Não foi possível copiar");
     });
