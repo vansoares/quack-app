@@ -2850,6 +2850,20 @@
     var tumbas = unionIds(localBlob.deletedIds, novo.deletedIds);
     novo.deletedIds = tumbas;
     SYNCED_ARRAYS.forEach(function(k){ novo[k] = mergeById(novo[k], locais[k], tumbas); });
+
+    // um cronômetro rodando aqui não pode ser apagado por um estado remoto
+    // que ainda não sabe disso — sem isso, o pull automático (a cada ~25s,
+    // ou ao voltar o foco da janela) podia substituir um bloco em andamento
+    // pelo estado parado de outra aba/aparelho, e "o tempo zerava sozinho"
+    // no meio do foco. Só cede se o remoto tiver um bloco mais recente.
+    if(localBlob.timer && localBlob.timer.running){
+      var remotoDesatualizado = !novo.timer.running || (localBlob.timer.endsAt || 0) >= (novo.timer.endsAt || 0);
+      if(remotoDesatualizado){
+        novo.timer = localBlob.timer;
+        novo.activeTaskId = localBlob.activeTaskId;
+        novo.activeStudyTopicId = localBlob.activeStudyTopicId;
+      }
+    }
     return novo;
   }
 
@@ -2876,6 +2890,14 @@
     if(!d) return;
     if((d.rev || 0) <= REV) return;         // revisão já conhecida ou mais antiga
 
+    // se o cronômetro daqui vai sobreviver ao merge (ver mergeState), o
+    // resultado precisa voltar pro localStorage — senão um F5 nesta aba lê
+    // direto o valor que a outra aba gravou (parado) e perde o bloco de
+    // novo. Só essa aba salva de volta (não as duas), pra não ficar
+    // reescrevendo e dando "storage" uma na outra pra sempre
+    var timerProtegido = S.timer.running &&
+      (!d.timer || !d.timer.running || (S.timer.endsAt || 0) >= (d.timer.endsAt || 0));
+
     S = mergeIncoming(d);
     REV = S.rev || 0;
 
@@ -2883,6 +2905,7 @@
     render();
     renderEmbed();
     toast("Sincronizado com outra aba");
+    if(timerProtegido) save();
   });
 
   /* ---------- conta e sincronização com o servidor ---------- */
