@@ -516,6 +516,7 @@
   /* excluir tarefa é o botão mais arriscado da fileira — mais respiro em
      relação ao ícone de expandir do lado, que faz uma coisa bem mais leve */
   .task .kill{padding:8px 8px;margin-left:4px}
+  .entry-date{font-family:var(--mono);font-size:10.5px;color:var(--ink-3);white-space:nowrap;flex:none}
 
   .task-toggle{
     flex:none;background:none;border:0;color:var(--ink-3);padding:2px 4px;
@@ -1100,6 +1101,15 @@
 
   /* ---------- hábitos ---------- */
   .habits{grid-column:1 / -1}
+  /* ofensiva estilo Duolingo: sequência de dias em que TODOS os hábitos
+     cobrados naquele dia foram cumpridos — mesmo critério do "hoje X/Y" */
+  .streak-badge{
+    display:inline-flex;align-items:center;gap:5px;
+    font-family:var(--mono);font-size:13px;font-weight:700;color:var(--amber-ink);
+    background:color-mix(in srgb, var(--amber) 22%, transparent);
+    border-radius:var(--r-pill);padding:4px 10px 4px 8px;
+  }
+  .streak-badge svg{width:14px;height:14px;flex:none}
   .week-nav{display:flex;align-items:center;gap:var(--sp);margin-bottom:calc(var(--sp)*2)}
   .week-nav button{padding:5px 11px;font-size:13px;line-height:1}
   .week-nav button[disabled]{opacity:.35;cursor:not-allowed}
@@ -1624,7 +1634,7 @@
     </button>
     <button type="button" role="tab" class="tab-btn" data-tab="notas" id="tab-btn-notas" aria-selected="false" hidden>
       <svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M15 3v5h5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><ellipse cx="9.3" cy="16.3" rx="3.1" ry="2.1" fill="var(--signal)"/><circle cx="12.6" cy="13.7" r="2.3" fill="var(--signal)"/></svg>
-      Notas
+      Anotações
     </button>
     <button type="button" role="tab" class="tab-btn" data-tab="calendario" id="tab-btn-calendario" aria-selected="false">
       <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="4.5" width="17" height="16" rx="2.5"/><path d="M3.5 9.5h17M8 3v3M16 3v3"/></svg>
@@ -1839,7 +1849,13 @@
     <section class="panel habits" id="panel-habits">
       <div class="panel-head">
         <h2 class="panel-title"><span class="panel-icon clover" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21c-4-2.5-7-6-7-10a7 7 0 0 1 14 0c0 4-3 7.5-7 10Z"/><path d="M12 8v5"/></svg></span>Hábitos</h2>
-        <span class="panel-title" id="habits-today"></span>
+        <div style="display:flex;align-items:center;gap:10px">
+          <span class="streak-badge" id="habits-streak" title="Sequência de dias seguidos com todos os hábitos do dia cumpridos" hidden>
+            <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c2.6 3.1 5.2 6.6 5.2 10.2a5.2 5.2 0 0 1-10.4 0c0-1.9.9-3.1 1.8-4.2-.2 1.7.7 2.5 1.6 2.1A6.4 6.4 0 0 0 12 2Z"/></svg>
+            <span id="habits-streak-n">0</span>
+          </span>
+          <span class="panel-title" id="habits-today"></span>
+        </div>
       </div>
 
       <div class="week-nav">
@@ -2030,11 +2046,12 @@
           </button>
         </div>
 
-        <div class="figures four" style="margin-top:14px">
+        <div class="figures" style="margin-top:14px">
           <div class="fig"><div class="n" id="dev-count">0</div><div class="l" id="dev-count-l">No período</div></div>
           <div class="fig"><div class="n" id="dev-total">0min</div><div class="l">Tempo total</div></div>
           <div class="fig"><div class="n" id="dev-avg">—</div><div class="l">Média</div></div>
           <div class="fig"><div class="n" id="dev-max">—</div><div class="l">Mais longo</div></div>
+          <div class="fig"><div class="n" id="dev-prs">0</div><div class="l">PRs no período</div></div>
         </div>
         <p class="note" id="dev-note"></p>
       </div>
@@ -2074,6 +2091,34 @@
         </div>
         <div id="study-list"></div>
         <p class="empty-state" id="study-empty" hidden>Nada por aqui ainda. Adicione algo que você quer estudar.</p>
+      </div>
+
+      <div class="sub-panel">
+        <div class="panel-head">
+          <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.2"/><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M6 8.2V15.8M8.2 6H14a4 4 0 0 1 4 4v0"/></svg></span>PRs feitos</h3>
+        </div>
+        <p class="hint">Registre os PRs que você abriu ou concluiu, com link opcional.</p>
+        <div class="new-task">
+          <input type="text" id="pr-title" placeholder="ex.: Corrige paginação da listagem" maxlength="140" aria-label="Título do PR">
+          <input type="text" id="pr-url" placeholder="link (opcional)" maxlength="300" aria-label="Link do PR">
+          <button class="btn-ghost" id="pr-add">Adicionar</button>
+        </div>
+        <ul class="task-list" id="pr-list"></ul>
+        <p class="empty-state" id="pr-empty" hidden>Nenhum PR registrado ainda.</p>
+      </div>
+
+      <div class="sub-panel">
+        <div class="panel-head">
+          <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M15 3v5h5"/><path d="M8 13h8M8 17h5"/></svg></span>Comentários de documentação</h3>
+        </div>
+        <p class="hint">Registre comentários ou revisões que você fez em documentações — da própria equipe ou de terceiros.</p>
+        <div class="new-task">
+          <input type="text" id="doccomment-title" placeholder="ex.: Revisão do README de autenticação" maxlength="140" aria-label="Comentário">
+          <input type="text" id="doccomment-url" placeholder="link (opcional)" maxlength="300" aria-label="Link da documentação">
+          <button class="btn-ghost" id="doccomment-add">Adicionar</button>
+        </div>
+        <ul class="task-list" id="doccomment-list"></ul>
+        <p class="empty-state" id="doccomment-empty" hidden>Nenhum comentário registrado ainda.</p>
       </div>
 
       <div class="sub-panel">
@@ -2821,6 +2866,8 @@
     duckNotes: [],
     techDebt: [],
     snippets: [],
+    prs: [],
+    docComments: [],
     // ids de itens apagados — sem isso, um item excluído aqui mas ainda
     // presente numa cópia desatualizada (outra aba, outro aparelho, ou o
     // servidor antes do push chegar) simplesmente volta na próxima fusão,
@@ -2903,6 +2950,8 @@
     if(Array.isArray(d.duckNotes)) s.duckNotes = d.duckNotes;
     if(Array.isArray(d.techDebt)) s.techDebt = d.techDebt;
     if(Array.isArray(d.snippets)) s.snippets = d.snippets;
+    if(Array.isArray(d.prs)) s.prs = d.prs;
+    if(Array.isArray(d.docComments)) s.docComments = d.docComments;
     if(Array.isArray(d.deletedIds)) s.deletedIds = d.deletedIds;
     if(Array.isArray(d.studyTopics)) s.studyTopics = d.studyTopics;
     if(typeof d.activeStudyTopicId !== "undefined") s.activeStudyTopicId = d.activeStudyTopicId;
@@ -2964,7 +3013,7 @@
 
   var SYNCED_ARRAYS = ["tasks","sessions","habits","books","readLog","capsules",
     "media","watchLog","seasons","milestones","builds","duckNotes","goals","noteFolders","notePages","pdi","reviews","meetings","studyTopics",
-    "lists","listItems","techDebt","snippets","subtasks"];
+    "lists","listItems","techDebt","snippets","subtasks","prs","docComments"];
 
   // funde um estado recebido (de outra aba ou do servidor) com o local, sem
   // perder nada dos dois lados — pura, não depende de qual é o S de agora
@@ -3663,7 +3712,7 @@
     renderHabits(); renderBooks(); renderMedia(); renderCapsuleBanner();
     renderEyebrow(); applyPanels();
     renderGoals(); renderPdi(); renderDevWatch(); renderDuckSummary(); renderStudyTopics();
-    renderTechDebt(); renderSnippets();
+    renderTechDebt(); renderSnippets(); renderPrs(); renderDocComments();
     renderPatterns();
     // só atualiza a página de notas se a aba dela for a ativa agora — mais
     // barato, e renderNoteEditor() já protege o que estiver sendo digitado
@@ -4692,6 +4741,27 @@
     return n;
   }
 
+  // ofensiva geral (estilo Duolingo): dias seguidos em que TODOS os hábitos
+  // cobrados naquele dia foram marcados — mesmo critério do resumo "hoje X/Y"
+  function habitDayOk(date){
+    var devidos = S.habits.filter(function(h){ return h.type === "semanal" || scheduled(h, date); });
+    if(!devidos.length) return null;  // nenhum hábito cobrado — não conta nem quebra a sequência
+    return devidos.filter(function(h){ return doneOn(h, date); }).length >= devidos.length;
+  }
+
+  function habitStreak(){
+    var d = startOfDay(new Date());
+    // hoje ainda pode ser cumprido — não quebra a sequência antes da hora
+    if(habitDayOk(d) === false) d = addDays(d, -1);
+    var n = 0, guard = 0;
+    while(guard++ < 1500){
+      var ok = habitDayOk(d);
+      if(ok === null){ d = addDays(d, -1); continue; }
+      if(ok){ n++; d = addDays(d, -1); } else break;
+    }
+    return n;
+  }
+
   function freqLabel(h){
     if(h.type === "semanal") return (h.target || 1) + "× por semana";
     var ds = h.days || [];
@@ -4724,7 +4794,7 @@
 
     table.innerHTML = "";
     $("habit-empty").hidden = S.habits.length > 0;
-    if(!S.habits.length){ $("habits-today").textContent = ""; return; }
+    if(!S.habits.length){ $("habits-today").textContent = ""; $("habits-streak").hidden = true; return; }
 
     var thead = document.createElement("thead");
     var hr = document.createElement("tr");
@@ -4814,6 +4884,12 @@
     var devidos = S.habits.filter(function(h){ return h.type === "semanal" || scheduled(h, today); });
     var feitosHoje = devidos.filter(function(h){ return doneOn(h, today); }).length;
     $("habits-today").textContent = devidos.length ? "hoje " + feitosHoje + "/" + devidos.length : "";
+
+    var streak = habitStreak();
+    $("habits-streak").hidden = streak <= 0;
+    if(streak > 0){
+      $("habits-streak-n").textContent = streak + (streak === 1 ? " dia" : " dias");
+    }
   }
 
   // lembrete de hábito pendente — só funciona com alguma aba aberta (sem
@@ -8572,6 +8648,13 @@
 
   /* ---------- tópicos de estudo ---------- */
   var STUDY_TYPE_LABEL = { livro:"Livro", video:"Vídeo", curso:"Curso", podcast:"Podcast", outro:"Outro" };
+  var openStudyId = null;   // tópico com o painel de subtópicos aberto
+
+  function studyPct(item){
+    var subs = item.subtopics || [];
+    if(!subs.length) return item.done ? 100 : 0;
+    return Math.round(subs.filter(function(x){ return x.done; }).length / subs.length * 100);
+  }
 
   function addStudyTopic(){
     var input = $("study-title");
@@ -8579,7 +8662,7 @@
     if(!title){ toast("Descreva o que você quer estudar primeiro"); input.focus(); return; }
     var type = $("study-type").value;
     if(!STUDY_TYPE_LABEL[type]) type = "outro";
-    S.studyTopics.unshift({ id: uid(), title: title, type: type, createdAt: Date.now() });
+    S.studyTopics.unshift({ id: uid(), title: title, type: type, subtopics: [], createdAt: Date.now() });
     input.value = "";
     save(); renderStudyTopics();
   }
@@ -8589,6 +8672,7 @@
     S.studyTopics = S.studyTopics.filter(function(x){ return x.id !== id; });
     markDeleted(id);
     if(S.activeStudyTopicId === id) S.activeStudyTopicId = null;
+    if(openStudyId === id) openStudyId = null;
     save(); renderStudyTopics(); renderTimer();
   }
 
@@ -8609,6 +8693,9 @@
   }
 
   function studyTopicRow(item){
+    var wrap = document.createElement("div");
+    wrap.className = "study-item";
+
     var row = document.createElement("button");
     row.type = "button";
     row.className = "study-row" + (item.done ? " done" : "");
@@ -8632,6 +8719,17 @@
     title.textContent = item.title;
     row.appendChild(title);
 
+    var subs = item.subtopics || [];
+    var toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = "mini";
+    toggle.textContent = subs.length
+      ? "Subtópicos (" + subs.filter(function(x){ return x.done; }).length + "/" + subs.length + ")"
+      : "Subtópicos";
+    toggle.setAttribute("aria-label", "Ver subtópicos de " + item.title);
+    toggle.onclick = function(ev){ ev.stopPropagation(); openStudyId = (openStudyId === item.id) ? null : item.id; renderStudyTopics(); };
+    row.appendChild(toggle);
+
     var del = document.createElement("button");
     del.className = "kill";
     del.type = "button";
@@ -8641,7 +8739,87 @@
     row.appendChild(del);
 
     row.onclick = function(){ toggleActiveStudyTopic(item.id); };
-    return row;
+    wrap.appendChild(row);
+
+    if(subs.length){
+      var bar = document.createElement("div");
+      bar.className = "goal-bar";
+      var track = document.createElement("div");
+      track.className = "bar-track";
+      var fill = document.createElement("div");
+      fill.className = "bar-fill";
+      var pct = studyPct(item);
+      fill.style.width = pct + "%";
+      track.appendChild(fill);
+      var lab = document.createElement("span");
+      lab.className = "goal-pct";
+      var feitos = subs.filter(function(x){ return x.done; }).length;
+      lab.innerHTML = "<b>" + feitos + "</b>/" + subs.length + " · " + pct + "%";
+      bar.appendChild(track); bar.appendChild(lab);
+      wrap.appendChild(bar);
+    }
+
+    if(openStudyId === item.id){
+      var ul = document.createElement("ul");
+      ul.className = "steps";
+      subs.forEach(function(st){
+        var sl = document.createElement("li");
+        sl.className = "step" + (st.done ? " done" : "");
+        var sc = document.createElement("button");
+        sc.className = "check";
+        sc.type = "button";
+        sc.textContent = "✓";
+        sc.setAttribute("aria-label", st.done ? "Reabrir subtópico" : "Concluir subtópico");
+        sc.onclick = function(){ st.done = !st.done; save(); renderStudyTopics(); };
+        if(st.done) sc.style.cssText = "background:var(--rest);border-color:var(--rest);color:var(--on-ink)";
+        var st_title = document.createElement("span");
+        st_title.className = "step-title";
+        st_title.style.cursor = "default";
+        st_title.textContent = st.title;
+        var sd = document.createElement("button");
+        sd.className = "kill";
+        sd.type = "button";
+        sd.textContent = "×";
+        sd.setAttribute("aria-label", "Excluir subtópico");
+        sd.onclick = function(){
+          item.subtopics = item.subtopics.filter(function(x){ return x.id !== st.id; });
+          save(); renderStudyTopics();
+        };
+        sl.appendChild(sc); sl.appendChild(st_title); sl.appendChild(sd);
+        ul.appendChild(sl);
+      });
+      wrap.appendChild(ul);
+
+      var add = document.createElement("div");
+      add.className = "step-add";
+      var inp = document.createElement("input");
+      inp.type = "text";
+      inp.placeholder = "Novo subtópico — ex.: capítulo, módulo, episódio";
+      inp.maxLength = 120;
+      inp.setAttribute("aria-label", "Novo subtópico");
+      function criar(){
+        var v = inp.value.trim();
+        if(!v) return;
+        if(!item.subtopics) item.subtopics = [];
+        item.subtopics.push({ id: uid(), title: v, done: false });
+        inp.value = "";
+        save(); renderStudyTopics();
+        setTimeout(function(){
+          var campos = document.querySelectorAll("#study-list .step-add input");
+          if(campos.length) campos[campos.length-1].focus();
+        }, 0);
+      }
+      inp.addEventListener("keydown", function(e){ if(e.key === "Enter") criar(); });
+      var bt = document.createElement("button");
+      bt.type = "button";
+      bt.className = "btn-ghost";
+      bt.textContent = "Somar";
+      bt.onclick = criar;
+      add.appendChild(inp); add.appendChild(bt);
+      wrap.appendChild(add);
+    }
+
+    return wrap;
   }
 
   function renderStudyTopics(){
@@ -8649,6 +8827,79 @@
     box.innerHTML = "";
     $("study-empty").hidden = S.studyTopics.length > 0;
     S.studyTopics.forEach(function(item){ box.appendChild(studyTopicRow(item)); });
+  }
+
+  /* ---------- PRs feitos ---------- */
+  function addPr(){
+    var input = $("pr-title");
+    var title = input.value.trim().slice(0, 140);
+    if(!title){ toast("Descreva o PR primeiro"); input.focus(); return; }
+    var urlInput = $("pr-url");
+    var url = urlInput.value.trim().slice(0, 300);
+    S.prs.unshift({ id: uid(), title: title, url: url || null, createdAt: Date.now() });
+    input.value = ""; urlInput.value = "";
+    save(); renderPrs(); renderDevWatch();
+  }
+
+  async function removePr(id){
+    if(!(await askConfirm("Excluir este PR da lista?", { danger:true }))) return;
+    S.prs = S.prs.filter(function(x){ return x.id !== id; });
+    markDeleted(id);
+    save(); renderPrs(); renderDevWatch();
+  }
+
+  function logEntryRow(item, onDelete){
+    var li = document.createElement("li");
+    li.className = "task";
+    var title = item.url ? document.createElement("a") : document.createElement("span");
+    title.className = "title";
+    if(item.url){ title.href = item.url; title.target = "_blank"; title.rel = "noopener noreferrer"; }
+    title.textContent = item.title;
+    var date = document.createElement("span");
+    date.className = "entry-date";
+    date.textContent = new Date(item.createdAt).toLocaleDateString("pt-BR");
+    var del = document.createElement("button");
+    del.className = "kill";
+    del.textContent = "×";
+    del.setAttribute("aria-label", "Excluir");
+    del.onclick = function(){ onDelete(item.id); };
+    li.appendChild(title); li.appendChild(date); li.appendChild(del);
+    return li;
+  }
+
+  function renderPrs(){
+    var box = $("pr-list");
+    box.innerHTML = "";
+    $("pr-empty").hidden = S.prs.length > 0;
+    S.prs.slice().sort(function(a, b){ return b.createdAt - a.createdAt; })
+      .forEach(function(item){ box.appendChild(logEntryRow(item, removePr)); });
+  }
+
+  /* ---------- comentários de documentação ---------- */
+  function addDocComment(){
+    var input = $("doccomment-title");
+    var title = input.value.trim().slice(0, 140);
+    if(!title){ toast("Descreva o comentário primeiro"); input.focus(); return; }
+    var urlInput = $("doccomment-url");
+    var url = urlInput.value.trim().slice(0, 300);
+    S.docComments.unshift({ id: uid(), title: title, url: url || null, createdAt: Date.now() });
+    input.value = ""; urlInput.value = "";
+    save(); renderDocComments();
+  }
+
+  async function removeDocComment(id){
+    if(!(await askConfirm("Excluir este comentário da lista?", { danger:true }))) return;
+    S.docComments = S.docComments.filter(function(x){ return x.id !== id; });
+    markDeleted(id);
+    save(); renderDocComments();
+  }
+
+  function renderDocComments(){
+    var box = $("doccomment-list");
+    box.innerHTML = "";
+    $("doccomment-empty").hidden = S.docComments.length > 0;
+    S.docComments.slice().sort(function(a, b){ return b.createdAt - a.createdAt; })
+      .forEach(function(item){ box.appendChild(logEntryRow(item, removeDocComment)); });
   }
 
   /* ---------- débito técnico ---------- */
@@ -9166,6 +9417,7 @@
     $("dev-total").textContent = total ? fmtShort(total) : "0min";
     $("dev-avg").textContent = noPeriodo.length ? fmtShort(Math.round(total / noPeriodo.length)) : "—";
     $("dev-max").textContent = maior ? fmtShort(maior.ms) : "—";
+    $("dev-prs").textContent = S.prs.filter(function(x){ return x.createdAt >= lim.from && x.createdAt < lim.to; }).length;
 
     if(!noPeriodo.length){
       $("dev-note").textContent = "Nenhuma " + (key === "review" ? "revisão" : "build") + " cronometrada " +
@@ -9712,6 +9964,16 @@
   $("duck-open").onclick = function(){ openDuckPad(); };
   $("study-add").onclick = addStudyTopic;
   $("study-title").addEventListener("keydown", function(e){ if(e.key === "Enter") addStudyTopic(); });
+
+  // PRs feitos
+  $("pr-add").onclick = addPr;
+  $("pr-title").addEventListener("keydown", function(e){ if(e.key === "Enter") addPr(); });
+  $("pr-url").addEventListener("keydown", function(e){ if(e.key === "Enter") addPr(); });
+
+  // comentários de documentação
+  $("doccomment-add").onclick = addDocComment;
+  $("doccomment-title").addEventListener("keydown", function(e){ if(e.key === "Enter") addDocComment(); });
+  $("doccomment-url").addEventListener("keydown", function(e){ if(e.key === "Enter") addDocComment(); });
 
   // débito técnico
   $("debt-add").onclick = addTechDebt;
