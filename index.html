@@ -2012,7 +2012,7 @@
         <h2 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M7 9l3 3-3 3M13 15h4"/></svg></span>Ferramentas de dev</h2>
       </div>
 
-      <div class="devwatch">
+      <div class="devwatch" id="devsub-timer">
         <div class="modes small" id="dev-tabs" role="group" aria-label="Cronômetro de dev">
           <button data-track="build" aria-pressed="true">Build<span class="tab-dot" id="tab-dot-build" hidden></span></button>
           <button data-track="review" aria-pressed="false">Code review<span class="tab-dot" id="tab-dot-review" hidden></span></button>
@@ -2056,7 +2056,7 @@
         <p class="note" id="dev-note"></p>
       </div>
 
-      <div class="sub-panel duck-sub">
+      <div class="sub-panel duck-sub" id="devsub-duck">
         <div class="panel-head">
           <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14.5" r="6"/><circle cx="15.6" cy="8.6" r="3.4"/><path d="M18.7 8.1c1.2-.2 2.2.3 2.2 1s-1 1.2-2.2 1c-.5-.1-.9-.5-.9-1s.4-.9.9-1z"/><circle cx="16.5" cy="7.7" r=".5" fill="currentColor" stroke="none"/></svg></span>Patoterapia</h3>
         </div>
@@ -2073,7 +2073,7 @@
         </div>
       </div>
 
-      <div class="sub-panel">
+      <div class="sub-panel" id="devsub-study">
         <div class="panel-head">
           <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H12v18H6.5A2.5 2.5 0 0 1 4 18.5v-13Z"/><path d="M20 5.5A2.5 2.5 0 0 0 17.5 3H12v18h5.5a2.5 2.5 0 0 0 2.5-2.5v-13Z"/></svg></span>Tópicos de estudo</h3>
         </div>
@@ -2093,7 +2093,7 @@
         <p class="empty-state" id="study-empty" hidden>Nada por aqui ainda. Adicione algo que você quer estudar.</p>
       </div>
 
-      <div class="sub-panel">
+      <div class="sub-panel" id="devsub-prs">
         <div class="panel-head">
           <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.2"/><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M6 8.2V15.8M8.2 6H14a4 4 0 0 1 4 4v0"/></svg></span>PRs feitos</h3>
         </div>
@@ -2107,7 +2107,7 @@
         <p class="empty-state" id="pr-empty" hidden>Nenhum PR registrado ainda.</p>
       </div>
 
-      <div class="sub-panel">
+      <div class="sub-panel" id="devsub-doc">
         <div class="panel-head">
           <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M6 3h9l5 5v13a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"/><path d="M15 3v5h5"/><path d="M8 13h8M8 17h5"/></svg></span>Comentários de documentação</h3>
         </div>
@@ -2121,7 +2121,7 @@
         <p class="empty-state" id="doccomment-empty" hidden>Nenhum comentário registrado ainda.</p>
       </div>
 
-      <div class="sub-panel">
+      <div class="sub-panel" id="devsub-debt">
         <div class="panel-head">
           <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="10" cy="14.5" r="6"/><circle cx="15.6" cy="8.6" r="3.4"/><path d="M18.7 8.1c1.2-.2 2.2.3 2.2 1s-1 1.2-2.2 1c-.5-.1-.9-.5-.9-1s.4-.9.9-1z"/><path d="M15.1 6.8l1.9 1.2M17.1 6.8l-1.9 1.2"/></svg></span>Débito técnico</h3>
         </div>
@@ -2149,7 +2149,7 @@
         </div>
       </div>
 
-      <div class="sub-panel">
+      <div class="sub-panel" id="devsub-snippets">
         <div class="panel-head">
           <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="14" width="17" height="7" rx="1.3"/><path d="M3 17.3h17"/><circle cx="9.3" cy="9.6" r="3.6"/><circle cx="14.6" cy="6" r="2.1"/><path d="M16.4 5.7c.8-.1 1.4.2 1.4.6s-.6.8-1.4.6c-.3 0-.5-.3-.5-.6s.2-.5.5-.6z"/><circle cx="15.4" cy="5.5" r=".4" fill="currentColor" stroke="none"/></svg></span>Cofre de snippets</h3>
           <button class="btn-main icon-only" id="snippet-add-btn" aria-label="Novo snippet" title="Novo snippet">
@@ -2461,6 +2461,16 @@
     <div class="field"><label for="p-music">Música ambiente</label><span class="switch"><input type="checkbox" id="p-music"></span></div>
     <div class="field"><label for="p-dev">Ferramentas de dev</label><span class="switch"><input type="checkbox" id="p-dev"></span></div>
     <p class="hint">Ocultar um painel não apaga nada: os registros continuam guardados e voltam quando você reativar.</p>
+
+    <p class="cap-meta" style="margin-top:10px">Itens de Ferramentas de dev</p>
+    <div class="field"><label for="p-dev-timer">Cronômetro de dev</label><span class="switch"><input type="checkbox" id="p-dev-timer"></span></div>
+    <div class="field"><label for="p-dev-duck">Patoterapia</label><span class="switch"><input type="checkbox" id="p-dev-duck"></span></div>
+    <div class="field"><label for="p-dev-study">Tópicos de estudo</label><span class="switch"><input type="checkbox" id="p-dev-study"></span></div>
+    <div class="field"><label for="p-dev-prs">PRs feitos</label><span class="switch"><input type="checkbox" id="p-dev-prs"></span></div>
+    <div class="field"><label for="p-dev-doc">Comentários de documentação</label><span class="switch"><input type="checkbox" id="p-dev-doc"></span></div>
+    <div class="field"><label for="p-dev-debt">Débito técnico</label><span class="switch"><input type="checkbox" id="p-dev-debt"></span></div>
+    <div class="field"><label for="p-dev-snippets">Cofre de snippets</label><span class="switch"><input type="checkbox" id="p-dev-snippets"></span></div>
+    <p class="hint">Escolha o que aparece dentro de Ferramentas de dev — útil se você só usa alguns desses itens.</p>
 
     <p class="cap-meta" style="margin-top:10px">O que entra no resumo da semana</p>
     <div class="field"><label for="p-card-season">Nome da temporada</label><span class="switch"><input type="checkbox" id="p-card-season"></span></div>
@@ -2846,6 +2856,7 @@
     seasons: [],
     milestones: [],
     panels: { habitos:true, leitura:true, tela:true, objetivos:true, pdi:true, temporada:true, capsula:true, musica:true },
+    devPanels: { timer:true, duck:true, study:true, prs:true, doc:true, debt:true, snippets:true },
     cardFields: { season:true, numbers:true, chart:true, reading:true, highlight:true, dev:true },
     cardStyle: "escuro",
     lists: [],
@@ -2926,6 +2937,7 @@
     if(Array.isArray(d.seasons)) s.seasons = d.seasons;
     if(Array.isArray(d.milestones)) s.milestones = d.milestones;
     if(d.panels) Object.assign(s.panels, d.panels);
+    if(d.devPanels) Object.assign(s.devPanels, d.devPanels);
     if(d.cardFields) Object.assign(s.cardFields, d.cardFields);
     if(d.cardStyle) s.cardStyle = d.cardStyle;
     if(Array.isArray(d.lists)) s.lists = d.lists;
@@ -9529,6 +9541,13 @@
     $("section-capsule").hidden = !S.panels.capsula;
     $("panel-sound").hidden = !S.panels.musica;
     $("panel-dev").hidden = !S.dev;
+    $("devsub-timer").hidden = !S.devPanels.timer;
+    $("devsub-duck").hidden = !S.devPanels.duck;
+    $("devsub-study").hidden = !S.devPanels.study;
+    $("devsub-prs").hidden = !S.devPanels.prs;
+    $("devsub-doc").hidden = !S.devPanels.doc;
+    $("devsub-debt").hidden = !S.devPanels.debt;
+    $("devsub-snippets").hidden = !S.devPanels.snippets;
     applyTabs();
   }
 
@@ -10415,6 +10434,13 @@
     $("p-capsule").checked = !!S.panels.capsula;
     $("p-music").checked = !!S.panels.musica;
     $("p-dev").checked = !!S.dev;
+    $("p-dev-timer").checked = !!S.devPanels.timer;
+    $("p-dev-duck").checked = !!S.devPanels.duck;
+    $("p-dev-study").checked = !!S.devPanels.study;
+    $("p-dev-prs").checked = !!S.devPanels.prs;
+    $("p-dev-doc").checked = !!S.devPanels.doc;
+    $("p-dev-debt").checked = !!S.devPanels.debt;
+    $("p-dev-snippets").checked = !!S.devPanels.snippets;
     $("p-card-season").checked = !!S.cardFields.season;
     $("p-card-numbers").checked = !!S.cardFields.numbers;
     $("p-card-chart").checked = !!S.cardFields.chart;
@@ -10476,6 +10502,13 @@
   [["p-habits","habitos"], ["p-reading","leitura"], ["p-screen","tela"], ["p-goals","objetivos"], ["p-pdi","pdi"], ["p-season","temporada"], ["p-capsule","capsula"], ["p-music","musica"]].forEach(function(par){
     $(par[0]).onchange = function(){
       S.panels[par[1]] = this.checked;
+      save(); applyPanels();
+    };
+  });
+
+  [["p-dev-timer","timer"], ["p-dev-duck","duck"], ["p-dev-study","study"], ["p-dev-prs","prs"], ["p-dev-doc","doc"], ["p-dev-debt","debt"], ["p-dev-snippets","snippets"]].forEach(function(par){
+    $(par[0]).onchange = function(){
+      S.devPanels[par[1]] = this.checked;
       save(); applyPanels();
     };
   });
