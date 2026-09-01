@@ -929,6 +929,32 @@
   /* ---------- ferramentas de dev ---------- */
   .dev{grid-column:1 / -1}
 
+  /* ---------- balanço geral de dev ---------- */
+  /* barra de composição: proporção do tempo cronometrado entre build/review/reunião,
+     como uma barra de progresso segmentada em vez de um gráfico separado */
+  .dev-mix{display:flex;height:10px;border-radius:6px;overflow:hidden;background:var(--grid-a);margin-top:4px}
+  .dev-mix span{height:100%;min-width:2px}
+  .dev-mix-legend{display:flex;flex-wrap:wrap;gap:5px 16px;font-family:var(--mono);font-size:10.5px;color:var(--ink-3);margin:8px 0 20px}
+  .dev-mix-legend b{color:var(--ink-2);font-weight:500}
+  .dev-mix-legend .lgdot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}
+
+  /* ledger: "fechado no período" vs "em aberto agora", lado a lado — o
+     nome "Balanço" em PT-BR já sugere um livro-caixa, então a gente leva
+     a ideia a sério em vez de só empilhar figuras */
+  .ledger{display:grid;grid-template-columns:1fr 1fr;gap:calc(var(--sp)*4);margin-top:calc(var(--sp)*1)}
+  @media (max-width:640px){ .ledger{grid-template-columns:1fr;gap:calc(var(--sp)*2.5)} }
+  .ledger-head{
+    font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
+    margin:0 0 9px;padding-bottom:7px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;
+  }
+  .ledger-head .n{color:var(--ink-2);font-weight:600}
+  .ledger-col.done .ledger-head .n{color:var(--rest)}
+  .ledger-col.open .ledger-head .n{color:var(--signal)}
+  .ledger-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+  .ledger-list li{font-size:13.5px;color:var(--ink-2);display:flex;gap:7px;line-height:1.4}
+  .ledger-list li b{color:var(--ink);font-variant-numeric:tabular-nums;flex:none}
+  .ledger-empty{font-size:13px;color:var(--ink-3);font-style:italic;margin:0}
+
   .dlg-body .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);display:block;margin-bottom:-4px}
   .duck-item{display:flex;align-items:baseline;gap:var(--sp);padding:9px 0;border-bottom:1px solid var(--grid-a);font-size:13.5px}
   .duck-item:last-child{border-bottom:0}
@@ -1195,6 +1221,21 @@
   .task.done .urgency{opacity:.45;background:transparent;color:var(--ink-3);border-color:transparent;font-weight:400}
   #task-due{width:148px;font-family:var(--mono);font-size:12px;color:var(--ink-2)}
   .warn{color:var(--signal);font-weight:600}
+
+  /* ---------- status de PR ---------- */
+  /* mesma linguagem visual da urgência (pílula, clique pra avançar), com
+     as 4 cores categóricas já existentes fazendo o papel semântico de
+     open/draft/merged/closed sem precisar inventar paleta nova */
+  .pr-status{
+    font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+    border:1px solid var(--line);border-radius:var(--r-md);padding:3px 8px;white-space:nowrap;flex:none;
+    background:transparent;color:var(--ink-3);cursor:pointer;
+  }
+  .pr-status:hover{border-color:var(--ink-3)}
+  .pr-status.status-open{color:var(--clover-ink);border-color:var(--clover);background:color-mix(in srgb, var(--clover) 20%, transparent)}
+  .pr-status.status-draft{color:var(--ink-3);border-color:var(--line);border-style:dashed}
+  .pr-status.status-merged{background:var(--rest);color:var(--on-ink);border-color:var(--rest);font-weight:600}
+  .pr-status.status-closed{color:var(--signal);border-color:var(--signal)}
 
   /* ---------- calendário ---------- */
   .cal-weekdays{
@@ -2097,10 +2138,16 @@
         <div class="panel-head">
           <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.2"/><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M6 8.2V15.8M8.2 6H14a4 4 0 0 1 4 4v0"/></svg></span>PRs feitos</h3>
         </div>
-        <p class="hint">Registre os PRs que você abriu ou concluiu, com link opcional.</p>
+        <p class="hint">Registre os PRs que você abriu, com link opcional. Clique no status pra mudar conforme ele avança.</p>
         <div class="new-task">
           <input type="text" id="pr-title" placeholder="ex.: Corrige paginação da listagem" maxlength="140" aria-label="Título do PR">
           <input type="text" id="pr-url" placeholder="link (opcional)" maxlength="300" aria-label="Link do PR">
+          <select id="pr-status-new" aria-label="Status do PR">
+            <option value="open">Aberto</option>
+            <option value="draft">Rascunho</option>
+            <option value="merged">Mesclado</option>
+            <option value="closed">Fechado</option>
+          </select>
           <button class="btn-ghost" id="pr-add">Adicionar</button>
         </div>
         <ul class="task-list" id="pr-list"></ul>
@@ -2177,6 +2224,39 @@
           </svg>
           <p id="snippet-empty-text">Nada guardado ainda. Clique em "+" pra salvar seu primeiro snippet.</p>
         </div>
+      </div>
+
+      <div class="sub-panel" id="devsub-summary">
+        <div class="panel-head">
+          <h3 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20V10M11 20V4M18 20v-7"/></svg></span>Balanço geral</h3>
+          <div class="range" role="group" aria-label="Período do balanço geral de dev">
+            <button data-range="semana" aria-pressed="true">Semana</button>
+            <button data-range="mes" aria-pressed="false">Mês</button>
+            <button data-range="temporada" aria-pressed="false">Temporada</button>
+          </div>
+        </div>
+        <p class="hint">Tudo que você fez em Ferramentas de dev, junto num só lugar — como um livro-caixa: o que fechou no período de um lado, o que ainda está em aberto do outro.</p>
+
+        <p class="cap-meta">Tempo cronometrado</p>
+        <div class="dev-mix" id="dev-mix" hidden></div>
+        <p class="dev-mix-legend" id="dev-mix-legend" hidden></p>
+
+        <p class="cap-meta" style="margin-top:16px">Status dos PRs</p>
+        <div class="dev-mix" id="pr-mix" hidden></div>
+        <p class="dev-mix-legend" id="pr-mix-legend" hidden></p>
+
+        <div class="ledger">
+          <div class="ledger-col done">
+            <p class="ledger-head">Fechado no período <span class="n" id="dev-ledger-done-n">0</span></p>
+            <ul class="ledger-list" id="dev-ledger-done"></ul>
+          </div>
+          <div class="ledger-col open">
+            <p class="ledger-head">Em aberto agora <span class="n" id="dev-ledger-open-n">0</span></p>
+            <ul class="ledger-list" id="dev-ledger-open"></ul>
+          </div>
+        </div>
+
+        <p class="note" id="dev-summary-note"></p>
       </div>
     </section>
 
@@ -2470,6 +2550,7 @@
     <div class="field"><label for="p-dev-doc">Comentários de documentação</label><span class="switch"><input type="checkbox" id="p-dev-doc"></span></div>
     <div class="field"><label for="p-dev-debt">Débito técnico</label><span class="switch"><input type="checkbox" id="p-dev-debt"></span></div>
     <div class="field"><label for="p-dev-snippets">Cofre de snippets</label><span class="switch"><input type="checkbox" id="p-dev-snippets"></span></div>
+    <div class="field"><label for="p-dev-summary">Balanço geral</label><span class="switch"><input type="checkbox" id="p-dev-summary"></span></div>
     <p class="hint">Escolha o que aparece dentro de Ferramentas de dev — útil se você só usa alguns desses itens.</p>
 
     <p class="cap-meta" style="margin-top:10px">O que entra no resumo da semana</p>
@@ -2856,7 +2937,7 @@
     seasons: [],
     milestones: [],
     panels: { habitos:true, leitura:true, tela:true, objetivos:true, pdi:true, temporada:true, capsula:true, musica:true },
-    devPanels: { timer:true, duck:true, study:true, prs:true, doc:true, debt:true, snippets:true },
+    devPanels: { timer:true, duck:true, study:true, prs:true, doc:true, debt:true, snippets:true, summary:true },
     cardFields: { season:true, numbers:true, chart:true, reading:true, highlight:true, dev:true },
     cardStyle: "escuro",
     lists: [],
@@ -3724,7 +3805,7 @@
     renderHabits(); renderBooks(); renderMedia(); renderCapsuleBanner();
     renderEyebrow(); applyPanels();
     renderGoals(); renderPdi(); renderDevWatch(); renderDuckSummary(); renderStudyTopics();
-    renderTechDebt(); renderSnippets(); renderPrs(); renderDocComments();
+    renderTechDebt(); renderSnippets(); renderPrs(); renderDocComments(); renderDevSummary();
     renderPatterns();
     // só atualiza a página de notas se a aba dela for a ativa agora — mais
     // barato, e renderNoteEditor() já protege o que estiver sendo digitado
@@ -8416,7 +8497,7 @@
     }
 
     editingDuckId = null;
-    save(); renderDuckSummary(); renderStats();
+    save(); renderDuckSummary(); renderStats(); renderDevSummary();
     $("duckpad").close();
     if(ficouResolvido){
       celebrate("O patinho agradece.");
@@ -8536,7 +8617,7 @@
       if(!(await askConfirm("Excluir esta sessão da biblioteca?", { danger:true }))) return;
       S.duckNotes = S.duckNotes.filter(function(x){ return x.id !== n.id; });
       markDeleted(n.id);
-      save(); renderLibrary(); renderDuckSummary(); renderStats();
+      save(); renderLibrary(); renderDuckSummary(); renderStats(); renderDevSummary();
     };
     acts.appendChild(del);
     row.appendChild(acts);
@@ -8592,7 +8673,7 @@
       if(!(await askConfirm("Excluir esta sessão da biblioteca?", { danger:true }))) return;
       S.duckNotes = S.duckNotes.filter(function(x){ return x.id !== n.id; });
       markDeleted(n.id);
-      save(); renderDuckSummary(); renderStats();
+      save(); renderDuckSummary(); renderStats(); renderDevSummary();
       $("lib-detail").close();
       renderLibrary();
     };
@@ -8685,7 +8766,7 @@
     markDeleted(id);
     if(S.activeStudyTopicId === id) S.activeStudyTopicId = null;
     if(openStudyId === id) openStudyId = null;
-    save(); renderStudyTopics(); renderTimer();
+    save(); renderStudyTopics(); renderTimer(); renderDevSummary();
   }
 
   // clicar de novo no mesmo tópico solta a associação — mesmo padrão do toggle de tarefa ativa
@@ -8782,7 +8863,7 @@
         sc.type = "button";
         sc.textContent = "✓";
         sc.setAttribute("aria-label", st.done ? "Reabrir subtópico" : "Concluir subtópico");
-        sc.onclick = function(){ st.done = !st.done; save(); renderStudyTopics(); };
+        sc.onclick = function(){ st.done = !st.done; st.doneAt = st.done ? Date.now() : null; save(); renderStudyTopics(); renderDevSummary(); };
         if(st.done) sc.style.cssText = "background:var(--rest);border-color:var(--rest);color:var(--on-ink)";
         var st_title = document.createElement("span");
         st_title.className = "step-title";
@@ -8795,7 +8876,7 @@
         sd.setAttribute("aria-label", "Excluir subtópico");
         sd.onclick = function(){
           item.subtopics = item.subtopics.filter(function(x){ return x.id !== st.id; });
-          save(); renderStudyTopics();
+          save(); renderStudyTopics(); renderDevSummary();
         };
         sl.appendChild(sc); sl.appendChild(st_title); sl.appendChild(sd);
         ul.appendChild(sl);
@@ -8842,25 +8923,38 @@
   }
 
   /* ---------- PRs feitos ---------- */
+  var PR_STATUS_ORDER = ["open", "draft", "merged", "closed"];
+  var PR_STATUS_LABEL = { open:"Aberto", draft:"Rascunho", merged:"Mesclado", closed:"Fechado" };
+
   function addPr(){
     var input = $("pr-title");
     var title = input.value.trim().slice(0, 140);
     if(!title){ toast("Descreva o PR primeiro"); input.focus(); return; }
     var urlInput = $("pr-url");
     var url = urlInput.value.trim().slice(0, 300);
-    S.prs.unshift({ id: uid(), title: title, url: url || null, createdAt: Date.now() });
-    input.value = ""; urlInput.value = "";
-    save(); renderPrs(); renderDevWatch();
+    var status = $("pr-status-new").value;
+    if(PR_STATUS_ORDER.indexOf(status) < 0) status = "open";
+    var now = Date.now();
+    S.prs.unshift({ id: uid(), title: title, url: url || null, status: status, createdAt: now, statusAt: now });
+    input.value = ""; urlInput.value = ""; $("pr-status-new").value = "open";
+    save(); renderPrs(); renderDevWatch(); renderDevSummary();
   }
 
   async function removePr(id){
     if(!(await askConfirm("Excluir este PR da lista?", { danger:true }))) return;
     S.prs = S.prs.filter(function(x){ return x.id !== id; });
     markDeleted(id);
-    save(); renderPrs(); renderDevWatch();
+    save(); renderPrs(); renderDevWatch(); renderDevSummary();
   }
 
-  function logEntryRow(item, onDelete){
+  function cyclePrStatus(item){
+    var at = PR_STATUS_ORDER.indexOf(item.status);
+    item.status = PR_STATUS_ORDER[(at + 1) % PR_STATUS_ORDER.length] || PR_STATUS_ORDER[0];
+    item.statusAt = Date.now();
+    save(); renderPrs(); renderDevSummary();
+  }
+
+  function logEntryRow(item, onDelete, extra){
     var li = document.createElement("li");
     li.className = "task";
     var title = item.url ? document.createElement("a") : document.createElement("span");
@@ -8875,8 +8969,22 @@
     del.textContent = "×";
     del.setAttribute("aria-label", "Excluir");
     del.onclick = function(){ onDelete(item.id); };
-    li.appendChild(title); li.appendChild(date); li.appendChild(del);
+    li.appendChild(title);
+    if(extra) li.appendChild(extra);
+    li.appendChild(date); li.appendChild(del);
     return li;
+  }
+
+  function prStatusPill(item){
+    var status = PR_STATUS_LABEL[item.status] ? item.status : "open";
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "pr-status status-" + status;
+    btn.textContent = PR_STATUS_LABEL[status];
+    btn.title = "Status: " + PR_STATUS_LABEL[status] + " — clique para mudar";
+    btn.setAttribute("aria-label", "Status do PR: " + PR_STATUS_LABEL[status]);
+    btn.onclick = function(){ cyclePrStatus(item); };
+    return btn;
   }
 
   function renderPrs(){
@@ -8884,7 +8992,7 @@
     box.innerHTML = "";
     $("pr-empty").hidden = S.prs.length > 0;
     S.prs.slice().sort(function(a, b){ return b.createdAt - a.createdAt; })
-      .forEach(function(item){ box.appendChild(logEntryRow(item, removePr)); });
+      .forEach(function(item){ box.appendChild(logEntryRow(item, removePr, prStatusPill(item))); });
   }
 
   /* ---------- comentários de documentação ---------- */
@@ -8896,14 +9004,14 @@
     var url = urlInput.value.trim().slice(0, 300);
     S.docComments.unshift({ id: uid(), title: title, url: url || null, createdAt: Date.now() });
     input.value = ""; urlInput.value = "";
-    save(); renderDocComments();
+    save(); renderDocComments(); renderDevSummary();
   }
 
   async function removeDocComment(id){
     if(!(await askConfirm("Excluir este comentário da lista?", { danger:true }))) return;
     S.docComments = S.docComments.filter(function(x){ return x.id !== id; });
     markDeleted(id);
-    save(); renderDocComments();
+    save(); renderDocComments(); renderDevSummary();
   }
 
   function renderDocComments(){
@@ -9150,7 +9258,7 @@
     var priority = $("debt-priority").value || "media";
     S.techDebt.unshift({ id: uid(), title: title, priority: priority, note: null, resolved: false, createdAt: Date.now(), resolvedAt: null });
     input.value = "";
-    save(); renderTechDebt();
+    save(); renderTechDebt(); renderDevSummary();
     input.focus();
   }
 
@@ -9159,7 +9267,7 @@
     if(!it) return;
     it.resolved = !it.resolved;
     it.resolvedAt = it.resolved ? Date.now() : null;
-    save(); renderTechDebt();
+    save(); renderTechDebt(); renderDevSummary();
   }
 
   function cycleDebtPriority(item){
@@ -9171,7 +9279,7 @@
   function removeTechDebt(id){
     S.techDebt = S.techDebt.filter(function(x){ return x.id !== id; });
     markDeleted(id);
-    save(); renderTechDebt();
+    save(); renderTechDebt(); renderDevSummary();
   }
 
   /* ---------- cofre de snippets ---------- */
@@ -9261,7 +9369,7 @@
     }else{
       S.snippets.unshift({ id: uid(), title: title, tag: tag, code: code, createdAt: Date.now(), updatedAt: Date.now() });
     }
-    save(); renderSnippets();
+    save(); renderSnippets(); renderDevSummary();
     $("snippet-editor").close();
   }
 
@@ -9272,7 +9380,7 @@
     if(!(await askConfirm("Excluir o snippet “" + (sn.title || "sem título") + "”?", { danger:true }))) return;
     S.snippets = S.snippets.filter(function(x){ return x.id !== snippetEditingId; });
     markDeleted(snippetEditingId);
-    save(); renderSnippets();
+    save(); renderSnippets(); renderDevSummary();
     $("snippet-editor").close();
   }
 
@@ -9380,7 +9488,7 @@
       t.log().push({ id: prefixo + inicio, start: inicio, end: inicio + ms, ms: ms, label: st.label || "" });
       toast(t.doneMsg + fmtShort(ms) + (key === "review" ? " registrada" : " registrado"));
     }
-    save(); renderDevWatch(); renderStats();
+    save(); renderDevWatch(); renderStats(); renderDevSummary();
   }
 
   function cancelTrack(key){
@@ -9447,6 +9555,163 @@
         txt += " " + (key === "review" ? "A mais longa foi" : "O mais longo foi") + " “" + maior.label + "”, com " + fmtShort(maior.ms) + ".";
       }
       $("dev-note").textContent = txt;
+    }
+  }
+
+  /* ---------- balanço geral de dev ---------- */
+  // junta tudo que existe em Ferramentas de dev num "livro-caixa": o que
+  // fechou no período de um lado, o que ainda está em aberto (estoque atual,
+  // não fatiado por período) do outro — mais fiel ao sentido de "balanço"
+  // do que só empilhar figuras soltas
+  // barra de composição genérica: reaproveitada pro tempo cronometrado e
+  // pro status dos PRs — mesma ideia visual, fontes de dado diferentes
+  function renderMix(mixId, legendId, parts){
+    var mixEl = $(mixId), legendEl = $(legendId);
+    mixEl.innerHTML = ""; legendEl.innerHTML = "";
+    var total = parts.reduce(function(a, p){ return a + p.value; }, 0);
+    if(total <= 0){ mixEl.hidden = true; legendEl.hidden = true; return; }
+    mixEl.hidden = false; legendEl.hidden = false;
+    parts.forEach(function(p){
+      if(!p.value) return;
+      var seg = document.createElement("span");
+      seg.style.cssText = "width:" + (p.value / total * 100) + "%;background:" + p.color;
+      seg.title = p.label + " — " + p.display;
+      mixEl.appendChild(seg);
+      var lg = document.createElement("span");
+      var dot = document.createElement("span");
+      dot.className = "lgdot";
+      dot.style.background = p.color;
+      lg.appendChild(dot);
+      lg.appendChild(document.createTextNode(p.label + " "));
+      var b = document.createElement("b");
+      b.textContent = p.display;
+      lg.appendChild(b);
+      legendEl.appendChild(lg);
+    });
+  }
+
+  function renderDevSummary(){
+    var r = periodRange();
+    var lim = rangeMs(r);
+
+    var bR = S.builds.filter(function(x){ return x.end >= lim.from && x.end < lim.to; });
+    var rR = S.reviews.filter(function(x){ return x.end >= lim.from && x.end < lim.to; });
+    var mR = S.meetings.filter(function(x){ return x.end >= lim.from && x.end < lim.to; });
+    var bMs = bR.reduce(function(a,x){ return a + x.ms; }, 0);
+    var rMs = rR.reduce(function(a,x){ return a + x.ms; }, 0);
+    var mMs = mR.reduce(function(a,x){ return a + x.ms; }, 0);
+    var totalMs = bMs + rMs + mMs;
+
+    // barra 1: como o tempo cronometrado se dividiu entre os 3 tipos
+    renderMix("dev-mix", "dev-mix-legend", [
+      { label:"Build", value:bMs, display:fmtShort(bMs), color:"var(--signal)" },
+      { label:"Revisão", value:rMs, display:fmtShort(rMs), color:"var(--teal)" },
+      { label:"Reunião", value:mMs, display:fmtShort(mMs), color:"var(--amber)" }
+    ]);
+
+    // barra 2: retrato atual de todos os PRs guardados, por status — não é
+    // fatiado por período porque é o estado da fila agora, não um fluxo
+    var prStatus = { open:0, draft:0, merged:0, closed:0 };
+    S.prs.forEach(function(p){ prStatus[PR_STATUS_LABEL[p.status] ? p.status : "open"]++; });
+    renderMix("pr-mix", "pr-mix-legend", [
+      { label:"Aberto", value:prStatus.open, display:String(prStatus.open), color:"var(--clover)" },
+      { label:"Rascunho", value:prStatus.draft, display:String(prStatus.draft), color:"var(--ink-3)" },
+      { label:"Mesclado", value:prStatus.merged, display:String(prStatus.merged), color:"var(--rest)" },
+      { label:"Fechado", value:prStatus.closed, display:String(prStatus.closed), color:"var(--signal)" }
+    ]);
+
+    var prMerged = S.prs.filter(function(x){ return (x.status||"open") === "merged" && x.statusAt >= lim.from && x.statusAt < lim.to; });
+    var prClosed = S.prs.filter(function(x){ return (x.status||"open") === "closed" && x.statusAt >= lim.from && x.statusAt < lim.to; });
+    var prPending = S.prs.filter(function(x){ var s = x.status||"open"; return s === "open" || s === "draft"; });
+    var docR = S.docComments.filter(function(x){ return x.createdAt >= lim.from && x.createdAt < lim.to; });
+    var debtDone = S.techDebt.filter(function(x){ return x.resolved && x.resolvedAt >= lim.from && x.resolvedAt < lim.to; });
+    var debtOpen = S.techDebt.filter(function(x){ return !x.resolved; });
+    var duckR = S.duckNotes.filter(function(x){ return x.at >= lim.from && x.at < lim.to; });
+    var duckDone = duckR.filter(function(x){ return x.solved; });
+    var duckOpen = S.duckNotes.filter(function(x){ return !x.solved; });
+    var snippetsR = S.snippets.filter(function(x){ return x.createdAt >= lim.from && x.createdAt < lim.to; });
+
+    var subDone = 0, subOpen = 0;
+    S.studyTopics.forEach(function(t){
+      (t.subtopics || []).forEach(function(s){
+        if(s.done && s.doneAt && s.doneAt >= lim.from && s.doneAt < lim.to) subDone++;
+        else if(!s.done) subOpen++;
+      });
+    });
+
+    function line(n, label){ return { n:n, l:label }; }
+    var doneLines = [];
+    var trackCount = bR.length + rR.length + mR.length;
+    if(trackCount){
+      var bits = [];
+      if(bR.length) bits.push(bR.length + " build" + (bR.length===1?"":"s"));
+      if(rR.length) bits.push(rR.length + " " + (rR.length===1?"revisão":"revisões"));
+      if(mR.length) bits.push(mR.length + " " + (mR.length===1?"reunião":"reuniões"));
+      doneLines.push(line(fmtShort(totalMs), "cronometrados (" + bits.join(", ") + ")"));
+    }
+    if(prMerged.length) doneLines.push(line(prMerged.length, "PR" + (prMerged.length===1?"":"s") + " mesclado" + (prMerged.length===1?"":"s")));
+    if(prClosed.length) doneLines.push(line(prClosed.length, "PR" + (prClosed.length===1?"":"s") + " fechado" + (prClosed.length===1?"":"s") + " sem merge"));
+    if(docR.length) doneLines.push(line(docR.length, "comentário" + (docR.length===1?"":"s") + " de documentação"));
+    if(debtDone.length) doneLines.push(line(debtDone.length, (debtDone.length===1?"item":"itens") + " de débito técnico resolvido" + (debtDone.length===1?"":"s")));
+    if(duckDone.length) doneLines.push(line(duckDone.length, (duckDone.length===1?"sessão":"sessões") + " de patoterapia resolvida" + (duckDone.length===1?"":"s")));
+    if(subDone) doneLines.push(line(subDone, "subtópico" + (subDone===1?"":"s") + " de estudo concluído" + (subDone===1?"":"s")));
+    if(snippetsR.length) doneLines.push(line(snippetsR.length, "snippet" + (snippetsR.length===1?"":"s") + " guardado" + (snippetsR.length===1?"":"s")));
+
+    var openLines = [];
+    if(prPending.length) openLines.push(line(prPending.length, "PR" + (prPending.length===1?"":"s") + " aguardando (aberto ou rascunho)"));
+    if(debtOpen.length) openLines.push(line(debtOpen.length, (debtOpen.length===1?"item":"itens") + " de débito técnico"));
+    if(duckOpen.length) openLines.push(line(duckOpen.length, (duckOpen.length===1?"sessão":"sessões") + " de patoterapia sem solução"));
+    if(subOpen) openLines.push(line(subOpen, "subtópico" + (subOpen===1?"":"s") + " de estudo pendente" + (subOpen===1?"":"s")));
+
+    var doneBox = $("dev-ledger-done"), openBox = $("dev-ledger-open");
+    doneBox.innerHTML = ""; openBox.innerHTML = "";
+    function fillLedger(box, lines, emptyMsg){
+      if(!lines.length){
+        var e = document.createElement("li");
+        e.className = "ledger-empty";
+        e.textContent = emptyMsg;
+        box.appendChild(e);
+        return;
+      }
+      lines.forEach(function(x){
+        var li = document.createElement("li");
+        var b = document.createElement("b");
+        b.textContent = x.n;
+        li.appendChild(b);
+        li.appendChild(document.createTextNode(" " + x.l));
+        box.appendChild(li);
+      });
+    }
+    fillLedger(doneBox, doneLines, "Nada fechado ainda " + periodLabel(r) + ".");
+    fillLedger(openBox, openLines, "Tudo em dia — nada em aberto. 🦆");
+
+    var doneCount = trackCount + prMerged.length + prClosed.length + docR.length + debtDone.length + duckDone.length + subDone + snippetsR.length;
+    var openCount = prPending.length + debtOpen.length + duckOpen.length + subOpen;
+    $("dev-ledger-done-n").textContent = doneCount;
+    $("dev-ledger-open-n").textContent = openCount;
+
+    var noteEl = $("dev-summary-note");
+    if(doneCount === 0 && openCount === 0){
+      noteEl.textContent = "Ainda não há nada registrado em Ferramentas de dev. Comece cronometrando um build, salvando um PR ou anotando um débito técnico.";
+    }else if(doneCount === 0){
+      noteEl.textContent = "Nenhuma atividade fechada " + periodLabel(r) + ", mas há " +
+        openCount + (openCount === 1 ? " item esperando em aberto." : " itens esperando em aberto.");
+    }else{
+      var txt = doneCount + (doneCount === 1 ? " coisa fechada " : " coisas fechadas ") + periodLabel(r);
+      if(totalMs > 0) txt += ", com " + fmtShort(totalMs) + " de cronômetro rodando";
+      txt += ".";
+      txt += openCount > 0
+        ? " Do outro lado da conta, " + openCount + (openCount === 1 ? " item ainda está em aberto." : " itens ainda estão em aberto.")
+        : " E nada ficou pendente — quadro limpo.";
+      noteEl.textContent = txt;
+    }
+
+    // taxa de merge geral (todo o histórico, não só o período) — só aparece
+    // quando já existe algum PR decidido, pra não julgar antes da hora
+    var prDecided = prStatus.merged + prStatus.closed;
+    if(prDecided > 0){
+      var mergeRate = Math.round(prStatus.merged / prDecided * 100);
+      noteEl.textContent += " Taxa de merge geral: " + mergeRate + "% (" + prStatus.merged + " de " + prDecided + " PRs decididos).";
     }
   }
 
@@ -9548,6 +9813,7 @@
     $("devsub-doc").hidden = !S.devPanels.doc;
     $("devsub-debt").hidden = !S.devPanels.debt;
     $("devsub-snippets").hidden = !S.devPanels.snippets;
+    $("devsub-summary").hidden = !S.devPanels.summary;
     applyTabs();
   }
 
@@ -9914,7 +10180,7 @@
   document.querySelectorAll(".range button").forEach(function(b){
     b.onclick = function(){
       S.range = b.dataset.range;
-      save(); renderStats(); renderBooks(); renderMedia();   // todos seguem o mesmo período
+      save(); renderStats(); renderBooks(); renderMedia(); renderDevWatch(); renderDevSummary();   // todos seguem o mesmo período
     };
   });
 
@@ -10441,6 +10707,7 @@
     $("p-dev-doc").checked = !!S.devPanels.doc;
     $("p-dev-debt").checked = !!S.devPanels.debt;
     $("p-dev-snippets").checked = !!S.devPanels.snippets;
+    $("p-dev-summary").checked = !!S.devPanels.summary;
     $("p-card-season").checked = !!S.cardFields.season;
     $("p-card-numbers").checked = !!S.cardFields.numbers;
     $("p-card-chart").checked = !!S.cardFields.chart;
@@ -10506,7 +10773,7 @@
     };
   });
 
-  [["p-dev-timer","timer"], ["p-dev-duck","duck"], ["p-dev-study","study"], ["p-dev-prs","prs"], ["p-dev-doc","doc"], ["p-dev-debt","debt"], ["p-dev-snippets","snippets"]].forEach(function(par){
+  [["p-dev-timer","timer"], ["p-dev-duck","duck"], ["p-dev-study","study"], ["p-dev-prs","prs"], ["p-dev-doc","doc"], ["p-dev-debt","debt"], ["p-dev-snippets","snippets"], ["p-dev-summary","summary"]].forEach(function(par){
     $(par[0]).onchange = function(){
       S.devPanels[par[1]] = this.checked;
       save(); applyPanels();
