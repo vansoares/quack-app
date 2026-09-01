@@ -2254,9 +2254,6 @@
         <div class="dev-mix" id="pr-mix" hidden></div>
         <p class="dev-mix-legend" id="pr-mix-legend" hidden></p>
 
-        <p class="cap-meta" style="margin-top:16px">Atividade por dia</p>
-        <svg class="chart" id="dev-activity-chart" viewBox="0 0 900 200" role="img" aria-label="Minutos de dev cronometrados por dia"></svg>
-
         <div class="ledger">
           <div class="ledger-col done">
             <p class="ledger-head">Fechado no período <span class="n" id="dev-ledger-done-n">0</span></p>
@@ -9643,12 +9640,6 @@
       { label:"Mesclado", value:prStatus.merged, display:String(prStatus.merged), color:"var(--rest)" },
       { label:"Fechado", value:prStatus.closed, display:String(prStatus.closed), color:"var(--signal)" }
     ]);
-
-    // gráfico 3: minutos cronometrados por dia (build+revisão+reunião juntos) —
-    // mesma máquina de gráfico usada em Balanço/Leitura/Tela (dailyMap + buildSeries + drawChart)
-    var dm = dailyMap(r, bR.concat(rR, mR), function(x){ return x.end; }, function(x){ return x.ms / 60000; });
-    var built = buildSeries(r, dm);
-    drawChart($("dev-activity-chart"), built.series, { unit:["minuto cronometrado", "minutos cronometrados"] });
 
     var prMerged = S.prs.filter(function(x){ return (x.status||"open") === "merged" && x.statusAt >= lim.from && x.statusAt < lim.to; });
     var prClosed = S.prs.filter(function(x){ return (x.status||"open") === "closed" && x.statusAt >= lim.from && x.statusAt < lim.to; });
