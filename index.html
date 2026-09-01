@@ -955,6 +955,15 @@
   .ledger-list li b{color:var(--ink);font-variant-numeric:tabular-nums;flex:none}
   .ledger-empty{font-size:13px;color:var(--ink-3);font-style:italic;margin:0}
 
+  /* o pato dá o veredito final do balanço — recado curto, tom de piada
+     interna de dev, sem levar muito a sério a si mesmo */
+  .duck-verdict{
+    display:flex;align-items:center;gap:12px;margin-top:16px;padding:11px 14px;
+    border:1px solid var(--line);border-radius:var(--r-md);background:var(--card);
+  }
+  .duck-verdict-icon{width:28px;height:28px;flex:none}
+  .duck-verdict p{margin:0;font-size:13px;color:var(--ink-2);font-style:italic;line-height:1.4}
+
   .dlg-body .k{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-3);display:block;margin-bottom:-4px}
   .duck-item{display:flex;align-items:baseline;gap:var(--sp);padding:9px 0;border-bottom:1px solid var(--grid-a);font-size:13.5px}
   .duck-item:last-child{border-bottom:0}
@@ -2245,6 +2254,9 @@
         <div class="dev-mix" id="pr-mix" hidden></div>
         <p class="dev-mix-legend" id="pr-mix-legend" hidden></p>
 
+        <p class="cap-meta" style="margin-top:16px">Atividade por dia</p>
+        <svg class="chart" id="dev-activity-chart" viewBox="0 0 900 200" role="img" aria-label="Minutos de dev cronometrados por dia"></svg>
+
         <div class="ledger">
           <div class="ledger-col done">
             <p class="ledger-head">Fechado no período <span class="n" id="dev-ledger-done-n">0</span></p>
@@ -2257,6 +2269,18 @@
         </div>
 
         <p class="note" id="dev-summary-note"></p>
+
+        <div class="duck-verdict" id="duck-verdict">
+          <svg class="duck-verdict-icon" viewBox="0 0 32 32" role="img" aria-hidden="true">
+            <ellipse cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>
+            <circle cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>
+            <path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>
+            <circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>
+            <circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>
+            <circle cx="18.4" cy="14.6" r="1.5" fill="#fff" opacity=".18"/>
+          </svg>
+          <p id="duck-verdict-text"></p>
+        </div>
       </div>
     </section>
 
@@ -9620,6 +9644,12 @@
       { label:"Fechado", value:prStatus.closed, display:String(prStatus.closed), color:"var(--signal)" }
     ]);
 
+    // gráfico 3: minutos cronometrados por dia (build+revisão+reunião juntos) —
+    // mesma máquina de gráfico usada em Balanço/Leitura/Tela (dailyMap + buildSeries + drawChart)
+    var dm = dailyMap(r, bR.concat(rR, mR), function(x){ return x.end; }, function(x){ return x.ms / 60000; });
+    var built = buildSeries(r, dm);
+    drawChart($("dev-activity-chart"), built.series, { unit:["minuto cronometrado", "minutos cronometrados"] });
+
     var prMerged = S.prs.filter(function(x){ return (x.status||"open") === "merged" && x.statusAt >= lim.from && x.statusAt < lim.to; });
     var prClosed = S.prs.filter(function(x){ return (x.status||"open") === "closed" && x.statusAt >= lim.from && x.statusAt < lim.to; });
     var prPending = S.prs.filter(function(x){ var s = x.status||"open"; return s === "open" || s === "draft"; });
@@ -9709,10 +9739,51 @@
     // taxa de merge geral (todo o histórico, não só o período) — só aparece
     // quando já existe algum PR decidido, pra não julgar antes da hora
     var prDecided = prStatus.merged + prStatus.closed;
-    if(prDecided > 0){
-      var mergeRate = Math.round(prStatus.merged / prDecided * 100);
+    var mergeRate = prDecided > 0 ? Math.round(prStatus.merged / prDecided * 100) : null;
+    if(mergeRate !== null){
       noteEl.textContent += " Taxa de merge geral: " + mergeRate + "% (" + prStatus.merged + " de " + prDecided + " PRs decididos).";
     }
+
+    $("duck-verdict-text").textContent = duckVerdict({
+      doneCount: doneCount, openCount: openCount, debtOpenN: debtOpen.length,
+      draftN: prStatus.draft, mergeRate: mergeRate, prDecided: prDecided
+    });
+  }
+
+  // o pato dá o palpite final — condições específicas primeiro (refletem os
+  // números de verdade), com uma piada por dia da semana como plano B
+  function duckVerdict(s){
+    if(s.doneCount === 0 && s.openCount === 0){
+      return "O pato está esperando o primeiro commit. Silêncio total — nem um console.log solto por aqui.";
+    }
+    if(s.openCount === 0){
+      return "Zero itens em aberto. O pato aprova sem ressalvas — commit limpo, consciência tranquila.";
+    }
+    if(s.prDecided >= 2 && s.mergeRate === 100){
+      return "100% de taxa de merge. Nem o pato acredita — will it merge? Sempre mergeia.";
+    }
+    if(s.prDecided >= 2 && s.mergeRate < 50){
+      return "Taxa de merge abaixo de 50%. O pato sugere revisar antes de perguntar “funciona na minha máquina?”.";
+    }
+    if(s.draftN >= 3){
+      return "Muitos rascunhos parados. No dicionário do pato, “WIP” não é status — é estado de espírito.";
+    }
+    if(s.debtOpenN >= 5){
+      return "Débito técnico se acumulando feito fila de pato — um atrás do outro, sem pressa nenhuma.";
+    }
+    if(s.openCount > s.doneCount * 2 && s.openCount >= 4){
+      return "A fila de aberto cresce mais rápido do que você fecha — clássico “TODO: resolver depois”.";
+    }
+    var pool = [
+      "Domingo. Nem o pato está fazendo deploy hoje.",
+      "Segunda-feira: reiniciar o cérebro é mais devagar que reiniciar o servidor.",
+      "Terça-feira. O pato revisou seu código e não disse nada — como sempre.",
+      "Quarta-feira, meio do sprint, meio do pato.",
+      "Quinta-feira: quase sexta, quase produção.",
+      "Sexta-feira. Ninguém faz deploy sexta. Nem o pato recomenda.",
+      "Sábado. Commit de madrugada é sempre suspeito."
+    ];
+    return pool[new Date().getDay()];
   }
 
   // atalhos mantidos para o restante do app (balanço geral, cartão da semana)
