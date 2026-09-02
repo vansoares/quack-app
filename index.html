@@ -1265,6 +1265,28 @@
   .pr-env.env-staging{color:var(--amber);border-color:var(--amber);background:color-mix(in srgb, var(--amber) 20%, transparent)}
   .pr-env.env-prod{background:var(--clover);color:var(--clover-ink);border-color:var(--clover);font-weight:600}
 
+  /* ---------- correlação, etiquetas e arquivamento de PRs ---------- */
+  .pr-tag-chip{cursor:default}
+  .pr-tag-chip:hover{color:var(--ink-2)}
+  .pr-toolbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:calc(var(--sp)*2) 0}
+  .pr-edit-block{display:flex;flex-direction:column;gap:8px}
+  .pr-edit-block > label{font-size:12.5px;font-weight:600;color:var(--ink-2);text-transform:uppercase;letter-spacing:.05em}
+  .pr-edit-block input[type=text]{width:100%;font-family:var(--sans);font-size:13.5px}
+  .pr-related-list{max-height:180px;overflow-y:auto;display:flex;flex-direction:column;gap:2px;margin-top:6px}
+  .pr-related-row{display:flex;align-items:center;gap:8px;font-size:13px;padding:4px 2px;cursor:pointer}
+  .pr-related-row input{flex:none}
+  #pr-edit{width:min(480px,94vw)}
+  #pr-graph{width:min(640px,94vw)}
+  .pr-graph-body svg{width:100%;height:auto;max-width:480px;display:block;margin:0 auto}
+  .pr-graph-body .pr-node{cursor:pointer}
+  .pr-graph-body .pr-node:hover circle{opacity:.85}
+  .pr-graph-legend{list-style:none;margin:calc(var(--sp)*2) 0 0;padding:0;font-size:11.5px;color:var(--ink-3);display:flex;flex-direction:column;gap:3px;max-height:140px;overflow-y:auto}
+  .pr-graph-legend b{color:var(--ink-2);font-family:var(--mono);margin-right:4px}
+
+  /* ---------- indicativo de cronômetro rodando, no cabeçalho ---------- */
+  #btn-running{color:var(--signal)}
+  #btn-running .btn-label{font-family:var(--mono);font-size:11px}
+
   /* ---------- calendário ---------- */
   .cal-weekdays{
     display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:6px;text-align:center;
@@ -1433,7 +1455,7 @@
   /* ---------- página de notas (markdown, pastas) ---------- */
   .notes-page-body{display:flex;gap:calc(var(--sp)*3);align-items:flex-start}
   .notes-sidebar{
-    flex:0 0 220px;min-width:0;background:var(--panel);border:1px solid var(--glass-border);
+    flex:0 0 268px;min-width:0;background:var(--panel);border:1px solid var(--glass-border);
     border-radius:var(--r-lg);padding:calc(var(--sp)*2);backdrop-filter:var(--glass-blur);-webkit-backdrop-filter:var(--glass-blur);
   }
   .notes-sidebar-head{
@@ -1641,6 +1663,17 @@
       </div>
     </div>
     <div class="top-actions">
+      <button class="btn-ghost" id="btn-running" hidden>
+        <svg viewBox="0 0 32 32" width="18" height="18" aria-hidden="true">
+          <ellipse cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>
+          <circle cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>
+          <path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>
+          <circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>
+          <circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>
+          <g id="btn-running-accessory"></g>
+        </svg>
+        <span class="btn-label" id="btn-running-label"></span>
+      </button>
       <button class="btn-ghost" id="btn-card" aria-label="Resumo da semana">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 15.5 16 10.5 12 14.5 9 11.5 3 17.5"/></svg>
         <span class="btn-label">Resumo da semana</span>
@@ -2183,6 +2216,14 @@
             <option value="prod">Prod</option>
           </select>
           <button class="btn-ghost" id="pr-add">Adicionar</button>
+        </div>
+        <div class="pr-toolbar">
+          <div class="seg small" id="pr-view" role="group" aria-label="Organização da lista">
+            <button type="button" data-view="lista" aria-pressed="true">Lista</button>
+            <button type="button" data-view="tags" aria-pressed="false">Por etiqueta</button>
+          </div>
+          <button type="button" class="btn-ghost" id="pr-graph-open">Ver grafo</button>
+          <button type="button" class="btn-ghost" id="pr-archived-toggle" aria-pressed="false">Ver arquivados</button>
         </div>
         <ul class="task-list" id="pr-list"></ul>
         <p class="empty-state" id="pr-empty" hidden>Nenhum PR registrado ainda.</p>
@@ -2881,6 +2922,44 @@
   </div>
 </dialog>
 
+<dialog id="pr-edit">
+  <div class="dlg-head">
+    <h2 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.2"/><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M6 8.2V15.8M8.2 6H14a4 4 0 0 1 4 4v0"/></svg></span><span id="pr-edit-title">PR</span></h2>
+    <button class="btn-ghost icon-only" id="pr-edit-close" aria-label="Fechar" title="Fechar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="dlg-body">
+    <div class="pr-edit-block">
+      <label>Etiquetas</label>
+      <div class="notes-editor-tags">
+        <div class="notes-tag-list" id="pr-edit-tags"></div>
+        <input type="text" id="pr-edit-tag-input" placeholder="+ etiqueta" maxlength="24" aria-label="Nova etiqueta">
+      </div>
+    </div>
+    <div class="pr-edit-block">
+      <label>PRs relacionados</label>
+      <input type="text" id="pr-edit-related-search" placeholder="Buscar PR pra relacionar…" aria-label="Buscar PR pra relacionar">
+      <div id="pr-edit-related-list" class="pr-related-list"></div>
+    </div>
+  </div>
+  <div class="dlg-foot">
+    <button class="btn-ghost" id="pr-edit-archive">Arquivar</button>
+    <button class="btn-ghost" id="pr-edit-done">Concluído</button>
+  </div>
+</dialog>
+
+<dialog id="pr-graph">
+  <div class="dlg-head">
+    <h2 class="panel-title"><span class="panel-icon clay" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="2.2"/><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M6 8.2V15.8M8.2 6H14a4 4 0 0 1 4 4v0"/></svg></span>Grafo de PRs</h2>
+    <button class="btn-ghost icon-only" id="pr-graph-close" aria-label="Fechar" title="Fechar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="dlg-body pr-graph-body">
+    <p class="hint">Passe o mouse num ponto pra ver o título, ou clique pra ir até o PR na lista.</p>
+    <svg id="pr-graph-svg" viewBox="0 0 640 640" aria-hidden="true"></svg>
+    <p class="empty-state" id="pr-graph-empty" hidden>Nenhum PR ativo pra mostrar no grafo ainda.</p>
+    <ol class="pr-graph-legend" id="pr-graph-legend"></ol>
+  </div>
+</dialog>
+
 <dialog id="auth">
   <div class="dlg-head">
     <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21a8 8 0 0 0-16 0"/><circle cx="12" cy="7" r="4"/></svg></span><span id="auth-title">Entrar</span></h2>
@@ -3025,6 +3104,7 @@
     range: "semana",
     filterTag: null,
     taskView: "lista",
+    prView: "lista",
     hideCompleted: false,
     collapsed: [],
     topicColors: {},
@@ -3111,6 +3191,7 @@
     // pra "lista"; quem tinha o extinto modo "dias" (removido depois que o
     // Calendário passou a cobrir esse caso de uso) cai de volta pra "lista"
     if(d.taskView) s.taskView = d.taskView === "dias" ? "lista" : d.taskView;
+    if(d.prView) s.prView = d.prView;
     else if(d.groupTasks) s.taskView = "topicos";
     if(typeof d.hideCompleted !== "undefined") s.hideCompleted = !!d.hideCompleted;
     if(Array.isArray(d.collapsed)) s.collapsed = d.collapsed;
@@ -3994,6 +4075,7 @@
     $("tally-text").textContent = n === 0 ? "nenhum pomodoro ainda" :
       (n + (n === 1 ? " pomodoro" : " pomodoros") + (n > 16 ? " (+" + (n-16) + ")" : "") + " · " + fmtDuration(dayFocusMs(today)));
     paintClock();
+    renderHeaderRun();
   }
 
   function dayFocusMs(key){
@@ -5538,7 +5620,7 @@
       atual = HUES.indexOf(h);
     }
     S.topicColors[k] = (atual + 1) % HUES.length;
-    save(); renderTasks(); renderStats();
+    save(); renderTasks(); renderStats(); renderPrs();
   }
 
   function paintTopic(el, tag){
@@ -9013,6 +9095,17 @@
   var PR_STATUS_LABEL = { open:"Aberto", draft:"Rascunho", merged:"Mesclado", tested:"Testado", closed:"Fechado" };
   var PR_ENV_ORDER = ["none", "staging", "prod"];
   var PR_ENV_LABEL = { none:"Nenhum", staging:"Staging", prod:"Prod" };
+  var PR_STATUS_COLOR = { open:"var(--clover)", draft:"var(--ink-3)", merged:"var(--rest)", tested:"var(--teal)", closed:"var(--signal)" };
+  var PR_SEM_TAG = " sem";
+
+  // arquivados ficam fora da lista/grafo por padrão, mas nunca somem de
+  // verdade — esse toggle só troca o que renderPrs() mostra, sem persistir
+  // (mesma ideia de notesPreviewMode: preferência de visão, não dado)
+  var prShowArchived = false;
+  var prEditId = null;      // PR aberto no diálogo de edição, ou null
+  var prRelatedSearch = "";
+
+  function findPr(id){ return S.prs.filter(function(p){ return p.id === id; })[0] || null; }
 
   function addPr(){
     var input = $("pr-title");
@@ -9025,15 +9118,19 @@
     var env = $("pr-env-new").value;
     if(PR_ENV_ORDER.indexOf(env) < 0) env = "none";
     var now = Date.now();
-    S.prs.unshift({ id: uid(), title: title, url: url || null, status: status, env: env, createdAt: now, statusAt: now });
+    S.prs.unshift({ id: uid(), title: title, url: url || null, status: status, env: env, createdAt: now, statusAt: now, tags: [], relatedIds: [], archived: false });
     input.value = ""; urlInput.value = ""; $("pr-status-new").value = "open"; $("pr-env-new").value = "none";
     save(); renderPrs(); renderDevWatch(); renderDevSummary();
   }
 
   async function removePr(id){
     if(!(await askConfirm("Excluir este PR da lista?", { danger:true }))) return;
+    // limpa o id de qualquer outro PR relacionado antes de sumir com ele —
+    // sem isso o vínculo ficaria pendurado apontando pra um PR que não existe
+    S.prs.forEach(function(p){ if(p.relatedIds) p.relatedIds = p.relatedIds.filter(function(x){ return x !== id; }); });
     S.prs = S.prs.filter(function(x){ return x.id !== id; });
     markDeleted(id);
+    if(prEditId === id){ prEditId = null; if($("pr-edit").open) $("pr-edit").close(); }
     save(); renderPrs(); renderDevWatch(); renderDevSummary();
   }
 
@@ -9048,6 +9145,237 @@
     var at = PR_ENV_ORDER.indexOf(item.env || "none");
     item.env = PR_ENV_ORDER[(at + 1) % PR_ENV_ORDER.length] || PR_ENV_ORDER[0];
     save(); renderPrs();
+  }
+
+  function addPrTag(id, raw){
+    var tag = normTag(raw);
+    if(!tag) return;
+    var p = findPr(id);
+    if(!p) return;
+    if(!p.tags) p.tags = [];
+    if(p.tags.some(function(t){ return t.toLowerCase() === tag.toLowerCase(); })) return;
+    p.tags.push(tag);
+    save(); renderPrs(); renderPrEditDialog();
+  }
+
+  function removePrTag(id, tag){
+    var p = findPr(id);
+    if(!p || !p.tags) return;
+    p.tags = p.tags.filter(function(t){ return t.toLowerCase() !== tag.toLowerCase(); });
+    save(); renderPrs(); renderPrEditDialog();
+  }
+
+  // vínculo simples, sem direção — grava dos dois lados pra ficar simétrico
+  // por construção, sem depender de quem abriu o diálogo pra relacionar
+  function addPrRelation(idA, idB){
+    if(idA === idB) return;
+    var a = findPr(idA), b = findPr(idB);
+    if(!a || !b) return;
+    if(!a.relatedIds) a.relatedIds = [];
+    if(!b.relatedIds) b.relatedIds = [];
+    if(a.relatedIds.indexOf(idB) < 0) a.relatedIds.push(idB);
+    if(b.relatedIds.indexOf(idA) < 0) b.relatedIds.push(idA);
+    save(); renderPrs(); renderPrEditDialog();
+  }
+
+  function removePrRelation(idA, idB){
+    var a = findPr(idA), b = findPr(idB);
+    if(a && a.relatedIds) a.relatedIds = a.relatedIds.filter(function(x){ return x !== idB; });
+    if(b && b.relatedIds) b.relatedIds = b.relatedIds.filter(function(x){ return x !== idA; });
+    save(); renderPrs(); renderPrEditDialog();
+  }
+
+  function archivePr(id){
+    var p = findPr(id);
+    if(!p) return;
+    p.archived = true;
+    save(); renderPrs(); renderDevWatch(); renderPrEditDialog();
+  }
+
+  function restorePr(id){
+    var p = findPr(id);
+    if(!p) return;
+    p.archived = false;
+    save(); renderPrs(); renderDevWatch(); renderPrEditDialog();
+  }
+
+  function openPrEditor(id){
+    if(document.querySelector("dialog[open]")) return;
+    prEditId = id;
+    prRelatedSearch = "";
+    $("pr-edit-related-search").value = "";
+    $("pr-edit-tag-input").value = "";
+    renderPrEditDialog();
+    $("pr-edit").showModal();
+  }
+
+  function renderPrEditDialog(){
+    if(!prEditId) return;
+    var p = findPr(prEditId);
+    if(!p){
+      prEditId = null;
+      if($("pr-edit").open) $("pr-edit").close();
+      return;
+    }
+
+    $("pr-edit-title").textContent = p.title;
+
+    var tagBox = $("pr-edit-tags");
+    tagBox.innerHTML = "";
+    (p.tags || []).forEach(function(tag){
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "note-tag-chip";
+      chip.title = "Remover etiqueta";
+      chip.innerHTML = escapeHtml(tag) + '<span class="x">×</span>';
+      chip.onclick = function(){ removePrTag(p.id, tag); };
+      tagBox.appendChild(chip);
+    });
+
+    var relBox = $("pr-edit-related-list");
+    relBox.innerHTML = "";
+    var q = prRelatedSearch.trim().toLowerCase();
+    var others = S.prs.filter(function(x){ return x.id !== p.id && !x.archived; });
+    if(q) others = others.filter(function(x){ return x.title.toLowerCase().indexOf(q) >= 0; });
+    others = others.slice().sort(function(a, b){ return b.createdAt - a.createdAt; });
+    if(!others.length){
+      var empty = document.createElement("p");
+      empty.className = "empty-state";
+      empty.textContent = q ? "Nenhum PR encontrado." : "Nenhum outro PR ativo pra relacionar.";
+      relBox.appendChild(empty);
+    }
+    others.forEach(function(x){
+      var row = document.createElement("label");
+      row.className = "pr-related-row";
+      var chk = document.createElement("input");
+      chk.type = "checkbox";
+      chk.checked = (p.relatedIds || []).indexOf(x.id) >= 0;
+      chk.onchange = function(){ chk.checked ? addPrRelation(p.id, x.id) : removePrRelation(p.id, x.id); };
+      var span = document.createElement("span");
+      span.textContent = x.title;
+      row.appendChild(chk); row.appendChild(span);
+      relBox.appendChild(row);
+    });
+
+    var archiveBtn = $("pr-edit-archive");
+    archiveBtn.textContent = p.archived ? "Restaurar" : "Arquivar";
+    archiveBtn.onclick = function(){ p.archived ? restorePr(p.id) : archivePr(p.id); };
+  }
+
+  function prGroupKey(p){ return (p.tags && p.tags[0]) ? p.tags[0].toLowerCase() : PR_SEM_TAG; }
+  function prCollapseKey(key){ return "pr:" + key; }
+
+  // coleção de agrupamento própria pros PRs (em vez de toggleCollapsed, que
+  // é de tarefas e re-renderiza a lista errada) — a chave prefixada "pr:"
+  // evita colidir com as chaves de tópico de tarefa no mesmo S.collapsed
+  function togglePrCollapsed(key){
+    if(!S.collapsed) S.collapsed = [];
+    var ck = prCollapseKey(key);
+    var at = S.collapsed.indexOf(ck);
+    if(at >= 0) S.collapsed.splice(at, 1);
+    else S.collapsed.push(ck);
+    save(); renderPrs();
+  }
+
+  function prGroupHeader(key, label, items){
+    var li = document.createElement("li");
+    li.className = "group";
+    var tag = key === PR_SEM_TAG ? null : label;
+
+    if(tag){
+      var sw = document.createElement("button");
+      sw.type = "button";
+      sw.className = "swatch";
+      paintTopic(sw, tag);
+      sw.title = "Trocar a cor de " + tag;
+      sw.setAttribute("aria-label", "Trocar a cor da etiqueta " + tag);
+      sw.onclick = function(ev){ ev.stopPropagation(); cycleTopicColor(tag); };
+      li.appendChild(sw);
+      li.style.display = "flex"; li.style.alignItems = "center"; li.style.gap = "12px";
+    }
+
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "group-head";
+    var ck = prCollapseKey(key);
+    b.setAttribute("aria-expanded", String(!isCollapsed(ck)));
+    if(tag && paintTopic(b, tag)) b.classList.add("acc");
+
+    var caret = document.createElement("span");
+    caret.className = "caret" + (isCollapsed(ck) ? " collapsed" : "");
+    caret.innerHTML = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>';
+
+    var name = document.createElement("span");
+    name.className = "group-name";
+    name.textContent = label;
+    if(tag && paintTopic(name, tag)) name.classList.add("colored");
+
+    var meta = document.createElement("span");
+    meta.className = "group-meta";
+    var merged = items.filter(function(p){ return p.status === "merged"; }).length;
+    meta.textContent = items.length + (items.length === 1 ? " PR" : " PRs") +
+      (merged ? " · " + merged + " mesclado" + (merged === 1 ? "" : "s") : "");
+
+    b.appendChild(caret); b.appendChild(name); b.appendChild(meta);
+    b.onclick = function(){ togglePrCollapsed(key); };
+    li.appendChild(b);
+    return li;
+  }
+
+  function prRow(item){
+    var li = document.createElement("li");
+    li.className = "task";
+    li.dataset.id = item.id;
+
+    var title = item.url ? document.createElement("a") : document.createElement("span");
+    title.className = "title";
+    if(item.url){ title.href = item.url; title.target = "_blank"; title.rel = "noopener noreferrer"; }
+    title.textContent = item.title;
+    li.appendChild(title);
+
+    if(item.archived){
+      var restore = document.createElement("button");
+      restore.type = "button";
+      restore.className = "btn-ghost";
+      restore.textContent = "Restaurar";
+      restore.onclick = function(){ restorePr(item.id); };
+      li.appendChild(restore);
+    }else{
+      li.appendChild(prStatusPill(item));
+      li.appendChild(prEnvPill(item));
+    }
+
+    (item.tags || []).forEach(function(tag){
+      var chip = document.createElement("span");
+      chip.className = "note-tag-chip pr-tag-chip";
+      paintTopic(chip, tag);
+      chip.textContent = tag;
+      li.appendChild(chip);
+    });
+
+    var edit = document.createElement("button");
+    edit.type = "button";
+    edit.className = "btn-ghost icon-only";
+    edit.title = "Editar etiquetas, vínculos e arquivamento";
+    edit.setAttribute("aria-label", "Editar PR");
+    edit.innerHTML = '<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>';
+    edit.onclick = function(){ openPrEditor(item.id); };
+    li.appendChild(edit);
+
+    var date = document.createElement("span");
+    date.className = "entry-date";
+    date.textContent = new Date(item.createdAt).toLocaleDateString("pt-BR");
+    li.appendChild(date);
+
+    var del = document.createElement("button");
+    del.type = "button";
+    del.className = "kill";
+    del.textContent = "×";
+    del.setAttribute("aria-label", "Excluir");
+    del.onclick = function(){ removePr(item.id); };
+    li.appendChild(del);
+
+    return li;
   }
 
   function logEntryRow(item, onDelete, extra){
@@ -9098,14 +9426,127 @@
   function renderPrs(){
     var box = $("pr-list");
     box.innerHTML = "";
-    $("pr-empty").hidden = S.prs.length > 0;
-    S.prs.slice().sort(function(a, b){ return b.createdAt - a.createdAt; })
-      .forEach(function(item){
-        var badges = document.createDocumentFragment();
-        badges.appendChild(prStatusPill(item));
-        badges.appendChild(prEnvPill(item));
-        box.appendChild(logEntryRow(item, removePr, badges));
+
+    document.querySelectorAll("#pr-view button").forEach(function(b){
+      b.setAttribute("aria-pressed", String(b.dataset.view === S.prView));
+    });
+    var archivedCount = S.prs.filter(function(p){ return p.archived; }).length;
+    var archToggle = $("pr-archived-toggle");
+    archToggle.setAttribute("aria-pressed", String(prShowArchived));
+    archToggle.textContent = prShowArchived ? "Ver ativos" : "Ver arquivados" + (archivedCount ? " (" + archivedCount + ")" : "");
+
+    var visible = S.prs.filter(function(p){ return !!p.archived === prShowArchived; })
+      .slice().sort(function(a, b){ return b.createdAt - a.createdAt; });
+
+    $("pr-empty").hidden = visible.length > 0;
+    $("pr-empty").textContent = prShowArchived ? "Nenhum PR arquivado." : "Nenhum PR registrado ainda.";
+
+    // a visão agrupada só existe pra ativos — arquivados sempre aparecem
+    // como lista simples, pra não multiplicar o número de combinações de UI
+    if(prShowArchived || S.prView !== "tags"){
+      visible.forEach(function(item){ box.appendChild(prRow(item)); });
+    }else{
+      var groups = {}, order = [];
+      visible.forEach(function(p){
+        var k = prGroupKey(p);
+        if(!groups[k]){ groups[k] = { key:k, label: (p.tags && p.tags[0]) || "Sem etiqueta", items: [] }; order.push(k); }
+        groups[k].items.push(p);
       });
+      order.sort(function(a, b){
+        if(a === PR_SEM_TAG) return 1;
+        if(b === PR_SEM_TAG) return -1;
+        return groups[a].label.localeCompare(groups[b].label, "pt-BR");
+      });
+      order.forEach(function(k){
+        var g = groups[k];
+        box.appendChild(prGroupHeader(k, g.label, g.items));
+        if(isCollapsed(prCollapseKey(k))) return;
+        g.items.forEach(function(p){ box.appendChild(prRow(p)); });
+      });
+    }
+  }
+
+  /* ---------- grafo de correlação entre PRs ---------- */
+  // layout circular determinístico — sem simulação de força: robusto e
+  // simples pra uma lista de dezenas de PRs, o que já cobre bem o uso real
+  function renderPrGraph(){
+    var svg = $("pr-graph-svg");
+    var nodes = S.prs.filter(function(p){ return !p.archived; });
+
+    if(!nodes.length){
+      svg.innerHTML = ""; svg.hidden = true;
+      $("pr-graph-empty").hidden = false;
+      $("pr-graph-legend").innerHTML = "";
+      return;
+    }
+    svg.hidden = false;
+    $("pr-graph-empty").hidden = true;
+
+    // PRs da mesma etiqueta primária ficam vizinhos no anel — reduz cruzamento
+    // de linhas sem precisar de física
+    nodes = nodes.slice().sort(function(a, b){
+      var ta = (a.tags && a.tags[0]) || "";
+      var tb = (b.tags && b.tags[0]) || "";
+      return ta.localeCompare(tb, "pt-BR") || a.createdAt - b.createdAt;
+    });
+
+    var N = nodes.length;
+    var cx = 320, cy = 320;
+    var R = Math.max(160, Math.min(280, 60 + N * 10));
+    var rDot = N > 30 ? 6 : (N > 15 ? 8 : 11);
+    var pos = {};
+    nodes.forEach(function(p, i){
+      var angle = -Math.PI / 2 + i * (2 * Math.PI / N);
+      pos[p.id] = { x: cx + R * Math.cos(angle), y: cy + R * Math.sin(angle) };
+    });
+
+    var parts = [];
+    var seen = {};
+    nodes.forEach(function(p){
+      (p.relatedIds || []).forEach(function(rid){
+        // defensivo: um relatedId pode apontar pra um PR arquivado (fora do
+        // grafo) ou pra um id que sumiu num merge cross-device — nunca confia
+        // no array como autoritativo, só desenha o que existe agora
+        if(!pos[rid]) return;
+        var key = [p.id, rid].sort().join("|");
+        if(seen[key]) return;
+        seen[key] = true;
+        var a = pos[p.id], b = pos[rid];
+        parts.push('<line x1="' + a.x.toFixed(1) + '" y1="' + a.y.toFixed(1) + '" x2="' + b.x.toFixed(1) + '" y2="' + b.y.toFixed(1) + '" stroke="var(--ink-3)" stroke-width="1.3" opacity=".45"/>');
+      });
+    });
+
+    nodes.forEach(function(p, i){
+      var xy = pos[p.id];
+      var status = PR_STATUS_LABEL[p.status] ? p.status : "open";
+      parts.push(
+        '<g class="pr-node" data-id="' + p.id + '" tabindex="0" role="button" aria-label="' + escapeHtml(p.title) + '">' +
+        '<circle cx="' + xy.x.toFixed(1) + '" cy="' + xy.y.toFixed(1) + '" r="' + rDot + '" fill="' + PR_STATUS_COLOR[status] + '"><title>' + escapeHtml(p.title) + '</title></circle>' +
+        '<text x="' + xy.x.toFixed(1) + '" y="' + xy.y.toFixed(1) + '" text-anchor="middle" dominant-baseline="central" font-size="' + Math.max(7, rDot) + '" font-family="var(--mono)" fill="var(--paper)">' + (i + 1) + '</text>' +
+        '</g>'
+      );
+    });
+
+    svg.innerHTML = parts.join("");
+    $("pr-graph-legend").innerHTML = nodes.map(function(p, i){
+      return "<li><b>" + (i + 1) + "</b>" + escapeHtml(p.title) + "</li>";
+    }).join("");
+  }
+
+  function openPrGraph(){
+    if(document.querySelector("dialog[open]")) return;
+    renderPrGraph();
+    $("pr-graph").showModal();
+  }
+
+  function goToPrFromGraph(id){
+    if($("pr-graph").open) $("pr-graph").close();
+    prShowArchived = false;
+    S.prView = "lista";
+    save();
+    selectTab("ferramentas");
+    renderPrs();
+    flashSearchHit($("pr-list"), id);
   }
 
   /* ---------- comentários de documentação ---------- */
@@ -9576,6 +10017,68 @@
     return Object.keys(TRACKS).filter(function(k){ return k !== key && TRACKS[k].state().running; });
   }
 
+  /* ---------- indicativo de cronômetro rodando, no cabeçalho ---------- */
+  // cobre os 3 cronômetros de dev tools + o pomodoro do Foco, que vive num
+  // sistema totalmente separado (S.timer) — quando mais de um está rodando
+  // ao mesmo tempo (já é possível hoje), mostra o que começou mais recente
+  function currentRunningKey(){
+    var candidates = [];
+    Object.keys(TRACKS).forEach(function(k){
+      var st = TRACKS[k].state();
+      if(st.running) candidates.push({ key:k, startedAt: st.startedAt || 0 });
+    });
+    if(S.timer.running){
+      candidates.push({ key:"foco", startedAt: (S.timer.endsAt || Date.now()) - duration(S.timer.mode) });
+    }
+    if(!candidates.length) return null;
+    candidates.sort(function(a, b){ return b.startedAt - a.startedAt; });
+    return candidates[0].key;
+  }
+
+  var HEADER_RUN_LABEL = { build:"Build", review:"Code review", meeting:"Reunião", foco:"Foco" };
+  // acessório do Foco ecoa o próprio mostrador circular da aba (anel +
+  // marcador), pra ter identidade própria mesmo sem um cronômetro de dev
+  // por trás — os outros 3 reaproveitam DEV_DUCK_ACCESSORY tal como estão
+  var HEADER_FOCO_ACCESSORY =
+    '<circle cx="6" cy="20.3" r="5.1" fill="none" stroke="var(--ink)" stroke-width="1.6"/>' +
+    '<circle cx="6" cy="20.3" r="1.3" fill="var(--ink)"/>' +
+    '<circle cx="6" cy="15.4" r="1" fill="var(--ink)"/>';
+
+  function headerRunAccessory(key){
+    return key === "foco" ? HEADER_FOCO_ACCESSORY : (DEV_DUCK_ACCESSORY[key] || "");
+  }
+
+  var headerRunKey = null;
+  function renderHeaderRun(){
+    var key = currentRunningKey();
+    var btn = $("btn-running");
+    btn.hidden = !key;
+    if(!key) return;
+
+    if(headerRunKey !== key){
+      headerRunKey = key;
+      $("btn-running-accessory").innerHTML = headerRunAccessory(key);
+    }
+
+    var label = HEADER_RUN_LABEL[key];
+    var clock = key === "foco" ? fmtClock(duration(S.timer.mode) - remaining()) : fmtClock(trackElapsed(key));
+    btn.title = label + " rodando — " + clock + " · clique pra ir até lá";
+    btn.setAttribute("aria-label", btn.title);
+    $("btn-running-label").textContent = label + " · " + clock;
+  }
+
+  function goToRunningTimer(){
+    var key = currentRunningKey();
+    if(!key) return;
+    if(key === "foco"){ selectTab("foco"); return; }
+    S.devTab = key;
+    save();
+    selectTab("ferramentas");
+    renderDevWatch();
+    var el = $("devsub-timer");
+    if(el) el.scrollIntoView({ block:"start", behavior:"smooth" });
+  }
+
   function startTrack(key){
     var outros = otherRunningTrack(key);
     if(outros.length){
@@ -9669,6 +10172,7 @@
       }
       $("dev-note").textContent = txt;
     }
+    renderHeaderRun();
   }
 
   /* ---------- balanço geral de dev ---------- */
@@ -10410,6 +10914,45 @@
   $("pr-add").onclick = addPr;
   $("pr-title").addEventListener("keydown", function(e){ if(e.key === "Enter") addPr(); });
   $("pr-url").addEventListener("keydown", function(e){ if(e.key === "Enter") addPr(); });
+
+  document.querySelectorAll("#pr-view button").forEach(function(b){
+    b.onclick = function(){
+      S.prView = b.dataset.view;
+      save(); renderPrs();
+    };
+  });
+  $("pr-archived-toggle").onclick = function(){
+    prShowArchived = !prShowArchived;
+    renderPrs();
+  };
+
+  $("pr-graph-open").onclick = openPrGraph;
+  $("pr-graph-close").onclick = function(){ $("pr-graph").close(); };
+  $("pr-graph-svg").addEventListener("click", function(e){
+    var g = e.target.closest("[data-id]");
+    if(g) goToPrFromGraph(g.getAttribute("data-id"));
+  });
+  $("pr-graph-svg").addEventListener("keydown", function(e){
+    if(e.key !== "Enter" && e.key !== " ") return;
+    var g = e.target.closest("[data-id]");
+    if(!g) return;
+    e.preventDefault();
+    goToPrFromGraph(g.getAttribute("data-id"));
+  });
+
+  $("pr-edit-close").onclick = function(){ $("pr-edit").close(); };
+  $("pr-edit-done").onclick = function(){ $("pr-edit").close(); };
+  $("pr-edit-tag-input").addEventListener("keydown", function(e){
+    if(e.key !== "Enter" || !prEditId) return;
+    addPrTag(prEditId, this.value);
+    this.value = "";
+  });
+  $("pr-edit-related-search").addEventListener("input", function(){
+    prRelatedSearch = this.value;
+    renderPrEditDialog();
+  });
+
+  $("btn-running").onclick = goToRunningTimer;
 
   // comentários de documentação
   $("doccomment-add").onclick = addDocComment;
