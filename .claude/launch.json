@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "quack-local",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["test/local-server.js"],
+      "port": 4020
+    }
+  ]
+}

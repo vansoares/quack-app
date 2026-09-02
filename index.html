@@ -546,6 +546,7 @@
     margin-top:calc(var(--sp)*2);padding-top:calc(var(--sp)*1.5);border-top:1px solid var(--line);
     font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-3);
   }
+  .list-foot[hidden]{display:none}
   /* o bloco de ações quebra inteiro pra linha de baixo se precisar — nunca
      cada botão isolado, que ficava com um jeito de tudo desalinhado */
   .list-foot > span:last-child{white-space:nowrap}
@@ -1066,6 +1067,11 @@
     background:hsl(var(--h) var(--topic-s) var(--topic-l));cursor:pointer;
   }
   .swatch:hover{outline:2px solid hsl(var(--h) var(--topic-s) var(--topic-l));outline-offset:2px}
+  .group-add{
+    width:21px;height:21px;min-height:0;flex:none;border:1px solid var(--line);border-radius:50%;padding:0;
+    display:grid;place-items:center;color:var(--ink-3);background:transparent;cursor:pointer;
+  }
+  .group-add:hover{color:var(--signal);border-color:var(--signal)}
   .dot{
     width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:baseline;
     background:hsl(var(--h) var(--topic-s) var(--topic-l));
@@ -1233,8 +1239,8 @@
 
   /* ---------- status de PR ---------- */
   /* mesma linguagem visual da urgência (pílula, clique pra avançar), com
-     as 4 cores categóricas já existentes fazendo o papel semântico de
-     open/draft/merged/closed sem precisar inventar paleta nova */
+     as cores categóricas já existentes fazendo o papel semântico de
+     open/draft/merged/tested/closed sem precisar inventar paleta nova */
   .pr-status{
     font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
     border:1px solid var(--line);border-radius:var(--r-md);padding:3px 8px;white-space:nowrap;flex:none;
@@ -1244,7 +1250,20 @@
   .pr-status.status-open{color:var(--clover-ink);border-color:var(--clover);background:color-mix(in srgb, var(--clover) 20%, transparent)}
   .pr-status.status-draft{color:var(--ink-3);border-color:var(--line);border-style:dashed}
   .pr-status.status-merged{background:var(--rest);color:var(--on-ink);border-color:var(--rest);font-weight:600}
+  .pr-status.status-tested{color:var(--teal);border-color:var(--teal);background:color-mix(in srgb, var(--teal) 20%, transparent)}
   .pr-status.status-closed{color:var(--signal);border-color:var(--signal)}
+
+  /* etiqueta de ambiente do PR — mesma pílula, clique pra avançar entre
+     nenhum/staging/prod; "nenhum" fica discreta de propósito */
+  .pr-env{
+    font-family:var(--mono);font-size:9px;letter-spacing:.1em;text-transform:uppercase;
+    border:1px solid var(--line);border-radius:var(--r-md);padding:3px 8px;white-space:nowrap;flex:none;
+    background:transparent;color:var(--ink-3);cursor:pointer;
+  }
+  .pr-env:hover{border-color:var(--ink-3)}
+  .pr-env.env-none{color:var(--ink-3);border-color:var(--line);border-style:dashed}
+  .pr-env.env-staging{color:var(--amber);border-color:var(--amber);background:color-mix(in srgb, var(--amber) 20%, transparent)}
+  .pr-env.env-prod{background:var(--clover);color:var(--clover-ink);border-color:var(--clover);font-weight:600}
 
   /* ---------- calendário ---------- */
   .cal-weekdays{
@@ -2155,7 +2174,13 @@
             <option value="open">Aberto</option>
             <option value="draft">Rascunho</option>
             <option value="merged">Mesclado</option>
+            <option value="tested">Testado</option>
             <option value="closed">Fechado</option>
+          </select>
+          <select id="pr-env-new" aria-label="Ambiente do PR">
+            <option value="none">Nenhum</option>
+            <option value="staging">Staging</option>
+            <option value="prod">Prod</option>
           </select>
           <button class="btn-ghost" id="pr-add">Adicionar</button>
         </div>
@@ -2308,6 +2333,7 @@
           <div class="embed-lofi-extra" id="embed-lofi-extra" hidden>
             <button class="btn-ghost" id="embed-lofi-girl">Lofi Girl</button>
             <button class="btn-ghost" id="embed-synthwave">Synthwave Radio</button>
+            <button class="btn-ghost" id="embed-claude-fm">Claude FM</button>
           </div>
           <span class="hint" style="margin:0">rádios ao vivo de verdade — se uma parar de tocar, é a transmissão que mudou; cole o link novo acima</span>
         </div>
@@ -2498,6 +2524,12 @@
           <ul class="task-list" id="list-items"></ul>
           <div class="empty-state" id="list-items-empty" hidden>
             Lista vazia. Adicione o primeiro item abaixo.
+          </div>
+          <div class="list-foot" id="list-items-foot" hidden>
+            <span></span>
+            <span>
+              <button id="list-clear-done">Limpar concluídos</button>
+            </span>
           </div>
           <div class="new-task" id="new-list-item">
             <input type="text" id="list-item-text" placeholder="Novo item" maxlength="120" aria-label="Novo item">
@@ -4244,7 +4276,27 @@
     b.appendChild(caret); b.appendChild(name); b.appendChild(meta);
     b.onclick = function(){ toggleCollapsed(key); };
     li.appendChild(b);
+
+    if(tag){
+      var addBtn = document.createElement("button");
+      addBtn.type = "button";
+      addBtn.className = "group-add";
+      addBtn.title = "Nova tarefa em " + tag;
+      addBtn.setAttribute("aria-label", "Nova tarefa com a etiqueta " + tag);
+      addBtn.innerHTML = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+      addBtn.onclick = function(ev){ ev.stopPropagation(); quickAddTaskWithTag(tag); };
+      li.appendChild(addBtn);
+    }
     return li;
+  }
+
+  // preenche a etiqueta e foca o campo de título — clique no "+" ao lado
+  // de um tópico existente, pra não ter que redigitar a etiqueta na mão
+  function quickAddTaskWithTag(tag){
+    $("task-tag").value = tag;
+    var input = $("task-input");
+    input.scrollIntoView({ block:"center", behavior:"smooth" });
+    input.focus();
   }
 
   function renderTasks(){
@@ -5130,9 +5182,9 @@
     ul.innerHTML = "";
     items.forEach(function(it){ ul.appendChild(listItemRow(it)); });
     $("list-items-empty").hidden = items.length > 0;
-    $("notes-list-editor-count").textContent = items.length
-      ? items.filter(function(it){ return it.checked; }).length + "/" + items.length
-      : "";
+    var doneCount = items.filter(function(it){ return it.checked; }).length;
+    $("notes-list-editor-count").textContent = items.length ? doneCount + "/" + items.length : "";
+    $("list-items-foot").hidden = doneCount === 0;
   }
 
   function listItemRow(it){
@@ -5213,6 +5265,18 @@
   function removeListItem(id){
     S.listItems = S.listItems.filter(function(it){ return it.id !== id; });
     markDeleted(id);
+    save(); renderListEditor();
+  }
+
+  async function clearDoneListItems(){
+    var list = findList(notesOpenListId);
+    if(!list) return;
+    var done = listItemsFor(list.id).filter(function(it){ return it.checked; });
+    if(!done.length) return;
+    if(!(await askConfirm("Remover " + done.length + (done.length === 1 ? " item concluído" : " itens concluídos") + " desta lista?", { danger:true }))) return;
+    var ids = done.map(function(it){ return it.id; });
+    S.listItems = S.listItems.filter(function(it){ return ids.indexOf(it.id) < 0; });
+    markDeletedMany(ids);
     save(); renderListEditor();
   }
 
@@ -7243,7 +7307,8 @@
   // deve aparecer marcado (ver renderSound)
   var LOFI_OPTION_SRCS = [
     "https://www.youtube.com/embed/XVFUtEh9zrY?rel=0",
-    "https://www.youtube.com/embed/4xDzrJKXOOY?rel=0"
+    "https://www.youtube.com/embed/4xDzrJKXOOY?rel=0",
+    "https://www.youtube.com/embed/tRsQsTMvPNg?rel=0"
   ];
 
   // AudioContext usado pelo aviso sonoro do fim do pomodoro (beep)
@@ -8944,8 +9009,10 @@
   }
 
   /* ---------- PRs feitos ---------- */
-  var PR_STATUS_ORDER = ["open", "draft", "merged", "closed"];
-  var PR_STATUS_LABEL = { open:"Aberto", draft:"Rascunho", merged:"Mesclado", closed:"Fechado" };
+  var PR_STATUS_ORDER = ["open", "draft", "merged", "tested", "closed"];
+  var PR_STATUS_LABEL = { open:"Aberto", draft:"Rascunho", merged:"Mesclado", tested:"Testado", closed:"Fechado" };
+  var PR_ENV_ORDER = ["none", "staging", "prod"];
+  var PR_ENV_LABEL = { none:"Nenhum", staging:"Staging", prod:"Prod" };
 
   function addPr(){
     var input = $("pr-title");
@@ -8955,9 +9022,11 @@
     var url = urlInput.value.trim().slice(0, 300);
     var status = $("pr-status-new").value;
     if(PR_STATUS_ORDER.indexOf(status) < 0) status = "open";
+    var env = $("pr-env-new").value;
+    if(PR_ENV_ORDER.indexOf(env) < 0) env = "none";
     var now = Date.now();
-    S.prs.unshift({ id: uid(), title: title, url: url || null, status: status, createdAt: now, statusAt: now });
-    input.value = ""; urlInput.value = ""; $("pr-status-new").value = "open";
+    S.prs.unshift({ id: uid(), title: title, url: url || null, status: status, env: env, createdAt: now, statusAt: now });
+    input.value = ""; urlInput.value = ""; $("pr-status-new").value = "open"; $("pr-env-new").value = "none";
     save(); renderPrs(); renderDevWatch(); renderDevSummary();
   }
 
@@ -8973,6 +9042,12 @@
     item.status = PR_STATUS_ORDER[(at + 1) % PR_STATUS_ORDER.length] || PR_STATUS_ORDER[0];
     item.statusAt = Date.now();
     save(); renderPrs(); renderDevSummary();
+  }
+
+  function cyclePrEnv(item){
+    var at = PR_ENV_ORDER.indexOf(item.env || "none");
+    item.env = PR_ENV_ORDER[(at + 1) % PR_ENV_ORDER.length] || PR_ENV_ORDER[0];
+    save(); renderPrs();
   }
 
   function logEntryRow(item, onDelete, extra){
@@ -9008,12 +9083,29 @@
     return btn;
   }
 
+  function prEnvPill(item){
+    var env = PR_ENV_LABEL[item.env] ? item.env : "none";
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "pr-env env-" + env;
+    btn.textContent = PR_ENV_LABEL[env];
+    btn.title = "Ambiente: " + PR_ENV_LABEL[env] + " — clique para mudar";
+    btn.setAttribute("aria-label", "Ambiente do PR: " + PR_ENV_LABEL[env]);
+    btn.onclick = function(){ cyclePrEnv(item); };
+    return btn;
+  }
+
   function renderPrs(){
     var box = $("pr-list");
     box.innerHTML = "";
     $("pr-empty").hidden = S.prs.length > 0;
     S.prs.slice().sort(function(a, b){ return b.createdAt - a.createdAt; })
-      .forEach(function(item){ box.appendChild(logEntryRow(item, removePr, prStatusPill(item))); });
+      .forEach(function(item){
+        var badges = document.createDocumentFragment();
+        badges.appendChild(prStatusPill(item));
+        badges.appendChild(prEnvPill(item));
+        box.appendChild(logEntryRow(item, removePr, badges));
+      });
   }
 
   /* ---------- comentários de documentação ---------- */
@@ -9632,12 +9724,13 @@
 
     // barra 2: retrato atual de todos os PRs guardados, por status — não é
     // fatiado por período porque é o estado da fila agora, não um fluxo
-    var prStatus = { open:0, draft:0, merged:0, closed:0 };
+    var prStatus = { open:0, draft:0, merged:0, tested:0, closed:0 };
     S.prs.forEach(function(p){ prStatus[PR_STATUS_LABEL[p.status] ? p.status : "open"]++; });
     renderMix("pr-mix", "pr-mix-legend", [
       { label:"Aberto", value:prStatus.open, display:String(prStatus.open), color:"var(--clover)" },
       { label:"Rascunho", value:prStatus.draft, display:String(prStatus.draft), color:"var(--ink-3)" },
       { label:"Mesclado", value:prStatus.merged, display:String(prStatus.merged), color:"var(--rest)" },
+      { label:"Testado", value:prStatus.tested, display:String(prStatus.tested), color:"var(--teal)" },
       { label:"Fechado", value:prStatus.closed, display:String(prStatus.closed), color:"var(--signal)" }
     ]);
 
@@ -9729,10 +9822,11 @@
 
     // taxa de merge geral (todo o histórico, não só o período) — só aparece
     // quando já existe algum PR decidido, pra não julgar antes da hora
-    var prDecided = prStatus.merged + prStatus.closed;
-    var mergeRate = prDecided > 0 ? Math.round(prStatus.merged / prDecided * 100) : null;
+    var prMergedTotal = prStatus.merged + prStatus.tested;
+    var prDecided = prMergedTotal + prStatus.closed;
+    var mergeRate = prDecided > 0 ? Math.round(prMergedTotal / prDecided * 100) : null;
     if(mergeRate !== null){
-      noteEl.textContent += " Taxa de merge geral: " + mergeRate + "% (" + prStatus.merged + " de " + prDecided + " PRs decididos).";
+      noteEl.textContent += " Taxa de merge geral: " + mergeRate + "% (" + prMergedTotal + " de " + prDecided + " PRs decididos).";
     }
 
     $("duck-verdict-text").textContent = duckVerdict({
@@ -10433,6 +10527,7 @@
   $("notes-list-editor-title").addEventListener("blur", commitListTitle);
   $("notes-list-editor-title").addEventListener("keydown", function(e){ if(e.key === "Enter") $("notes-list-editor-title").blur(); });
   $("notes-list-editor-delete").onclick = function(){ if(notesOpenListId) deleteList(notesOpenListId); };
+  $("list-clear-done").onclick = clearDoneListItems;
   $("notes-list-editor-folder").addEventListener("change", function(){
     if(!notesOpenListId) return;
     var list = findList(notesOpenListId);
@@ -10681,6 +10776,12 @@
     S.sound.embed = { src:"https://www.youtube.com/embed/4xDzrJKXOOY?rel=0", h:220, kind:"YouTube" };
     save(); renderSound(); renderEmbed();
     toast("Synthwave Radio carregada");
+  };
+
+  $("embed-claude-fm").onclick = function(){
+    S.sound.embed = { src:"https://www.youtube.com/embed/tRsQsTMvPNg?rel=0", h:220, kind:"YouTube" };
+    save(); renderSound(); renderEmbed();
+    toast("Claude FM carregada");
   };
 
   $("task-add").onclick = addTask;
