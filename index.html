@@ -1288,22 +1288,25 @@
   .header-running{display:flex;gap:4px}
   .header-running[hidden]{display:none}
   .header-run-btn{color:var(--signal)}
-  .header-run-btn svg{animation:bob 1.7s ease-in-out infinite}
+  .header-run-btn svg{animation:header-duck-dance 1.1s ease-in-out infinite;transform-origin:50% 80%}
+  .header-run-btn:nth-child(2) svg{animation-delay:.18s}
+  .header-run-btn:nth-child(3) svg{animation-delay:.36s}
+  .header-run-btn:nth-child(4) svg{animation-delay:.54s}
 
   #btn-music{position:relative;color:var(--signal);overflow:visible}
-  #btn-music.playing svg{animation:duck-dance 1.1s ease-in-out infinite}
-  @keyframes duck-dance{
-    0%,100%{transform:rotate(-6deg) translateY(0)}
-    25%{transform:rotate(3deg) translateY(-2px)}
-    50%{transform:rotate(-4deg) translateY(0)}
-    75%{transform:rotate(6deg) translateY(-1px)}
+  #btn-music.playing svg{animation:header-radio-bounce 1.1s ease-in-out infinite;transform-origin:50% 100%}
+  @keyframes header-radio-bounce{
+    0%,100%{transform:translateY(0) rotate(0deg)}
+    25%{transform:translateY(-2px) rotate(-4deg)}
+    50%{transform:translateY(0) rotate(0deg)}
+    75%{transform:translateY(-1px) rotate(4deg)}
   }
-  .music-notes{position:absolute;top:-2px;right:-4px;left:-4px;height:0;pointer-events:none;font-family:var(--sans);font-weight:700;font-size:11px;color:var(--signal);opacity:0}
+  .music-notes{position:absolute;top:-6px;left:9px;right:9px;height:0;pointer-events:none;font-family:var(--sans);font-weight:700;font-size:10px;color:var(--signal);opacity:0}
   #btn-music.playing .music-notes{opacity:1}
   .music-notes span{position:absolute;top:0;opacity:0;animation:note-float 1.8s ease-in infinite}
   .music-notes span:nth-child(1){left:-2px;animation-delay:0s}
-  .music-notes span:nth-child(2){left:8px;animation-delay:.5s}
-  .music-notes span:nth-child(3){left:18px;animation-delay:1s}
+  .music-notes span:nth-child(2){left:4px;animation-delay:.5s}
+  .music-notes span:nth-child(3){left:10px;animation-delay:1s}
   @keyframes note-float{
     0%{opacity:0;transform:translateY(4px) scale(.7)}
     20%{opacity:1}
@@ -1688,14 +1691,14 @@
     <div class="top-actions">
       <div class="header-running" id="header-running" hidden aria-label="Cronômetros em andamento"></div>
       <button class="btn-ghost icon-only" id="btn-music" hidden aria-label="Música tocando — clique para ir até o player">
-        <svg viewBox="0 0 32 32" width="18" height="18" aria-hidden="true">
-          <ellipse cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>
-          <circle cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>
-          <path d="M13.6 9.6a7.4 7.4 0 0 1 13.4 4.4" fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/>
-          <circle cx="13.6" cy="10.6" r="1.9" fill="var(--ink)"/>
-          <circle cx="27" cy="14" r="1.9" fill="var(--ink)"/>
-          <circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>
-          <circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>
+        <svg viewBox="0 0 32 32" width="20" height="20" aria-hidden="true">
+          <rect x="4" y="12" width="24" height="14" rx="3" fill="var(--ink)"/>
+          <rect x="7.2" y="5.5" width="1.6" height="7" rx=".8" fill="var(--ink)" transform="rotate(-18 8 9)"/>
+          <rect x="23.2" y="5.5" width="1.6" height="7" rx=".8" fill="var(--ink)" transform="rotate(18 24 9)"/>
+          <circle cx="10.5" cy="19.5" r="4.3" fill="var(--paper)"/>
+          <circle cx="21.5" cy="19.5" r="4.3" fill="var(--paper)"/>
+          <circle cx="10.5" cy="19.5" r="1.4" fill="var(--ink)"/>
+          <circle cx="21.5" cy="19.5" r="1.4" fill="var(--ink)"/>
         </svg>
         <span class="music-notes" id="btn-music-notes" aria-hidden="true"><span>♪</span><span>♫</span><span>♪</span></span>
       </button>
@@ -10169,11 +10172,11 @@
   }
 
   /* ---------- indicativo de música tocando, no cabeçalho ---------- */
-  // não há integração com a IFrame Player API do YouTube/Spotify, então
-  // "tocando" aqui é só "tem um player carregado" (S.sound.embed) — é a
-  // mesma aproximação que renderSound() já usa pra marcar o botão pressionado
+  // "tocando" de verdade, não só "tem um player carregado" — musicPlaying
+  // vem do postMessage do próprio YouTube (ver initYoutubeListening, perto
+  // de renderEmbed); carregar o player sem apertar play não acende o patinho
   function renderHeaderMusic(){
-    var playing = !!(S.sound && S.sound.embed);
+    var playing = !!(S.sound && S.sound.embed) && musicPlaying;
     var btn = $("btn-music");
     btn.hidden = !playing;
     btn.classList.toggle("playing", playing && !reduzMovimento);
@@ -10703,12 +10706,43 @@
   // do zero (ou nem voltava a tocar, já que o novo load não tem gesto do usuário)
   // a cada poucos segundos — era exatamente o "toca uns segundos e já para"
   var lastEmbedSrc = null;
+
+  // "tocando de verdade" (pra decidir se o patinho de música aparece no
+  // cabeçalho) só dá pra saber de fato com o YouTube, via o protocolo de
+  // postMessage do próprio player (não precisa carregar o script da IFrame
+  // API pra isso — basta "enablejsapi=1" na src e escutar "infoDelivery").
+  // Spotify e links avulsos não expõem esse sinal, então pra eles o patinho
+  // fica sempre escondido — melhor não aparecer do que aparecer errado.
+  var musicPlaying = false;
+
+  function initYoutubeListening(iframeEl){
+    function post(msg){
+      try{ iframeEl.contentWindow.postMessage(JSON.stringify(msg), "*"); }catch(err){}
+    }
+    iframeEl.addEventListener("load", function(){
+      post({ event:"listening", id: iframeEl.id });
+      post({ event:"command", func:"addEventListener", args:["onStateChange"] });
+    });
+  }
+
+  window.addEventListener("message", function(ev){
+    if(typeof ev.origin !== "string" || ev.origin.indexOf("youtube.com") < 0) return;
+    if(typeof ev.data !== "string") return;
+    var data;
+    try{ data = JSON.parse(ev.data); }catch(err){ return; }
+    if(data.event !== "infoDelivery" || !data.info || typeof data.info.playerState === "undefined") return;
+    var playing = data.info.playerState === 1;
+    if(playing !== musicPlaying){ musicPlaying = playing; renderHeaderMusic(); }
+  });
+
   function renderEmbed(){
     var box = $("embed-frame");
     var e = S.sound.embed;
     if(!e){
       box.innerHTML = "";
       lastEmbedSrc = null;
+      musicPlaying = false;
+      renderHeaderMusic();
       box.hidden = true;
       $("embed-hint").textContent = "O player abre aqui dentro e continua tocando enquanto você usa o app. Precisa de internet, e o controle de play fica no próprio player.";
       return;
@@ -10719,14 +10753,19 @@
       return;
     }
     box.innerHTML = "";
+    musicPlaying = false;
+    renderHeaderMusic();
     var f = document.createElement("iframe");
-    f.src = e.src;
+    var isYoutube = e.src.indexOf("youtube.com/embed/") >= 0;
+    f.src = isYoutube ? e.src + (e.src.indexOf("?") >= 0 ? "&" : "?") + "enablejsapi=1&origin=" + encodeURIComponent(location.origin) : e.src;
+    f.id = "sound-embed-iframe";
     f.height = e.h;
     f.loading = "lazy";
     f.title = "Player " + e.kind;
     f.setAttribute("allow", "autoplay; encrypted-media; clipboard-write; picture-in-picture");
     f.setAttribute("referrerpolicy", "strict-origin-when-cross-origin");
     box.appendChild(f);
+    if(isYoutube) initYoutubeListening(f);
     box.hidden = false;
     lastEmbedSrc = e.src;
     $("embed-hint").textContent = "";
