@@ -1262,6 +1262,7 @@
   }
   .pr-env:hover{border-color:var(--ink-3)}
   .pr-env.env-none{color:var(--ink-3);border-color:var(--line);border-style:dashed}
+  .pr-env.env-dev{color:var(--rest);border-color:var(--rest);background:color-mix(in srgb, var(--rest) 20%, transparent)}
   .pr-env.env-staging{color:var(--amber);border-color:var(--amber);background:color-mix(in srgb, var(--amber) 20%, transparent)}
   .pr-env.env-prod{background:var(--clover);color:var(--clover-ink);border-color:var(--clover);font-weight:600}
 
@@ -1284,8 +1285,30 @@
   .pr-graph-legend b{color:var(--ink-2);font-family:var(--mono);margin-right:4px}
 
   /* ---------- indicativo de cronômetro rodando, no cabeçalho ---------- */
-  #btn-running{color:var(--signal)}
-  #btn-running .btn-label{font-family:var(--mono);font-size:11px}
+  .header-running{display:flex;gap:4px}
+  .header-running[hidden]{display:none}
+  .header-run-btn{color:var(--signal)}
+  .header-run-btn svg{animation:bob 1.7s ease-in-out infinite}
+
+  #btn-music{position:relative;color:var(--signal);overflow:visible}
+  #btn-music.playing svg{animation:duck-dance 1.1s ease-in-out infinite}
+  @keyframes duck-dance{
+    0%,100%{transform:rotate(-6deg) translateY(0)}
+    25%{transform:rotate(3deg) translateY(-2px)}
+    50%{transform:rotate(-4deg) translateY(0)}
+    75%{transform:rotate(6deg) translateY(-1px)}
+  }
+  .music-notes{position:absolute;top:-2px;right:-4px;left:-4px;height:0;pointer-events:none;font-family:var(--sans);font-weight:700;font-size:11px;color:var(--signal);opacity:0}
+  #btn-music.playing .music-notes{opacity:1}
+  .music-notes span{position:absolute;top:0;opacity:0;animation:note-float 1.8s ease-in infinite}
+  .music-notes span:nth-child(1){left:-2px;animation-delay:0s}
+  .music-notes span:nth-child(2){left:8px;animation-delay:.5s}
+  .music-notes span:nth-child(3){left:18px;animation-delay:1s}
+  @keyframes note-float{
+    0%{opacity:0;transform:translateY(4px) scale(.7)}
+    20%{opacity:1}
+    100%{opacity:0;transform:translateY(-20px) scale(1.05)}
+  }
 
   /* ---------- calendário ---------- */
   .cal-weekdays{
@@ -1663,16 +1686,18 @@
       </div>
     </div>
     <div class="top-actions">
-      <button class="btn-ghost" id="btn-running" hidden>
+      <div class="header-running" id="header-running" hidden aria-label="Cronômetros em andamento"></div>
+      <button class="btn-ghost icon-only" id="btn-music" hidden aria-label="Música tocando — clique para ir até o player">
         <svg viewBox="0 0 32 32" width="18" height="18" aria-hidden="true">
           <ellipse cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>
           <circle cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>
-          <path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>
+          <path d="M13.6 9.6a7.4 7.4 0 0 1 13.4 4.4" fill="none" stroke="var(--ink)" stroke-width="1.6" stroke-linecap="round"/>
+          <circle cx="13.6" cy="10.6" r="1.9" fill="var(--ink)"/>
+          <circle cx="27" cy="14" r="1.9" fill="var(--ink)"/>
           <circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>
           <circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>
-          <g id="btn-running-accessory"></g>
         </svg>
-        <span class="btn-label" id="btn-running-label"></span>
+        <span class="music-notes" id="btn-music-notes" aria-hidden="true"><span>♪</span><span>♫</span><span>♪</span></span>
       </button>
       <button class="btn-ghost" id="btn-card" aria-label="Resumo da semana">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9.5" r="1.5"/><path d="M21 15.5 16 10.5 12 14.5 9 11.5 3 17.5"/></svg>
@@ -2203,6 +2228,8 @@
         <div class="new-task">
           <input type="text" id="pr-title" placeholder="ex.: Corrige paginação da listagem" maxlength="140" aria-label="Título do PR">
           <input type="text" id="pr-url" placeholder="link (opcional)" maxlength="300" aria-label="Link do PR">
+          <input type="text" id="pr-tag-new" list="pr-tag-options" placeholder="etiqueta (opcional)" maxlength="24" aria-label="Etiqueta do PR">
+          <datalist id="pr-tag-options"></datalist>
           <select id="pr-status-new" aria-label="Status do PR">
             <option value="open">Aberto</option>
             <option value="draft">Rascunho</option>
@@ -2212,6 +2239,7 @@
           </select>
           <select id="pr-env-new" aria-label="Ambiente do PR">
             <option value="none">Nenhum</option>
+            <option value="dev">Dev</option>
             <option value="staging">Staging</option>
             <option value="prod">Prod</option>
           </select>
@@ -7419,6 +7447,7 @@
         : (e && e.src === AMB_EMBEDS[kind]);
       btns[i].setAttribute("aria-pressed", String(!!pressed));
     }
+    renderHeaderMusic();
   }
 
   /* ---------- PDI ---------- */
@@ -9093,8 +9122,8 @@
   /* ---------- PRs feitos ---------- */
   var PR_STATUS_ORDER = ["open", "draft", "merged", "tested", "closed"];
   var PR_STATUS_LABEL = { open:"Aberto", draft:"Rascunho", merged:"Mesclado", tested:"Testado", closed:"Fechado" };
-  var PR_ENV_ORDER = ["none", "staging", "prod"];
-  var PR_ENV_LABEL = { none:"Nenhum", staging:"Staging", prod:"Prod" };
+  var PR_ENV_ORDER = ["none", "dev", "staging", "prod"];
+  var PR_ENV_LABEL = { none:"Nenhum", dev:"Dev", staging:"Staging", prod:"Prod" };
   var PR_STATUS_COLOR = { open:"var(--clover)", draft:"var(--ink-3)", merged:"var(--rest)", tested:"var(--teal)", closed:"var(--signal)" };
   var PR_SEM_TAG = " sem";
 
@@ -9117,9 +9146,11 @@
     if(PR_STATUS_ORDER.indexOf(status) < 0) status = "open";
     var env = $("pr-env-new").value;
     if(PR_ENV_ORDER.indexOf(env) < 0) env = "none";
+    var tagInput = $("pr-tag-new");
+    var tag = normTag(tagInput.value);
     var now = Date.now();
-    S.prs.unshift({ id: uid(), title: title, url: url || null, status: status, env: env, createdAt: now, statusAt: now, tags: [], relatedIds: [], archived: false });
-    input.value = ""; urlInput.value = ""; $("pr-status-new").value = "open"; $("pr-env-new").value = "none";
+    S.prs.unshift({ id: uid(), title: title, url: url || null, status: status, env: env, createdAt: now, statusAt: now, tags: tag ? [tag] : [], relatedIds: [], archived: false });
+    input.value = ""; urlInput.value = ""; tagInput.value = ""; $("pr-status-new").value = "open"; $("pr-env-new").value = "none";
     save(); renderPrs(); renderDevWatch(); renderDevSummary();
   }
 
@@ -9319,7 +9350,41 @@
     b.appendChild(caret); b.appendChild(name); b.appendChild(meta);
     b.onclick = function(){ togglePrCollapsed(key); };
     li.appendChild(b);
+
+    if(tag){
+      var addBtn = document.createElement("button");
+      addBtn.type = "button";
+      addBtn.className = "group-add";
+      addBtn.title = "Novo PR em " + tag;
+      addBtn.setAttribute("aria-label", "Novo PR com a etiqueta " + tag);
+      addBtn.innerHTML = '<svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>';
+      addBtn.onclick = function(ev){ ev.stopPropagation(); quickAddPrWithTag(tag); };
+      li.appendChild(addBtn);
+    }
     return li;
+  }
+
+  // mesma ideia de quickAddTaskWithTag: preenche a etiqueta e foca o título,
+  // pra criar um PR já dentro do tópico em que o "+" foi clicado
+  function quickAddPrWithTag(tag){
+    $("pr-tag-new").value = tag;
+    var input = $("pr-title");
+    input.scrollIntoView({ block:"center", behavior:"smooth" });
+    input.focus();
+  }
+
+  function renderPrTagOptions(){
+    var seen = {}, out = [];
+    S.prs.forEach(function(p){
+      (p.tags || []).forEach(function(t){
+        var k = t.toLowerCase();
+        if(!seen[k]){ seen[k] = true; out.push(t); }
+      });
+    });
+    out.sort(function(a, b){ return a.localeCompare(b, "pt-BR"); });
+    $("pr-tag-options").innerHTML = out.map(function(t){
+      return '<option value="' + t.replace(/"/g, "&quot;") + '"></option>';
+    }).join("");
   }
 
   function prRow(item){
@@ -9426,6 +9491,7 @@
   function renderPrs(){
     var box = $("pr-list");
     box.innerHTML = "";
+    renderPrTagOptions();
 
     document.querySelectorAll("#pr-view button").forEach(function(b){
       b.setAttribute("aria-pressed", String(b.dataset.view === S.prView));
@@ -10019,9 +10085,10 @@
 
   /* ---------- indicativo de cronômetro rodando, no cabeçalho ---------- */
   // cobre os 3 cronômetros de dev tools + o pomodoro do Foco, que vive num
-  // sistema totalmente separado (S.timer) — quando mais de um está rodando
-  // ao mesmo tempo (já é possível hoje), mostra o que começou mais recente
-  function currentRunningKey(){
+  // sistema totalmente separado (S.timer) — a pessoa pode ter mais de um
+  // rodando ao mesmo tempo (ex.: Foco + Build), então listamos todos os que
+  // estiverem ativos, do mais recente pro mais antigo, em vez de só um
+  function runningKeys(){
     var candidates = [];
     Object.keys(TRACKS).forEach(function(k){
       var st = TRACKS[k].state();
@@ -10030,9 +10097,8 @@
     if(S.timer.running){
       candidates.push({ key:"foco", startedAt: (S.timer.endsAt || Date.now()) - duration(S.timer.mode) });
     }
-    if(!candidates.length) return null;
     candidates.sort(function(a, b){ return b.startedAt - a.startedAt; });
-    return candidates[0].key;
+    return candidates.map(function(c){ return c.key; });
   }
 
   var HEADER_RUN_LABEL = { build:"Build", review:"Code review", meeting:"Reunião", foco:"Foco" };
@@ -10048,34 +10114,75 @@
     return key === "foco" ? HEADER_FOCO_ACCESSORY : (DEV_DUCK_ACCESSORY[key] || "");
   }
 
-  var headerRunKey = null;
-  function renderHeaderRun(){
-    var key = currentRunningKey();
-    var btn = $("btn-running");
-    btn.hidden = !key;
-    if(!key) return;
-
-    if(headerRunKey !== key){
-      headerRunKey = key;
-      $("btn-running-accessory").innerHTML = headerRunAccessory(key);
-    }
-
-    var label = HEADER_RUN_LABEL[key];
-    var clock = key === "foco" ? fmtClock(duration(S.timer.mode) - remaining()) : fmtClock(trackElapsed(key));
-    btn.title = label + " rodando — " + clock + " · clique pra ir até lá";
-    btn.setAttribute("aria-label", btn.title);
-    $("btn-running-label").textContent = label + " · " + clock;
+  function headerRunButton(key){
+    var btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "btn-ghost icon-only header-run-btn";
+    btn.dataset.runKey = key;
+    btn.innerHTML = '<svg viewBox="0 0 32 32" width="18" height="18" aria-hidden="true">' +
+      '<ellipse cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>' +
+      '<circle cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>' +
+      '<path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>' +
+      '<circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>' +
+      '<circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>' +
+      headerRunAccessory(key) +
+      '</svg>';
+    btn.onclick = function(){ goToRunningTimer(key); };
+    return btn;
   }
 
-  function goToRunningTimer(){
-    var key = currentRunningKey();
-    if(!key) return;
+  // guarda o último conjunto de chaves renderizado pra só recriar os botões
+  // quando algum cronômetro começa/termina — recriando o SVG a cada tick
+  // (a cada 250ms) o "bob" reiniciaria sem nunca completar um ciclo inteiro
+  var headerRunKeys = [];
+  function renderHeaderRun(){
+    var keys = runningKeys();
+    var wrap = $("header-running");
+    wrap.hidden = !keys.length;
+
+    var changed = keys.length !== headerRunKeys.length || keys.some(function(k, i){ return k !== headerRunKeys[i]; });
+    if(changed){
+      headerRunKeys = keys;
+      wrap.innerHTML = "";
+      keys.forEach(function(key){ wrap.appendChild(headerRunButton(key)); });
+    }
+
+    keys.forEach(function(key){
+      var btn = wrap.querySelector('[data-run-key="' + key + '"]');
+      if(!btn) return;
+      var label = HEADER_RUN_LABEL[key];
+      var clock = key === "foco" ? fmtClock(duration(S.timer.mode) - remaining()) : fmtClock(trackElapsed(key));
+      btn.title = label + " rodando — " + clock + " · clique pra ir até lá";
+      btn.setAttribute("aria-label", btn.title);
+    });
+  }
+
+  function goToRunningTimer(key){
+    if(!key){ var keys = runningKeys(); if(!keys.length) return; key = keys[0]; }
     if(key === "foco"){ selectTab("foco"); return; }
     S.devTab = key;
     save();
     selectTab("ferramentas");
     renderDevWatch();
     var el = $("devsub-timer");
+    if(el) el.scrollIntoView({ block:"start", behavior:"smooth" });
+  }
+
+  /* ---------- indicativo de música tocando, no cabeçalho ---------- */
+  // não há integração com a IFrame Player API do YouTube/Spotify, então
+  // "tocando" aqui é só "tem um player carregado" (S.sound.embed) — é a
+  // mesma aproximação que renderSound() já usa pra marcar o botão pressionado
+  function renderHeaderMusic(){
+    var playing = !!(S.sound && S.sound.embed);
+    var btn = $("btn-music");
+    btn.hidden = !playing;
+    btn.classList.toggle("playing", playing && !reduzMovimento);
+  }
+
+  function goToMusic(){
+    if(!S.panels.musica){ S.panels.musica = true; save(); applyPanels(); }
+    selectTab("foco");
+    var el = $("panel-sound");
     if(el) el.scrollIntoView({ block:"start", behavior:"smooth" });
   }
 
@@ -10952,7 +11059,7 @@
     renderPrEditDialog();
   });
 
-  $("btn-running").onclick = goToRunningTimer;
+  $("btn-music").onclick = goToMusic;
 
   // comentários de documentação
   $("doccomment-add").onclick = addDocComment;
