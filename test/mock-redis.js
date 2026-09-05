@@ -45,6 +45,27 @@ function createMockRedis(){
     expire: async function(key, seconds){
       expirations[key] = Date.now() + seconds * 1000;
       return 1;
+    },
+    sadd: async function(key, member){
+      if(!readable(key)) delete store[key];
+      var set = store[key] instanceof Set ? store[key] : new Set();
+      var before = set.size;
+      set.add(member);
+      store[key] = set;
+      delete expirations[key];
+      return set.size > before ? 1 : 0;
+    },
+    srem: async function(key, member){
+      if(!readable(key)) return 0;
+      var set = store[key];
+      if(!(set instanceof Set)) return 0;
+      return set.delete(member) ? 1 : 0;
+    },
+    smembers: async function(key){
+      if(!readable(key)) return [];
+      var set = store[key];
+      if(!(set instanceof Set)) return [];
+      return Array.from(set);
     }
   };
 }

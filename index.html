@@ -981,6 +981,21 @@
   .profile-block .k:not(:first-child){margin-top:14px}
   .profile-username-row{display:flex;gap:var(--sp)}
   .profile-username-row input{flex:1;min-width:0}
+
+  /* ---------- admin ---------- */
+  .admin-user-row{
+    display:flex;align-items:center;gap:10px;width:100%;
+    border:1px solid var(--line);border-radius:var(--r-md);padding:8px 12px;background:var(--card);
+    font-size:13px;
+  }
+  .admin-user-row + .admin-user-row{margin-top:6px}
+  .admin-user-row .admin-user-email{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .admin-user-row .admin-user-date{font-family:var(--mono);font-size:10px;color:var(--ink-3);white-space:nowrap;flex:none}
+  .admin-feature-card{border:1px solid var(--line);border-radius:var(--r-md);padding:10px 12px;background:var(--card);margin-top:8px}
+  .admin-feature-head{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .admin-feature-head .admin-feature-title{font-size:13.5px;color:var(--ink)}
+  .admin-feature-head .admin-feature-key{font-family:var(--mono);font-size:10px;color:var(--ink-3);margin-left:6px}
+  .admin-feature-users{margin-top:8px;display:flex;flex-direction:column;gap:6px}
   #auth, #changepw, #deleteaccount{width:min(420px,92vw)}
   #settings{width:min(760px,92vw)}
   #auth-google{text-decoration:none;justify-content:center;width:100%;box-sizing:border-box;margin-bottom:14px}
@@ -1732,6 +1747,9 @@
         </button>
         <button class="btn-ghost icon-only" id="btn-settings" aria-label="Ajustes" title="Ajustes">
           <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
+        <button class="btn-ghost icon-only" id="btn-admin" aria-label="Administração" title="Administração" hidden>
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 2 4 5v6c0 5 3.4 8.7 8 11 4.6-2.3 8-6 8-11V5Z"/><path d="m9 12 2 2 4-4"/></svg>
         </button>
       </div>
     </div>
@@ -3060,6 +3078,29 @@
   </div>
 </dialog>
 
+<dialog id="admin">
+  <div class="dlg-head">
+    <h2 class="panel-title"><span class="panel-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 4 5v6c0 5 3.4 8.7 8 11 4.6-2.3 8-6 8-11V5Z"/><path d="m9 12 2 2 4-4"/></svg></span>Administração</h2>
+    <button class="btn-ghost icon-only" id="admin-close" aria-label="Fechar" title="Fechar"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+  </div>
+  <div class="dlg-body">
+    <p class="cap-meta" style="margin:0 0 8px">Usuários com conta</p>
+    <div id="admin-users-list"></div>
+    <p class="empty-state" id="admin-users-empty" hidden>Nenhum usuário ainda.</p>
+
+    <p class="cap-meta" style="margin-top:16px">Liberar features</p>
+    <p class="hint" style="margin:0 0 8px">Cada feature nova nasce desligada para todo mundo — libere só para quem você quiser.</p>
+    <div class="profile-username-row">
+      <input type="text" id="admin-feature-key" maxlength="40" placeholder="chave (ex.: novo_grafico)" aria-label="Chave da feature">
+      <input type="text" id="admin-feature-label" maxlength="80" placeholder="nome (ex.: Novo gráfico)" aria-label="Nome da feature">
+      <button class="btn-ghost" id="admin-feature-add">Adicionar</button>
+    </div>
+    <p class="hint" id="admin-feature-error" style="color:var(--signal);min-height:16px;margin:2px 0 0"></p>
+    <div id="admin-features-list"></div>
+    <p class="empty-state" id="admin-features-empty" hidden>Nenhuma feature cadastrada ainda.</p>
+  </div>
+</dialog>
+
 <!-- confirmação genérica — substitui o confirm() nativo do navegador, que
      quebra a cara do app (aparece com o estilo padrão do sistema) -->
 <dialog id="confirm-dlg">
@@ -3344,7 +3385,7 @@
   // Em file:// não existe servidor para conversar: o módulo inteiro fica inerte,
   // e o app se comporta exatamente como antes, só com localStorage.
   var SERVER_OK = (location.protocol === "http:" || location.protocol === "https:");
-  var AUTH = { email: null, username: null };
+  var AUTH = { email: null, username: null, isAdmin: false };
   var pushTimer = null;
   var pulling = false;
   var LAST_ACCOUNT_KEY = "quack.lastAccount"; // fora do blob sincronizado, de propósito
@@ -3466,6 +3507,8 @@
     $("tab-btn-notas").hidden = !logged;
     if(!logged && S.activeTab === "notas") selectTab("foco");
     applyTabs();
+
+    $("btn-admin").hidden = !AUTH.isAdmin;
   }
 
   // chave por conta — só existe entre um "Sair" e o próximo login da mesma
@@ -3490,6 +3533,7 @@
   function onAuthSuccess(res){
     AUTH.email = res.email;
     AUTH.username = res.username || null;
+    AUTH.isAdmin = !!res.isAdmin;
     restoreAccountBackup(AUTH.email);
     applyAccountUI();
     pullFromServer(true);
@@ -3503,6 +3547,7 @@
     }).catch(function(){
       AUTH.email = null;
       AUTH.username = null;
+      AUTH.isAdmin = false;
       applyAccountUI();
     });
   }
@@ -11286,7 +11331,7 @@
         try{ localStorage.setItem(accountBackupKey(AUTH.email), JSON.stringify(S)); }catch(e){}
       }
       try{ localStorage.removeItem(KEY); }catch(e){}
-      AUTH.email = null; AUTH.username = null;
+      AUTH.email = null; AUTH.username = null; AUTH.isAdmin = false;
       S = clone(DEFAULTS);
       REV = 0;
       applyAccountUI();
@@ -11315,6 +11360,146 @@
   $("account-username").addEventListener("keydown", function(e){
     if(e.key === "Enter"){ e.preventDefault(); $("account-username-save").click(); }
   });
+
+  // administração — só visível pra ADMIN_EMAIL (checado de novo no servidor
+  // em cada rota /api/admin/*; o hidden aqui é só pra não mostrar à toa)
+  var ADMIN_USERS = [];
+  var ADMIN_FEATURES = [];
+
+  function fmtAdminDate(ts){
+    if(!ts) return "—";
+    try{ return new Date(ts).toLocaleDateString("pt-BR"); }catch(e){ return "—"; }
+  }
+
+  function adminUserLabel(u){
+    return u.username ? (u.email + " (" + u.username + ")") : u.email;
+  }
+
+  function renderAdminUsers(){
+    var list = $("admin-users-list");
+    list.innerHTML = "";
+    $("admin-users-empty").hidden = !!ADMIN_USERS.length;
+    ADMIN_USERS.forEach(function(u){
+      var row = document.createElement("div");
+      row.className = "admin-user-row";
+      var email = document.createElement("span");
+      email.className = "admin-user-email";
+      email.textContent = adminUserLabel(u);
+      var date = document.createElement("span");
+      date.className = "admin-user-date";
+      date.textContent = fmtAdminDate(u.createdAt);
+      row.appendChild(email);
+      row.appendChild(date);
+      list.appendChild(row);
+    });
+  }
+
+  function renderAdminFeatures(){
+    var list = $("admin-features-list");
+    list.innerHTML = "";
+    $("admin-features-empty").hidden = !!ADMIN_FEATURES.length;
+    ADMIN_FEATURES.forEach(function(f){
+      var card = document.createElement("div");
+      card.className = "admin-feature-card";
+
+      var head = document.createElement("div");
+      head.className = "admin-feature-head";
+      var titleWrap = document.createElement("span");
+      var title = document.createElement("span");
+      title.className = "admin-feature-title";
+      title.textContent = f.label || f.key;
+      var key = document.createElement("span");
+      key.className = "admin-feature-key";
+      key.textContent = "(" + f.key + ")";
+      titleWrap.appendChild(title);
+      titleWrap.appendChild(key);
+      var del = document.createElement("button");
+      del.className = "btn-ghost icon-only";
+      del.type = "button";
+      del.setAttribute("aria-label", "Remover feature");
+      del.title = "Remover feature";
+      del.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg>';
+      del.onclick = function(){
+        askConfirm(
+          "Remover a feature \"" + (f.label || f.key) + "\"? Ela deixa de existir para todo mundo, e as liberações feitas para usuários se perdem.",
+          { title:"Remover feature", confirmLabel:"Remover", danger:true }
+        ).then(function(ok){
+          if(!ok) return;
+          api("/api/admin/features/" + encodeURIComponent(f.key), { method:"DELETE" }).then(function(res){
+            ADMIN_FEATURES = res.features || [];
+            renderAdminFeatures();
+            toast("Feature removida");
+          }).catch(function(err){ toast(err.message || "Não foi possível remover."); });
+        });
+      };
+      head.appendChild(titleWrap);
+      head.appendChild(del);
+      card.appendChild(head);
+
+      var usersBox = document.createElement("div");
+      usersBox.className = "admin-feature-users";
+      ADMIN_USERS.forEach(function(u){
+        var row = document.createElement("label");
+        row.className = "field";
+        var span = document.createElement("span");
+        span.textContent = adminUserLabel(u);
+        var switchSpan = document.createElement("span");
+        switchSpan.className = "switch";
+        var input = document.createElement("input");
+        input.type = "checkbox";
+        input.checked = !!(u.features && u.features[f.key]);
+        input.setAttribute("aria-label", "Liberar " + (f.label || f.key) + " para " + u.email);
+        input.onchange = function(){
+          var enabled = input.checked;
+          api("/api/admin/users/" + u.id + "/features", { method:"POST", body:{ key:f.key, enabled:enabled } }).then(function(){
+            u.features = u.features || {};
+            if(enabled) u.features[f.key] = true; else delete u.features[f.key];
+          }).catch(function(err){
+            input.checked = !enabled;
+            toast(err.message || "Não foi possível salvar.");
+          });
+        };
+        switchSpan.appendChild(input);
+        row.appendChild(span);
+        row.appendChild(switchSpan);
+        usersBox.appendChild(row);
+      });
+      card.appendChild(usersBox);
+      list.appendChild(card);
+    });
+  }
+
+  function loadAdmin(){
+    Promise.all([api("/api/admin/users"), api("/api/admin/features")]).then(function(results){
+      ADMIN_USERS = results[0].users || [];
+      ADMIN_FEATURES = results[1].features || [];
+      renderAdminUsers();
+      renderAdminFeatures();
+    }).catch(function(err){
+      toast(err.message || "Não foi possível carregar a administração.");
+    });
+  }
+
+  $("btn-admin").onclick = function(){
+    $("admin").showModal();
+    loadAdmin();
+  };
+  $("admin-close").onclick = function(){ $("admin").close(); };
+
+  $("admin-feature-add").onclick = function(){
+    $("admin-feature-error").textContent = "";
+    var key = $("admin-feature-key").value.trim().toLowerCase();
+    var label = $("admin-feature-label").value.trim();
+    api("/api/admin/features", { method:"POST", body:{ key:key, label:label } }).then(function(res){
+      ADMIN_FEATURES = res.features || [];
+      $("admin-feature-key").value = "";
+      $("admin-feature-label").value = "";
+      renderAdminFeatures();
+      toast("Feature adicionada");
+    }).catch(function(err){
+      $("admin-feature-error").textContent = err.message || "Não foi possível adicionar.";
+    });
+  };
 
   // página de notas em markdown
   $("notes-folder-add-btn").onclick = function(){
