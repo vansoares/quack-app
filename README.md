@@ -26,7 +26,11 @@ quack-vercel/
 ├── lib/
 │   ├── app.js         # a API (Express) — rotas de conta e de estado
 │   └── db.js           # leitura/escrita no Redis (Upstash)
-├── index.html          # o app inteiro, servido direto pela CDN do Vercel
+├── index.html          # estrutura da página (HTML), servida direto pela CDN do Vercel
+├── assets/
+│   ├── app.css         # estilos
+│   └── app.js          # toda a lógica do app (estado, sync, abas)
+├── sw.js               # service worker: cache do shell para abrir offline
 ├── vercel.json          # roteamento explícito
 ├── test/                # harness para testar localmente sem depender do Vercel
 └── package.json

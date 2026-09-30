@@ -1,7 +1,7 @@
 // Cache só do "shell" estático — nunca de /api/*, pra não arriscar servir
 // uma resposta de login/sync antiga ou quebrar a sincronização entre abas.
-var CACHE_NAME = "quack-shell-v1";
-var SHELL = ["/", "/manifest.json", "/icons/icon-192.png", "/icons/icon-512.png"];
+var CACHE_NAME = "quack-shell-v2";
+var SHELL = ["/", "/assets/app.css", "/assets/app.js", "/manifest.json", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", function(event){
   event.waitUntil(
@@ -40,6 +40,19 @@ self.addEventListener("fetch", function(event){
         caches.open(CACHE_NAME).then(function(cache){ cache.put("/", copy); });
         return res;
       }).catch(function(){ return caches.match("/"); })
+    );
+    return;
+  }
+
+  // css/js do app: rede primeiro (pra pegar a versão nova assim que existir)
+  // e cache como rede de segurança offline
+  if(url.pathname.indexOf("/assets/") === 0){
+    event.respondWith(
+      fetch(req).then(function(res){
+        var copy = res.clone();
+        caches.open(CACHE_NAME).then(function(cache){ cache.put(req, copy); });
+        return res;
+      }).catch(function(){ return caches.match(req); })
     );
     return;
   }
