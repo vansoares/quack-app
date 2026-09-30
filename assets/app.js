@@ -1022,7 +1022,7 @@
     // barato, e renderNoteEditor() já protege o que estiver sendo digitado
     if(S.activeTab === "notas") renderNotesPage();
     if(S.activeTab === "calendario") renderCalendar();
-    if(S.activeTab === "produtividade") renderHeatmap();
+    if(S.activeTab === "produtividade"){ renderHeatmap(); renderInsights(); }
     if(S.activeTab === "hoje") renderHoje();
   }
 
@@ -7642,7 +7642,7 @@
   var TAB_GROUPS = {
     hoje: ["panel-hoje-main", "panel-hoje-side"],
     foco: ["section-timer", "section-tarefas", "panel-sound"],
-    produtividade: ["panel-patterns", "panel-stats", "panel-heatmap"],
+    produtividade: ["panel-insights", "panel-patterns", "panel-stats", "panel-heatmap"],
     metas: ["panel-goals", "panel-pdi"],
     habitos: ["panel-habits"],
     leitura: ["panel-reading", "panel-screen"],
@@ -7665,7 +7665,7 @@
     if(S.activeTab !== tab){ S.activeTab = tab; save(); }
     if(tab === "notas") renderNotesPage();
     if(tab === "calendario") renderCalendar();
-    if(tab === "produtividade") renderHeatmap();
+    if(tab === "produtividade"){ renderHeatmap(); renderInsights(); }
     if(tab === "hoje") renderHoje();
   }
 
@@ -7825,6 +7825,116 @@
       li.appendChild(mk("span", "hj-meta", pct + "%"));
       gul.appendChild(li);
     });
+  }
+
+  /* ---------- insights ---------- */
+  function renderInsights(){
+    if(!$("ins-weeks")) return;
+    var now = new Date();
+    var wk0 = startOfWeek(now);
+
+    // foco por semana: últimas 8 semanas (a atual em destaque)
+    var weeks = [];
+    for(var i = 7; i >= 0; i--){
+      var ini = addDays(wk0, -7 * i), fim = addDays(ini, 7);
+      var mins = sessionsSince(ini.getTime(), fim.getTime()).reduce(function(a, x){ return a + (x.min || 0); }, 0);
+      weeks.push({ ini: ini, min: mins, now: i === 0 });
+    }
+    var maxW = Math.max.apply(null, weeks.map(function(w){ return w.min; })) || 1;
+    var bestIdx = weeks.reduce(function(b, w, k){ return w.min > weeks[b].min ? k : b; }, 0);
+    var box = $("ins-weeks"); box.innerHTML = "";
+    var bars = mk("div", "ins-bars"); bars.setAttribute("role", "img");
+    bars.setAttribute("aria-label", "Foco nas últimas 8 semanas: " + weeks.map(function(w){
+      return w.ini.toLocaleDateString("pt-BR", { day:"numeric", month:"short" }) + " " + fmtDuration(w.min * MIN);
+    }).join("; "));
+    var labels = mk("div", "ins-labels");
+    weeks.forEach(function(w, k){
+      var col = mk("div", "col" + (w.now ? " now" : "") + (k === bestIdx && w.min > 0 ? " best" : ""));
+      var b = mk("i"); b.style.height = Math.max(2, Math.round(w.min / maxW * 100)) + "%";
+      b.title = fmtDuration(w.min * MIN);
+      col.appendChild(b); bars.appendChild(col);
+      labels.appendChild(mk("span", null, w.ini.getDate() + "/" + (w.ini.getMonth() + 1)));
+    });
+    box.appendChild(bars); box.appendChild(labels);
+    var cur = weeks[7].min, prev = weeks[6].min;
+    var deltaTxt;
+    if(!cur && !prev) deltaTxt = "Sem foco registrado nas duas últimas semanas.";
+    else if(!prev) deltaTxt = "Esta semana: " + fmtDuration(cur * MIN) + " de foco (a semana passada ficou em branco).";
+    else{
+      var pct = Math.round((cur - prev) / prev * 100);
+      deltaTxt = "Esta semana: " + fmtDuration(cur * MIN) + ", " + (pct >= 0 ? "+" : "") + pct + "% em relação à semana passada.";
+    }
+    box.appendChild(mk("p", "ins-note", deltaTxt));
+
+    // horários de foco (últimos 90 dias), pelo meio de cada sessão
+    var desde = addDays(startOfDay(now), -90).getTime();
+    var porHora = []; for(var hh = 0; hh < 24; hh++) porHora.push(0);
+    S.sessions.forEach(function(x){
+      if(x.end >= desde) porHora[new Date(x.end - (x.min || 0) * MIN / 2).getHours()] += (x.min || 0);
+    });
+    var maxH = Math.max.apply(null, porHora) || 1;
+    var melhor = porHora.indexOf(Math.max.apply(null, porHora));
+    var hbox = $("ins-hours"); hbox.innerHTML = "";
+    var hb = mk("div", "ins-bars"); hb.setAttribute("role", "img");
+    hb.setAttribute("aria-label", porHora[melhor] > 0 ? "Horário com mais foco nos últimos 90 dias: " + melhor + "h" : "Sem sessões nos últimos 90 dias");
+    var hl = mk("div", "ins-labels");
+    porHora.forEach(function(m, k){
+      var col = mk("div", "col" + (k === melhor && m > 0 ? " now" : ""));
+      var b = mk("i"); b.style.height = Math.max(2, Math.round(m / maxH * 100)) + "%"; b.title = k + "h: " + fmtDuration(m * MIN);
+      col.appendChild(b); hb.appendChild(col);
+      hl.appendChild(mk("span", null, k % 6 === 0 ? k + "h" : ""));
+    });
+    hbox.appendChild(hb); hbox.appendChild(hl);
+    hbox.appendChild(mk("p", "ins-note", porHora[melhor] > 0
+      ? "Você rende mais por volta das " + melhor + "h (últimos 90 dias)."
+      : "Sem sessões nos últimos 90 dias."));
+
+    // tópicos dos últimos 30 dias
+    var d30 = addDays(startOfDay(now), -30).getTime();
+    var porTag = {};
+    S.sessions.forEach(function(x){
+      if(x.end < d30) return;
+      var tg = sessionTag(x) || "sem etiqueta";
+      porTag[tg] = (porTag[tg] || 0) + (x.min || 0);
+    });
+    var tags = Object.keys(porTag).sort(function(a, b){ return porTag[b] - porTag[a]; }).slice(0, 6);
+    var tbox = $("ins-topics"); tbox.innerHTML = "";
+    if(!tags.length) tbox.appendChild(mk("p", "ins-note", "Nenhuma sessão nos últimos 30 dias."));
+    tags.forEach(function(tg){
+      var row = mk("div", "ins-hbar");
+      row.appendChild(mk("span", "nm", tg));
+      var tr = mk("span", "track"); var f = mk("i"); f.style.width = Math.round(porTag[tg] / porTag[tags[0]] * 100) + "%";
+      var hue = topicHue(tg === "sem etiqueta" ? null : tg);
+      if(hue !== null) f.style.background = "hsl(" + hue + ",50%,36%)";
+      tr.appendChild(f); row.appendChild(tr);
+      row.appendChild(mk("span", "val", fmtDuration(porTag[tg] * MIN)));
+      tbox.appendChild(row);
+    });
+
+    // consistência dos hábitos nos últimos 30 dias
+    var hab = $("ins-habits"); hab.innerHTML = "";
+    if(!S.habits.length) hab.appendChild(mk("p", "ins-note", "Crie hábitos na aba Hábitos para acompanhar aqui."));
+    S.habits.forEach(function(h){
+      var dev = 0, ok = 0;
+      for(var k = 0; k < 30; k++){
+        var d = addDays(startOfDay(now), -k);
+        if(h.type === "semanal"){ if(doneOn(h, d)) ok++; }
+        else if(scheduled(h, d)){ dev++; if(doneOn(h, d)) ok++; }
+      }
+      if(h.type === "semanal") dev = Math.max(1, Math.round((h.target || 1) * 30 / 7));
+      var pct = Math.min(100, Math.round(ok / Math.max(1, dev) * 100));
+      var row = mk("div", "ins-hbar");
+      row.appendChild(mk("span", "nm", h.name));
+      var tr = mk("span", "track"); var f = mk("i"); f.style.width = pct + "%"; tr.appendChild(f); row.appendChild(tr);
+      row.appendChild(mk("span", "val", pct + "%"));
+      hab.appendChild(row);
+    });
+
+    var sess30 = S.sessions.filter(function(x){ return x.end >= d30; });
+    var totalMin30 = sess30.reduce(function(a, x){ return a + (x.min || 0); }, 0);
+    $("ins-summary").textContent = totalMin30
+      ? "Nos últimos 30 dias: " + fmtDuration(totalMin30 * MIN) + " de foco, em " + sess30.length + (sess30.length === 1 ? " pomodoro." : " pomodoros.")
+      : "Quando você registrar sessões de foco, os gráficos aparecem aqui.";
   }
 
   /* ---------- tema ---------- */

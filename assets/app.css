@@ -1684,3 +1684,22 @@
   .hj-bar i{display:block;height:100%;background:var(--rest);border-radius:99px}
   .hj-goal{display:block;flex:1;min-width:0}
   .hj-link{background:none;border:0;padding:0;color:var(--rest);text-decoration:underline;cursor:pointer;font:inherit;font-size:12.5px}
+
+  /* ---------- insights ---------- */
+  .ins-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:calc(var(--sp)*2);margin-top:calc(var(--sp)*1.5)}
+  .ins-card{background:var(--field);border:1px solid var(--line);border-radius:var(--r-md);padding:calc(var(--sp)*2)}
+  .ins-card .hj-sub{margin-top:0}
+  .ins-bars{display:flex;align-items:flex-end;gap:4px;height:110px}
+  .ins-bars .col{flex:1;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;height:100%;min-width:0}
+  .ins-bars .col i{display:block;width:100%;background:var(--rest);border-radius:4px 4px 2px 2px;min-height:2px}
+  .ins-bars .col.now i{background:var(--signal)}
+  .ins-bars .col.best i{box-shadow:0 0 0 2px var(--ink)}
+  .ins-labels{display:flex;gap:4px;margin-top:4px}
+  .ins-labels span{flex:1;text-align:center;font-size:10.5px;color:var(--ink-3);min-width:0;overflow:visible;white-space:nowrap}
+  .ins-hbar{display:grid;grid-template-columns:minmax(70px,30%) 1fr auto;align-items:center;gap:8px;margin-bottom:8px;font-size:13px}
+  .ins-hbar .track{height:8px;border-radius:99px;background:var(--line);overflow:hidden}
+  .ins-hbar .track i{display:block;height:100%;background:var(--rest);border-radius:99px}
+  .ins-hbar .nm{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink)}
+  .ins-hbar .val{color:var(--ink-3);font-variant-numeric:tabular-nums;font-size:12px}
+  .ins-note{font-size:12.5px;color:var(--ink-3);margin-top:8px}
+  .ins{grid-column:1/-1}
