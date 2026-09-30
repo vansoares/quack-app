@@ -303,6 +303,7 @@
   var pulling = false;
   var LAST_ACCOUNT_KEY = "quack.lastAccount"; // fora do blob sincronizado, de propósito
   var SREV_PREFIX = "quack.srev.";             // revisão do servidor em que este aparelho se baseou
+  var DIRTY_PREFIX = "quack.dirty.";           // há mudanças locais ainda não enviadas (sobrevive a fechar a aba/ficar offline)
   var pushing = false;
 
   function getSrev(){
@@ -312,6 +313,17 @@
     if(typeof n !== "number") return;
     try{ localStorage.setItem(SREV_PREFIX + AUTH.email, String(n)); }catch(e){}
   }
+  function setDirty(on){
+    if(!AUTH.email) return;
+    try{
+      if(on) localStorage.setItem(DIRTY_PREFIX + AUTH.email, "1");
+      else localStorage.removeItem(DIRTY_PREFIX + AUTH.email);
+    }catch(e){}
+  }
+  function isDirty(){
+    try{ return !!localStorage.getItem(DIRTY_PREFIX + AUTH.email); }catch(e){ return false; }
+  }
+
   function api(path, opts){
     opts = opts || {};
     return fetch(path, {
@@ -331,6 +343,7 @@
 
   function schedulePush(){
     if(!SERVER_OK || !AUTH.email) return;
+    setDirty(true);
     if(pushTimer) clearTimeout(pushTimer);
     pushTimer = setTimeout(pushToServer, 900);
   }
@@ -341,6 +354,10 @@
   function pushToServer(){
     if(!SERVER_OK || !AUTH.email) return;
     if(pushing){ pushAgain = true; return; }
+    if(navigator.onLine === false){
+      setSyncNote("sem conexão — suas mudanças ficam salvas aqui e sobem quando voltar");
+      return;
+    }
     pushing = true;
     pushAgain = false;
     var rev = getSrev();
@@ -349,6 +366,7 @@
       pushing = false;
       setSrev(res.rev);
       if(pushAgain){ pushAgain = false; pushToServer(); return; }   // mudou durante o envio
+      setDirty(false);
       setSyncNote("sincronizado agora há pouco");
     }).catch(function(err){
       pushing = false;
@@ -403,8 +421,21 @@
   function startAutoPull(){
     if(autoPullStarted) return;
     autoPullStarted = true;
-    setInterval(function(){ if(document.visibilityState === "visible") pullFromServer(false); }, 25000);
+    setInterval(function(){
+      if(document.visibilityState !== "visible") return;
+      // mudanças que não subiram (offline, erro) são reenviadas antes de puxar
+      if(isDirty() && !pushing) pushToServer();
+      pullFromServer(false);
+    }, 25000);
     window.addEventListener("focus", function(){ pullFromServer(false); });
+    window.addEventListener("online", function(){
+      setSyncNote("conexão de volta — sincronizando");
+      if(isDirty()) pushToServer();
+      pullFromServer(false);
+    });
+    window.addEventListener("offline", function(){
+      setSyncNote("sem conexão — suas mudanças ficam salvas aqui e sobem quando voltar");
+    });
   }
 
   // busca o estado do servidor e funde com o local; na primeira vez após login
