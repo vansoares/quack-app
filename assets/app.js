@@ -2523,6 +2523,7 @@
       cell.innerHTML = HEAT_DUCK_SVG;
       if(!noAno){
         cell.className = "heat-cell outside";
+        cell.setAttribute("aria-hidden", "true");   // dia fora do ano: só preenche a grade
         cell.tabIndex = -1;
         cell.disabled = true;
       }else{
@@ -7655,6 +7656,7 @@
     document.querySelectorAll(".tabbar .tab-btn").forEach(function(b){
       var active = b.getAttribute("data-tab") === tab;
       b.setAttribute("aria-selected", active ? "true" : "false");
+      b.tabIndex = active ? 0 : -1;    // roving tabindex: Tab entra na lista de abas uma vez só, setas navegam
       // no celular a barra rola na horizontal — sem isso, restaurar uma aba
       // salva (ou cair no fallback) podia deixar o botão ativo fora da vista
       if(active) b.scrollIntoView({ block:"nearest", inline:"nearest" });
@@ -7692,7 +7694,20 @@
     if(!currentBtn || currentBtn.hidden) selectTab(fallback || "foco");
   }
 
+  // todo <dialog> precisa de nome acessível: usa o primeiro título dentro dele
+  // (ex.: o h2 de ".dlg-head"), sem precisar repetir aria-labelledby em cada um
+  function labelDialogs(){
+    document.querySelectorAll("dialog").forEach(function(dlg){
+      if(dlg.getAttribute("aria-label") || dlg.getAttribute("aria-labelledby")) return;
+      var heading = dlg.querySelector("h1,h2,h3");
+      if(!heading) return;
+      if(!heading.id) heading.id = dlg.id + "-title";
+      dlg.setAttribute("aria-labelledby", heading.id);
+    });
+  }
+
   function initTabs(){
+    labelDialogs();
     Object.keys(TAB_GROUPS).forEach(function(tab){
       var container = $("tab-" + tab);
       if(!container) return;
@@ -7702,7 +7717,27 @@
       });
     });
     document.querySelectorAll(".tabbar .tab-btn").forEach(function(btn){
-      btn.addEventListener("click", function(){ selectTab(btn.getAttribute("data-tab")); });
+      var t = btn.getAttribute("data-tab");
+      btn.setAttribute("aria-controls", "tab-" + t);
+      btn.addEventListener("click", function(){ selectTab(t); });
+    });
+    document.querySelectorAll(".tab-panel").forEach(function(tp){
+      var t = tp.getAttribute("data-tab");
+      tp.setAttribute("role", "tabpanel");
+      if($("tab-btn-" + t)) tp.setAttribute("aria-labelledby", "tab-btn-" + t);
+    });
+    // setas / Home / End movem entre as abas visíveis (padrão WAI-ARIA de abas)
+    $("tabbar").addEventListener("keydown", function(e){
+      var keys = { ArrowRight:1, ArrowLeft:-1, Home:"first", End:"last" };
+      if(!(e.key in keys)) return;
+      var btns = Array.prototype.filter.call(document.querySelectorAll(".tabbar .tab-btn"), function(b){ return !b.hidden; });
+      var i = btns.indexOf(document.activeElement);
+      if(i < 0) return;
+      var k = keys[e.key];
+      var next = k === "first" ? 0 : (k === "last" ? btns.length - 1 : (i + k + btns.length) % btns.length);
+      e.preventDefault();
+      btns[next].focus();
+      selectTab(btns[next].getAttribute("data-tab"));
     });
     selectTab(S.activeTab || "foco");
   }
