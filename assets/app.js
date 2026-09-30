@@ -153,20 +153,24 @@
     return s;
   }
 
-  // união por id: quem chega primeiro na lista vence, e nada duplica.
+  // união por id, e nada duplica. Quando o mesmo id existe dos dois lados,
+  // vence o que foi editado por último (campo "u", carimbado em save());
+  // em empate (ou item antigo sem "u") vence quem chega primeiro na lista.
   // "tumbas" (ids apagados) ficam de fora dos dois lados — sem isso, um item
   // excluído aqui mas ainda presente numa cópia desatualizada simplesmente
   // reaparece na próxima fusão
   function mergeById(primary, secondary, tumbas){
     var mortos = {};
     (tumbas || []).forEach(function(id){ mortos[id] = true; });
-    var seen = {}, out = [];
-    (primary || []).forEach(function(x){
-      if(x && x.id && !seen[x.id] && !mortos[x.id]){ seen[x.id] = true; out.push(x); }
-    });
-    (secondary || []).forEach(function(x){
-      if(x && x.id && !seen[x.id] && !mortos[x.id]){ seen[x.id] = true; out.push(x); }
-    });
+    var pos = {}, out = [];
+    function add(x){
+      if(!x || !x.id || mortos[x.id]) return;
+      var i = pos[x.id];
+      if(i === undefined){ pos[x.id] = out.length; out.push(x); }
+      else if((x.u || 0) > (out[i].u || 0)){ out[i] = x; }
+    }
+    (primary || []).forEach(add);
+    (secondary || []).forEach(add);
     return out;
   }
 
@@ -220,8 +224,33 @@
   // atalho usado pela sincronização entre abas, que sempre funde contra o S atual
   function mergeIncoming(d){ return mergeState(S, d); }
 
+  // Carimbo de edição por item ("u"): em vez de achar cada lugar do app que
+  // edita um item, guarda a última versão serializada de cada um e carimba
+  // com a hora atual só os que mudaram desde o último save. O merge usa isso
+  // pra escolher a versão mais recente quando dois aparelhos editam o mesmo item.
+  var SNAP = {};
+  function itemJson(x){ var u = x.u; if(u === undefined) return JSON.stringify(x); x.u = undefined; var j = JSON.stringify(x); x.u = u; return j; }
+  function resnapshot(){
+    SNAP = {};
+    SYNCED_ARRAYS.forEach(function(k){
+      (S[k] || []).forEach(function(x){ if(x && x.id) SNAP[k + ":" + x.id] = itemJson(x); });
+    });
+  }
+  function stampChanges(){
+    var now = Date.now();
+    SYNCED_ARRAYS.forEach(function(k){
+      (S[k] || []).forEach(function(x){
+        if(!x || !x.id) return;
+        var key = k + ":" + x.id, j = itemJson(x);
+        if(SNAP[key] !== j){ x.u = now; SNAP[key] = itemJson(x); }
+      });
+    });
+  }
+  resnapshot();   // estado carregado é a base: só o que mudar daqui pra frente ganha carimbo
+
   function save(){
     try{
+      stampChanges();
       S.rev = (S.rev || 0) + 1;
       S.savedAt = Date.now();
       localStorage.setItem(KEY, JSON.stringify(S));
@@ -249,6 +278,7 @@
       (!d.timer || !d.timer.running || (S.timer.endsAt || 0) >= (d.timer.endsAt || 0));
 
     S = mergeIncoming(d);
+    resnapshot();
     REV = S.rev || 0;
 
     applyTheme();
@@ -266,21 +296,32 @@
   var pushTimer = null;
   var pulling = false;
   var LAST_ACCOUNT_KEY = "quack.lastAccount"; // fora do blob sincronizado, de propósito
+  var SREV_PREFIX = "quack.srev.";             // revisão do servidor em que este aparelho se baseou
+  var pushing = false;
 
+  function getSrev(){
+    try{ var v = localStorage.getItem(SREV_PREFIX + AUTH.email); return v == null ? null : Number(v); }catch(e){ return null; }
+  }
+  function setSrev(n){
+    if(typeof n !== "number") return;
+    try{ localStorage.setItem(SREV_PREFIX + AUTH.email, String(n)); }catch(e){}
+  }
   function api(path, opts){
     opts = opts || {};
     return fetch(path, {
       method: opts.method || "GET",
-      headers: opts.body ? { "Content-Type": "application/json" } : undefined,
+      headers: Object.assign(opts.body ? { "Content-Type": "application/json" } : {}, opts.headers || {}),
       body: opts.body ? JSON.stringify(opts.body) : undefined,
       credentials: "same-origin"
     }).then(function(res){
       return res.json().catch(function(){ return {}; }).then(function(data){
-        if(!res.ok){ var err = new Error(data.error || "Erro"); err.status = res.status; throw err; }
+        if(!res.ok){ var err = new Error(data.error || "Erro"); err.status = res.status; err.data = data; throw err; }
         return data;
       });
     });
   }
+
+  var pushAgain = false;
 
   function schedulePush(){
     if(!SERVER_OK || !AUTH.email) return;
@@ -288,15 +329,39 @@
     pushTimer = setTimeout(pushToServer, 900);
   }
 
+  // Envia o estado dizendo em qual revisão do servidor ele se baseou. Se outro
+  // aparelho gravou no meio, o servidor responde 409 com o estado dele: funde,
+  // e o save() que vem depois agenda um novo envio já com tudo junto.
   function pushToServer(){
     if(!SERVER_OK || !AUTH.email) return;
-    api("/api/state", { method:"PUT", body:S }).then(function(){
+    if(pushing){ pushAgain = true; return; }
+    pushing = true;
+    pushAgain = false;
+    var rev = getSrev();
+    var headers = rev != null ? { "If-Match": String(rev) } : {};
+    api("/api/state", { method:"PUT", body:S, headers:headers }).then(function(res){
+      pushing = false;
+      setSrev(res.rev);
+      if(pushAgain){ pushAgain = false; pushToServer(); return; }   // mudou durante o envio
       setSyncNote("sincronizado agora há pouco");
     }).catch(function(err){
-      // antes disso a mensagem de verdade do servidor (ex.: "estado grande
-      // demais", limite de tentativas) ficava escondida atrás de um texto
-      // genérico — sem isso não dava pra saber por que uma sincronização
-      // específica falhou, só que "algo" falhou
+      pushing = false;
+      if(err && err.status === 409){
+        if(err.data && err.data.busy){ setTimeout(pushToServer, 1200); return; }
+        if(err.data && err.data.state){
+          S = mergeState(S, err.data.state);
+          resnapshot();
+          setSrev(err.data.rev);
+          REV = S.rev || 0;
+          applyTheme(); render(); renderEmbed();
+          save();           // grava a fusão e agenda o reenvio
+          setSyncNote("mudanças de outro aparelho foram juntadas às suas");
+          return;
+        }
+      }
+      // a mensagem de verdade do servidor (ex.: "estado grande demais", limite
+      // de tentativas) aparece na nota — sem ela não dava pra saber por que
+      // uma sincronização específica falhou, só que "algo" falhou
       console.warn("[sync] push falhou:", err && err.status, err && err.message);
       var motivo = (err && err.message) ? " (" + err.message + ")" : "";
       setSyncNote("não deu para sincronizar agora" + motivo + " — tentando de novo em breve");
@@ -350,7 +415,9 @@
           ? (remoto.archive[remoto.activeProfileId] || remoto.archive[Object.keys(remoto.archive)[0]] || clone(DEFAULTS))
           : remoto;
         S = mergeState(S, remotoBlob);
+        resnapshot();
       }
+      setSrev(res.rev);
       REV = S.rev || 0;
       try{ localStorage.setItem(LAST_ACCOUNT_KEY, AUTH.email); }catch(e){}
 
