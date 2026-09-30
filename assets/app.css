@@ -1659,3 +1659,28 @@
     *{transition:none !important;animation:none !important}
   }
   .hint.warn{color:var(--signal)}
+
+  /* ---------- aba Hoje ---------- */
+  .hj-chips{display:flex;flex-wrap:wrap;gap:calc(var(--sp)*1.5);margin-bottom:calc(var(--sp)*2)}
+  .hj-chip{flex:1 1 90px;background:var(--field);border:1px solid var(--line);border-radius:var(--r-sm);padding:calc(var(--sp)*1.25) calc(var(--sp)*1.5)}
+  .hj-chip b{display:block;font-size:22px;font-weight:700;line-height:1.15;color:var(--ink)}
+  .hj-chip span{font-size:12px;color:var(--ink-3)}
+  .hj-timer{display:flex;align-items:center;justify-content:space-between;gap:calc(var(--sp)*2);flex-wrap:wrap;
+    background:var(--field);border:1px solid var(--line);border-radius:var(--r-md);padding:calc(var(--sp)*1.5) calc(var(--sp)*2);margin-bottom:calc(var(--sp)*2)}
+  .hj-timer .hj-clock{font-size:26px;font-weight:700;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .hj-timer .hj-mode{font-size:12px;color:var(--ink-3);display:block}
+  .hj-sub{font-size:13px;font-weight:600;color:var(--ink-2);margin:calc(var(--sp)*2) 0 var(--sp);letter-spacing:.01em}
+  .hj-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+  .hj-row{display:flex;align-items:center;gap:calc(var(--sp)*1.25);padding:8px 10px;border:1px solid var(--line);border-radius:var(--r-sm);background:var(--field)}
+  .hj-row.done .hj-title{text-decoration:line-through;color:var(--ink-3)}
+  .hj-check{flex:none;width:26px;height:26px;border-radius:8px;border:2px solid var(--ink-2);background:transparent;color:transparent;cursor:pointer;font-size:14px;line-height:1;padding:0}
+  .hj-check[aria-pressed="true"]{background:var(--rest);border-color:var(--rest);color:var(--on-ink)}
+  .hj-check:hover{border-color:var(--ink)}
+  .hj-title{flex:1;min-width:0;font-size:14px;color:var(--ink);overflow-wrap:anywhere}
+  .hj-meta{flex:none;font-size:12px;color:var(--ink-3)}
+  .hj-meta.late{color:var(--signal);font-weight:600}
+  .hj-empty{font-size:13px;color:var(--ink-3);padding:6px 2px}
+  .hj-bar{height:6px;border-radius:99px;background:var(--line);overflow:hidden;margin-top:4px}
+  .hj-bar i{display:block;height:100%;background:var(--rest);border-radius:99px}
+  .hj-goal{display:block;flex:1;min-width:0}
+  .hj-link{background:none;border:0;padding:0;color:var(--rest);text-decoration:underline;cursor:pointer;font:inherit;font-size:12.5px}

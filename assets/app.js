@@ -59,7 +59,7 @@
     topicColors: {},
     sound: { embed:null },
     theme: "auto",
-    activeTab: "foco",
+    activeTab: "hoje",
     lastHabitReminder: null
   };
 
@@ -1023,6 +1023,7 @@
     if(S.activeTab === "notas") renderNotesPage();
     if(S.activeTab === "calendario") renderCalendar();
     if(S.activeTab === "produtividade") renderHeatmap();
+    if(S.activeTab === "hoje") renderHoje();
   }
 
   function paintClock(){
@@ -1037,6 +1038,7 @@
     /* a fatia AVANÇA (cresce) conforme o tempo passa — por isso o offset encolhe, ao contrário de um "tempo restante" que esvazia */
     $("trace").setAttribute("stroke-dashoffset", (C * (1 - elapsed)).toFixed(1));
     paintOrbit(elapsed);
+    paintHojeClock();
     document.title = (S.timer.running ? text + " · " : "") + modeLabel(S.timer.mode) + " — Quack";
   }
 
@@ -7638,6 +7640,7 @@
   // dos divs ".tab-panel" dentro de #main; os painéis em si continuam sendo
   // os mesmos elementos, só mudam de pai (ver initTabs)
   var TAB_GROUPS = {
+    hoje: ["panel-hoje-main", "panel-hoje-side"],
     foco: ["section-timer", "section-tarefas", "panel-sound"],
     produtividade: ["panel-patterns", "panel-stats", "panel-heatmap"],
     metas: ["panel-goals", "panel-pdi"],
@@ -7663,6 +7666,7 @@
     if(tab === "notas") renderNotesPage();
     if(tab === "calendario") renderCalendar();
     if(tab === "produtividade") renderHeatmap();
+    if(tab === "hoje") renderHoje();
   }
 
   // esconde da barra as abas cujos painéis estão todos desligados nos
@@ -7701,6 +7705,126 @@
       btn.addEventListener("click", function(){ selectTab(btn.getAttribute("data-tab")); });
     });
     selectTab(S.activeTab || "foco");
+  }
+
+
+  /* ---------- aba Hoje ---------- */
+  // Só lê o que já existe em S (tarefas com prazo, hábitos, sessões, objetivos);
+  // não cria estado novo — por isso não há nada extra pra sincronizar.
+  function mk(tag, cls, txt){
+    var e = document.createElement(tag);
+    if(cls) e.className = cls;
+    if(txt !== undefined && txt !== null) e.textContent = txt;
+    return e;
+  }
+
+  function sessionsSince(fromMs, toMs){
+    return S.sessions.filter(function(x){ return x.end >= fromMs && x.end < toMs; });
+  }
+
+  function paintHojeClock(){
+    var c = $("hoje-clock");
+    if(!c) return;
+    var ms = remaining();
+    c.textContent = pad(Math.floor(ms / MIN)) + ":" + pad(Math.floor((ms % MIN) / 1000));
+  }
+
+  function renderHoje(){
+    if(!$("hoje-chips")) return;
+    var now = new Date();
+    var today = startOfDay(now);
+    var tKey = dayKey(today.getTime());
+    $("hoje-date").textContent = now.toLocaleDateString("pt-BR", { weekday:"long", day:"numeric", month:"long" });
+
+    // resumo do dia
+    var sess = sessionsSince(today.getTime(), addDays(today, 1).getTime());
+    var minutos = sess.reduce(function(a, x){ return a + (x.min || 0); }, 0);
+    var devidos = S.habits.filter(function(h){ return h.type === "semanal" || scheduled(h, today); });
+    var feitos = devidos.filter(function(h){ return doneOn(h, today); }).length;
+    var pend = S.tasks.filter(function(t){ return !t.completed && t.due && t.due <= tKey; });
+    var concluidasHoje = S.tasks.filter(function(t){ return t.completed && t.completedAt && t.completedAt >= today.getTime(); }).length;
+
+    var chips = $("hoje-chips"); chips.innerHTML = "";
+    [[sess.length, sess.length === 1 ? "pomodoro" : "pomodoros"], [fmtDuration(minutos * MIN), "de foco"],
+     [concluidasHoje, concluidasHoje === 1 ? "tarefa concluída" : "tarefas concluídas"],
+     [devidos.length ? feitos + "/" + devidos.length : "—", "hábitos"]].forEach(function(p){
+      var c = mk("div", "hj-chip"); c.appendChild(mk("b", null, String(p[0]))); c.appendChild(mk("span", null, p[1])); chips.appendChild(c);
+    });
+
+    // cronômetro (mesmo estado do timer da aba Foco)
+    var tm = $("hoje-timer"); tm.innerHTML = "";
+    var left = mk("div"); var clock = mk("span", "hj-clock"); clock.id = "hoje-clock";
+    left.appendChild(clock);
+    var at = findTask(S.activeTaskId);
+    left.appendChild(mk("span", "hj-mode", modeLabel(S.timer.mode) + (S.timer.running ? " em andamento" : " parado") + (at ? " · " + at.title : "")));
+    tm.appendChild(left);
+    var btn = mk("button", "btn-main", S.timer.running ? "Pausar" : "Iniciar");
+    btn.type = "button";
+    btn.onclick = function(){ if(S.timer.running) pause(); else start(); renderHoje(); };
+    tm.appendChild(btn);
+    paintHojeClock();
+
+    // tarefas: atrasadas primeiro, depois as de hoje
+    var ul = $("hoje-tasks"); ul.innerHTML = "";
+    pend.sort(function(a, b){ return a.due < b.due ? -1 : (a.due > b.due ? 1 : 0); });
+    if(!pend.length) ul.appendChild(mk("li", "hj-empty", "Nada vence hoje nem está atrasado."));
+    pend.slice(0, 8).forEach(function(t){
+      var li = mk("li", "hj-row");
+      var cb = mk("button", "hj-check", "✓"); cb.type = "button";
+      cb.setAttribute("aria-pressed", "false");
+      cb.setAttribute("aria-label", "Concluir: " + t.title);
+      cb.onclick = function(){ toggleTask(t.id); renderHoje(); };
+      li.appendChild(cb);
+      li.appendChild(mk("span", "hj-title", t.title));
+      var info = dueInfo(t.due);
+      li.appendChild(mk("span", "hj-meta" + (info && info.state === "atrasada" ? " late" : ""), info ? info.label : ""));
+      ul.appendChild(li);
+    });
+    if(pend.length > 8){
+      var more = mk("li", "hj-empty");
+      var lk = mk("button", "hj-link", "+" + (pend.length - 8) + " — ver todas na aba Foco"); lk.type = "button";
+      lk.onclick = function(){ selectTab("foco"); };
+      more.appendChild(lk); ul.appendChild(more);
+    }
+
+    // hábitos de hoje
+    var hul = $("hoje-habits"); hul.innerHTML = "";
+    var seq = S.habits.length ? habitStreak() : 0;
+    $("hoje-streak").textContent = S.habits.length ? "ofensiva: " + seq + (seq === 1 ? " dia" : " dias") : "";
+    if(!devidos.length) hul.appendChild(mk("li", "hj-empty", S.habits.length ? "Nenhum hábito cobrado hoje." : "Você ainda não criou hábitos."));
+    devidos.forEach(function(h){
+      var on = doneOn(h, today);
+      var li = mk("li", "hj-row" + (on ? " done" : ""));
+      var cb = mk("button", "hj-check", "✓"); cb.type = "button";
+      cb.setAttribute("aria-pressed", on ? "true" : "false");
+      cb.setAttribute("aria-label", h.name + (on ? " — feito hoje" : " — marcar como feito"));
+      cb.onclick = function(){ toggleHabit(h, today); renderHoje(); };
+      li.appendChild(cb);
+      li.appendChild(mk("span", "hj-title", h.name));
+      li.appendChild(mk("span", "hj-meta", freqLabel(h)));
+      hul.appendChild(li);
+    });
+
+    // objetivos em andamento (até 4)
+    var gul = $("hoje-goals"); gul.innerHTML = "";
+    var abertos = S.goals.filter(function(g){ return !g.doneAt; }).slice(0, 4);
+    if(!abertos.length) gul.appendChild(mk("li", "hj-empty", S.goals.length ? "Todos os objetivos foram cumpridos." : "Sem objetivos cadastrados."));
+    abertos.forEach(function(g){
+      var pct = goalPct(g);
+      var li = mk("li", "hj-row");
+      var box = mk("span", "hj-goal");
+      var top = mk("span", "hj-title", g.title);
+      top.style.display = "block";
+      box.appendChild(top);
+      var bar = mk("div", "hj-bar"); bar.setAttribute("role", "progressbar");
+      bar.setAttribute("aria-valuenow", String(pct)); bar.setAttribute("aria-valuemin", "0"); bar.setAttribute("aria-valuemax", "100");
+      bar.setAttribute("aria-label", "Progresso de " + g.title);
+      var fill = mk("i"); fill.style.width = pct + "%"; bar.appendChild(fill);
+      box.appendChild(bar);
+      li.appendChild(box);
+      li.appendChild(mk("span", "hj-meta", pct + "%"));
+      gul.appendChild(li);
+    });
   }
 
   /* ---------- tema ---------- */
