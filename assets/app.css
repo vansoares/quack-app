@@ -1658,3 +1658,4 @@
   @media (prefers-reduced-motion:reduce){
     *{transition:none !important;animation:none !important}
   }
+  .hint.warn{color:var(--signal)}

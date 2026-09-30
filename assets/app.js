@@ -201,7 +201,7 @@
     var locais = {};
     SYNCED_ARRAYS.forEach(function(k){ locais[k] = localBlob[k]; });
     var novo = adopt(clone(DEFAULTS), remoteBlob);
-    var tumbas = unionIds(localBlob.deletedIds, novo.deletedIds);
+    var tumbas = capTumbas(unionIds(localBlob.deletedIds, novo.deletedIds));
     novo.deletedIds = tumbas;
     SYNCED_ARRAYS.forEach(function(k){ novo[k] = mergeById(novo[k], locais[k], tumbas); });
 
@@ -246,11 +246,17 @@
       });
     });
   }
+  // teto de tumbas: sem ele a lista só cresce pra sempre e pesa em todo sync.
+  // Só as mais recentes importam — um aparelho parado há milhares de exclusões
+  // é o único que poderia ressuscitar algo apagado.
+  var MAX_TUMBAS = 3000;
+  function capTumbas(arr){ return arr.length > MAX_TUMBAS ? arr.slice(arr.length - MAX_TUMBAS) : arr; }
   resnapshot();   // estado carregado é a base: só o que mudar daqui pra frente ganha carimbo
 
   function save(){
     try{
       stampChanges();
+      S.deletedIds = capTumbas(S.deletedIds);
       S.rev = (S.rev || 0) + 1;
       S.savedAt = Date.now();
       localStorage.setItem(KEY, JSON.stringify(S));
@@ -368,7 +374,27 @@
     });
   }
 
+  // O servidor recusa estados acima de 4 MB (limite de corpo do Vercel). Mostra
+  // o uso e avisa antes de chegar lá — uma vez por sessão, pra não incomodar.
+  var SYNC_LIMIT = 4 * 1024 * 1024;
+  var sizeWarned = false;
+  function updateSizeNote(){
+    var el = $("account-sync-size");
+    if(!el) return;
+    if(!AUTH.email){ el.textContent = ""; return; }
+    var bytes = new Blob([JSON.stringify(S)]).size;
+    var pct = Math.round(bytes / SYNC_LIMIT * 100);
+    var mb = (bytes / 1048576).toFixed(2).replace(".", ",");
+    el.textContent = "Dados sincronizados: " + mb + " MB de 4 MB (" + pct + "%)";
+    el.classList.toggle("warn", pct >= 75);
+    if(pct >= 75 && !sizeWarned){
+      sizeWarned = true;
+      toast("Seus dados já usam " + pct + "% do limite de sincronização. Exclua itens antigos para não travar o sync.");
+    }
+  }
+
   function setSyncNote(txt){
+    updateSizeNote();
     var el = $("account-sync-state");
     if(el) el.textContent = AUTH.email ? txt : "";
   }

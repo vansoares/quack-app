@@ -63,7 +63,10 @@ test("cliente antigo (sem If-Match) continua gravando", async () => {
   assert.equal((await res.json()).rev, 3);
 });
 
-test("formato legado (objeto puro) ainda é lido", async () => {
+test("estado fica comprimido no Redis e formato legado ainda é lido", async () => {
+  const stored = mock._store["state:" + Object.keys(mock._store).find(k => k.startsWith("user:") && !k.startsWith("user:index")).slice(5)];
+  assert.equal(stored.v, 2);
+  assert.equal(typeof stored.gz, "string");
   const uid = Object.keys(mock._store).find(k => k.startsWith("user:")).slice(5);
   mock._store["state:" + uid] = { tasks: [{ id: "legado" }] };   // formato antigo: objeto puro
   const r = await get();
