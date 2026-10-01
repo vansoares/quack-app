@@ -8493,9 +8493,10 @@
     var dlg = $("duckgame"), cv = $("dg-canvas"), ctx = cv.getContext("2d");
     var BEST_KEY = "quack-duck-best";
     var TAU = Math.PI * 2;
-    var SP = 7;                          // amostras da trilha entre um patinho e outro (~21px)
+    var SP = 8;                          // amostras da trilha entre um patinho e outro (~24px)
     var W = 0, H = 0, cx = 0, cy = 0, rx = 0, ry = 0;
     var raf = 0, last = 0, clock = 0, rippleT = 0, mode = "intro";   // intro | play | paused | over
+    var logs = [], rocks = [], playTime = 0, level = 1, logT = 0, rockT = 0, bannerTimer = 0;
     var kidDir = [], kidColor = [], head, hist, kids, lost, decor, ripples, pops, scenery, score, best = 0, newRecord = false;
     var steerKey = null, pointer = { on:false, x:0, y:0 }, color = "#9C4A2B";
 
@@ -8528,14 +8529,15 @@
     function remapAll(o){
       function mv(p){ p.x = cx + (p.x - o.cx) * (rx / o.rx); p.y = cy + (p.y - o.cy) * (ry / o.ry); }
       if(!head) return;
-      mv(head); hist.forEach(mv); lost.forEach(mv); decor.forEach(mv); ripples.forEach(mv); pops.forEach(mv);
+      mv(head); hist.forEach(mv); lost.forEach(mv); decor.forEach(mv); ripples.forEach(mv); pops.forEach(mv); logs.forEach(mv); rocks.forEach(mv);
     }
 
     function spawnLost(){
       for(var tries = 0; tries < 30; tries++){
         var ang = Math.random() * TAU, rad = Math.sqrt(Math.random()) * 0.8;
         var x = cx + Math.cos(ang) * rx * rad, y = cy + Math.sin(ang) * ry * rad;
-        if(Math.hypot(x - head.x, y - head.y) > 140 || tries === 29){
+        var livre = rocks.every(function(r){ return Math.hypot(x - r.x, y - r.y) > r.r + 40; });
+        if((Math.hypot(x - head.x, y - head.y) > 140 && livre) || tries === 29){
           lost.push({ x:x, y:y, a:Math.random() * TAU, c:DUCKLING_COLORS[Math.floor(Math.random() * DUCKLING_COLORS.length)] });
           return;
         }
@@ -8549,10 +8551,12 @@
 
     function reset(){
       score = 0; kids = 0; clock = 0; newRecord = false;
-      head = { x:cx - rx * 0.3, y:cy, a:0 };
+      head = { x:cx - rx * 0.3, y:cy, a:0, dir:1 };
       kidDir = []; kidColor = [];
       hist = [{ x:head.x, y:head.y }];
-      lost = []; pops = []; ripples = [];
+      lost = []; pops = []; ripples = []; logs = []; rocks = [];
+      playTime = 0; level = 1; logT = 2; rockT = 2;
+      $("dg-banner").classList.remove("show");
       steerKey = null; pointer.on = false;
       spawnLost(); spawnLost();
     }
@@ -8576,6 +8580,7 @@
     function updateHud(){
       $("dg-score").textContent = "Patinhos: " + score;
       $("dg-best").textContent = "Recorde: " + Math.max(best, score);
+      $("dg-level").textContent = "Nível " + level;
     }
 
     function showOverlay(kind){
@@ -8617,13 +8622,95 @@
 
     function kidIndex(i){ return hist.length - 1 - i * SP; }
 
+    function showBanner(text){
+      var b = $("dg-banner");
+      b.textContent = text;
+      b.classList.add("show");
+      clearTimeout(bannerTimer);
+      bannerTimer = setTimeout(function(){ b.classList.remove("show"); }, 2800);
+    }
+
+    // distância do ponto (x,y) ao eixo do tronco (um segmento)
+    function segDist(x, y, lg){
+      var hx = Math.cos(lg.a) * (lg.len / 2 - lg.w / 2), hy = Math.sin(lg.a) * (lg.len / 2 - lg.w / 2);
+      var ax = lg.x - hx, ay = lg.y - hy, bx = lg.x + hx, by = lg.y + hy;
+      var vx = bx - ax, vy = by - ay, l2 = vx * vx + vy * vy;
+      var t = l2 ? Math.max(0, Math.min(1, ((x - ax) * vx + (y - ay) * vy) / l2)) : 0;
+      return Math.hypot(x - (ax + vx * t), y - (ay + vy * t));
+    }
+
+    function spawnLog(){
+      var ang = Math.random() * TAU;
+      var x = cx + Math.cos(ang) * rx * 0.97, y = cy + Math.sin(ang) * ry * 0.97;
+      var tx = cx + (Math.random() - 0.5) * rx * 0.8, ty = cy + (Math.random() - 0.5) * ry * 0.8;
+      var dir = Math.atan2(ty - y, tx - x), sp = 38 + level * 6 + Math.random() * 14;
+      logs.push({ x:x, y:y, vx:Math.cos(dir) * sp, vy:Math.sin(dir) * sp, a:dir + (Math.random() - 0.5) * 0.9,
+        len:70 + Math.random() * 40, w:15, fade:0, inside:false, spin:(Math.random() - 0.5) * 0.4 });
+    }
+
+    function spawnRock(){
+      for(var tries = 0; tries < 25; tries++){
+        var ang = Math.random() * TAU, rad = Math.sqrt(Math.random()) * 0.78;
+        var x = cx + Math.cos(ang) * rx * rad, y = cy + Math.sin(ang) * ry * rad;
+        var ok = Math.hypot(x - head.x, y - head.y) > 170 &&
+          rocks.every(function(r){ return Math.hypot(x - r.x, y - r.y) > 70; }) &&
+          lost.every(function(l){ return Math.hypot(x - l.x, y - l.y) > 50; });
+        if(ok){ rocks.push({ x:x, y:y, r:15 + Math.random() * 7, t:0, ph:Math.random() * TAU }); return; }
+      }
+    }
+
+    // a dificuldade sobe sozinha com o tempo de jogo: a cada 20s um nível novo
+    function progress(dt){
+      playTime += dt;
+      var nl = Math.floor(playTime / 20) + 1;
+      if(nl !== level){
+        level = nl;
+        updateHud();
+        showBanner(level === 2 ? "Nível 2 — troncos à deriva! 🪵" :
+                   level === 3 ? "Nível 3 — pedras surgindo na água! 🪨" :
+                   level === 4 ? "Nível 4 — os patinhos ficaram tímidos! 💨" :
+                   "Nível " + level + " — o lago está agitado!");
+      }
+      var i;
+      for(i = logs.length - 1; i >= 0; i--){
+        var lg = logs[i];
+        lg.x += lg.vx * dt; lg.y += lg.vy * dt; lg.a += lg.spin * dt;
+        lg.fade = Math.min(1, lg.fade + dt);
+        var inside = inPond(lg.x, lg.y, 0);
+        if(inside) lg.inside = true;
+        else if(lg.inside) logs.splice(i, 1);   // já cruzou e saiu do lago
+      }
+      if(level >= 2){
+        logT -= dt;
+        if(logs.length < Math.min(1 + Math.floor((level - 2) / 2), 4) && logT <= 0){ spawnLog(); logT = 5; }
+      }
+      for(i = rocks.length - 1; i >= 0; i--){
+        rocks[i].t += dt;
+        if(rocks[i].t > 26) rocks.splice(i, 1);
+      }
+      if(level >= 3){
+        rockT -= dt;
+        if(rocks.length < Math.min(level - 1, 6) && rockT <= 0){ spawnRock(); rockT = 6; }
+      }
+    }
+
     function update(dt){
       clock += dt;
       decor.forEach(function(d){ wander(d, 16, dt, 0.85); });
-      lost.forEach(function(l){ wander(l, 20, dt, 0.8); });
+      lost.forEach(function(l){
+        // a partir do nível 4 eles fogem do pato (mas o pato ainda é mais rápido)
+        if(mode === "play" && level >= 4 && Math.hypot(l.x - head.x, l.y - head.y) < 140){
+          l.a += angDiff(Math.atan2(l.y - head.y, l.x - head.x), l.a) * Math.min(1, 6 * dt);
+          wander(l, 62, dt, 0.8);
+        }else{
+          wander(l, 20, dt, 0.8);
+        }
+      });
       pops = pops.filter(function(p){ p.t += dt; return p.t < 0.9; });
       ripples = ripples.filter(function(r){ r.t += dt; return r.t < 1.2; });
       if(mode !== "play") return;
+
+      progress(dt);
 
       var want = null;
       if(pointer.on){
@@ -8636,7 +8723,7 @@
         var m = 4.2 * dt;
         head.a += Math.max(-m, Math.min(m, angDiff(want, head.a)));
       }
-      var sp = 135 + Math.min(score, 30) * 2;
+      var sp = 135 + Math.min(score, 30) * 2 + Math.min(playTime, 120) * 0.3;
       head.x += Math.cos(head.a) * sp * dt;
       head.y += Math.sin(head.a) * sp * dt;
 
@@ -8650,6 +8737,14 @@
       if(rippleT <= 0){ rippleT = 0.18; ripples.push({ x:head.x, y:head.y, t:0 }); }
 
       if(!inPond(head.x, head.y, 18)){ gameOver(); return; }
+      for(var k = 0; k < logs.length; k++){
+        var lg = logs[k];
+        if(lg.fade >= 1 && segDist(head.x, head.y, lg) < lg.w / 2 + 9){ gameOver(); return; }
+      }
+      for(k = 0; k < rocks.length; k++){
+        var rk = rocks[k];
+        if(rk.t >= 1.5 && Math.hypot(head.x - rk.x, head.y - rk.y) < rk.r + 10){ gameOver(); return; }
+      }
       for(var i = 3; i <= kids; i++){
         var idx = kidIndex(i);
         if(idx < 0) break;
@@ -8671,53 +8766,40 @@
       ctx.beginPath(); ctx.ellipse(x, y, a, b, 0, 0, TAU); ctx.fillStyle = fill; ctx.fill();
     }
 
-    // pato visto de cima, girando com o rumo: cabeça grande, bico achatado,
-    // olhinhos com brilho, bochechas rosadas, asas dobradas e rabinho que balança
-    function drawDuck(x, y, a, s, fill, alpha, phase){
-      var wag = Math.sin(clock * 6 + phase) * 0.05;
+    // pato de borracha visto de lado, boiando: a barriga fica "dentro" da água
+    // (recorte) e ele só vira pra esquerda/direita conforme o rumo — sem girar
+    function drawDuck(x, y, dir, s, fill, alpha, phase){
       ctx.save();
       ctx.globalAlpha = alpha;
-      ctx.translate(x, y);
-      ctx.rotate(a + wag);
-      // marola em volta + sombra na água
-      ctx.strokeStyle = "rgba(255,255,255,.4)"; ctx.lineWidth = 1.5;
-      ctx.beginPath(); ctx.ellipse(-0.1 * s, 0, 2.0 * s, 1.4 * s, 0, 0, TAU); ctx.stroke();
-      ctx.fillStyle = "rgba(20,60,80,.18)";
-      ctx.beginPath(); ctx.ellipse(-0.2 * s, 0.2 * s, 1.7 * s, 1.15 * s, 0, 0, TAU); ctx.fill();
+      ctx.translate(x, y + Math.sin(clock * 4 + phase) * s * 0.06);
+      ctx.scale(dir, 1);
+      // marola na linha d'água
+      ctx.strokeStyle = "rgba(255,255,255,.55)"; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.ellipse(0, 0.7 * s, 1.9 * s, 0.32 * s, 0, 0, TAU); ctx.stroke();
+      ctx.save();
+      ctx.beginPath(); ctx.rect(-3 * s, -3 * s, 6 * s, 3.7 * s); ctx.clip();
       ctx.fillStyle = fill;
-      // rabinho
-      ctx.beginPath(); ctx.moveTo(-1.2 * s, -0.45 * s); ctx.quadraticCurveTo(-2.1 * s, -0.1 * s, -2.0 * s, 0.05 * s);
-      ctx.quadraticCurveTo(-2.1 * s, 0.3 * s, -1.2 * s, 0.45 * s); ctx.closePath(); ctx.fill();
-      // corpo gordinho
-      ctx.beginPath(); ctx.ellipse(-0.35 * s, 0, 1.45 * s, 1.1 * s, 0, 0, TAU); ctx.fill();
-      // asinhas
-      ctx.fillStyle = "rgba(0,0,0,.13)";
-      [-1, 1].forEach(function(side){
-        ctx.beginPath(); ctx.ellipse(-0.55 * s, side * 0.62 * s, 0.95 * s, 0.4 * s, side * -0.18, 0, TAU); ctx.fill();
-      });
-      ctx.strokeStyle = "rgba(255,255,255,.28)"; ctx.lineWidth = Math.max(1, s * 0.09); ctx.lineCap = "round";
-      [-1, 1].forEach(function(side){
-        ctx.beginPath(); ctx.moveTo(-1.1 * s, side * 0.55 * s); ctx.quadraticCurveTo(-0.6 * s, side * 0.38 * s, -0.05 * s, side * 0.5 * s); ctx.stroke();
-      });
-      // cabeça
-      ctx.fillStyle = fill;
-      ctx.beginPath(); ctx.arc(0.8 * s, 0, 0.85 * s, 0, TAU); ctx.fill();
-      ctx.fillStyle = "rgba(255,255,255,.22)";
-      ctx.beginPath(); ctx.ellipse(0.55 * s, -0.3 * s, 0.4 * s, 0.22 * s, -0.5, 0, TAU); ctx.fill();
-      // bico
+      ctx.beginPath(); ctx.ellipse(-0.1 * s, 0.1 * s, 1.4 * s, 0.95 * s, 0, 0, TAU); ctx.fill();            // corpo
+      ctx.beginPath(); ctx.moveTo(-1.1 * s, -0.1 * s); ctx.quadraticCurveTo(-1.9 * s, -0.25 * s, -1.85 * s, -0.85 * s);
+      ctx.quadraticCurveTo(-1.3 * s, -0.55 * s, -0.8 * s, -0.5 * s); ctx.fill();                            // rabinho empinado
+      ctx.beginPath(); ctx.arc(0.8 * s, -0.8 * s, 0.75 * s, 0, TAU); ctx.fill();                            // cabeça
+      ctx.fillStyle = "rgba(0,0,0,.14)";
+      ctx.beginPath(); ctx.ellipse(-0.3 * s, 0.05 * s, 0.7 * s, 0.42 * s, -0.3, 0, TAU); ctx.fill();        // asa
       ctx.fillStyle = "#f09a33";
-      ctx.beginPath(); ctx.ellipse(1.72 * s, 0, 0.5 * s, 0.38 * s, 0, 0, TAU); ctx.fill();
-      ctx.fillStyle = "rgba(0,0,0,.2)";
-      ctx.beginPath(); ctx.arc(1.78 * s, -0.14 * s, 0.05 * s, 0, TAU); ctx.arc(1.78 * s, 0.14 * s, 0.05 * s, 0, TAU); ctx.fill();
-      // bochechas
-      ctx.fillStyle = "rgba(255,110,130,.38)";
-      ctx.beginPath(); ctx.arc(1.05 * s, -0.66 * s, 0.17 * s, 0, TAU); ctx.arc(1.05 * s, 0.66 * s, 0.17 * s, 0, TAU); ctx.fill();
-      // olhos
+      ctx.beginPath(); ctx.ellipse(1.65 * s, -0.75 * s, 0.5 * s, 0.2 * s, 0, 0, TAU); ctx.fill();           // bico
+      ctx.fillStyle = "rgba(255,110,130,.4)";
+      ctx.beginPath(); ctx.arc(0.78 * s, -0.62 * s, 0.14 * s, 0, TAU); ctx.fill();                          // bochecha
       ctx.fillStyle = "#2b2a28";
-      ctx.beginPath(); ctx.arc(1.08 * s, -0.4 * s, 0.2 * s, 0, TAU); ctx.arc(1.08 * s, 0.4 * s, 0.2 * s, 0, TAU); ctx.fill();
+      ctx.beginPath(); ctx.arc(0.98 * s, -0.98 * s, 0.13 * s, 0, TAU); ctx.fill();                          // olho
       ctx.fillStyle = "#fff";
-      ctx.beginPath(); ctx.arc(1.15 * s, -0.46 * s, 0.07 * s, 0, TAU); ctx.arc(1.15 * s, 0.34 * s, 0.07 * s, 0, TAU); ctx.fill();
+      ctx.beginPath(); ctx.arc(1.02 * s, -1.02 * s, 0.045 * s, 0, TAU); ctx.fill();
       ctx.restore();
+      ctx.restore();
+    }
+
+    // rumo horizontal do pato; perto de zero mantém o lado atual, pra não ficar piscando
+    function facing(cur, dx){
+      return Math.abs(dx) < 0.4 ? cur : (dx > 0 ? 1 : -1);
     }
 
     function draw(){
@@ -8758,23 +8840,67 @@
         ctx.beginPath(); ctx.ellipse(x + sway, y - r.h - 3, 2.2, 5, 0, 0, TAU); ctx.fill();
       });
 
-      decor.forEach(function(d, i){ drawDuck(d.x, d.y, d.a, 7, color, 0.85, i); });
+      rocks.forEach(function(r){
+        var warn = r.t < 1.5, alpha = r.t > 24 ? Math.max(0, (26 - r.t) / 2) : 1;
+        ctx.save();
+        ctx.globalAlpha = alpha;
+        if(warn){
+          var k = 0.5 + 0.5 * Math.sin(clock * 10);
+          ctx.strokeStyle = "rgba(255,255,255," + (0.45 + 0.4 * k).toFixed(3) + ")"; ctx.lineWidth = 2; ctx.setLineDash([5, 4]);
+          ctx.beginPath(); ctx.arc(r.x, r.y, r.r + 6 + k * 4, 0, TAU); ctx.stroke(); ctx.setLineDash([]);
+          ctx.globalAlpha = alpha * (0.25 + 0.5 * r.t / 1.5);
+        }
+        ctx.strokeStyle = "rgba(255,255,255,.45)"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.ellipse(r.x, r.y + 2, r.r + 5, r.r * 0.8 + 4, 0, 0, TAU); ctx.stroke();
+        ellipse(r.x + 2, r.y + 5, r.r, r.r * 0.78, "rgba(20,50,70,.25)");
+        ellipse(r.x, r.y, r.r, r.r * 0.85, "#858b90");
+        ellipse(r.x - r.r * 0.25, r.y - r.r * 0.25, r.r * 0.6, r.r * 0.42, "#aab0b5");
+        ellipse(r.x + r.r * 0.35, r.y + r.r * 0.2, r.r * 0.22, r.r * 0.16, "#6d7378");
+        ctx.restore();
+      });
+      logs.forEach(function(lg){
+        ctx.save();
+        ctx.globalAlpha = lg.fade;
+        ctx.translate(lg.x, lg.y); ctx.rotate(lg.a);
+        var L = lg.len, Wd = lg.w;
+        function capsule(dx, dy, wd){
+          ctx.beginPath();
+          ctx.moveTo(dx - L / 2 + wd / 2, dy - wd / 2); ctx.lineTo(dx + L / 2 - wd / 2, dy - wd / 2);
+          ctx.arc(dx + L / 2 - wd / 2, dy, wd / 2, -Math.PI / 2, Math.PI / 2);
+          ctx.lineTo(dx - L / 2 + wd / 2, dy + wd / 2);
+          ctx.arc(dx - L / 2 + wd / 2, dy, wd / 2, Math.PI / 2, Math.PI * 1.5);
+          ctx.closePath();
+        }
+        ctx.strokeStyle = "rgba(255,255,255,.4)"; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.ellipse(0, 0, L / 2 + 6, Wd / 2 + 6, 0, 0, TAU); ctx.stroke();
+        ctx.fillStyle = "rgba(20,50,70,.22)"; capsule(2, 5, Wd); ctx.fill();
+        ctx.fillStyle = "#8a5a34"; capsule(0, 0, Wd); ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,.14)"; capsule(0, -Wd * 0.2, Wd * 0.4); ctx.fill();
+        ctx.strokeStyle = "rgba(60,35,15,.45)"; ctx.lineWidth = 1.5; ctx.lineCap = "round";
+        for(var j = -2; j <= 2; j++){ ctx.beginPath(); ctx.moveTo(j * L * 0.17 - 4, Wd * 0.2); ctx.lineTo(j * L * 0.17 + 5, Wd * 0.2); ctx.stroke(); }
+        ctx.fillStyle = "#d1a671";
+        ctx.beginPath(); ctx.ellipse(L / 2 - Wd / 2, 0, Wd * 0.28, Wd * 0.4, 0, 0, TAU); ctx.fill();
+        ctx.strokeStyle = "#a87a47"; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.ellipse(L / 2 - Wd / 2, 0, Wd * 0.14, Wd * 0.22, 0, 0, TAU); ctx.stroke();
+        ctx.restore();
+      });
+      decor.forEach(function(d, i){ d.dir = facing(d.dir || 1, Math.cos(d.a)); drawDuck(d.x, d.y, d.dir, 8, color, 0.85, i); });
       lost.forEach(function(l){
         var pulse = 0.5 + 0.5 * Math.sin(clock * 4 + l.x);
         ctx.strokeStyle = "rgba(255,255,255," + (0.25 + 0.35 * pulse).toFixed(3) + ")";
         ctx.lineWidth = 2;
         ctx.beginPath(); ctx.arc(l.x, l.y, 20 + 4 * pulse, 0, TAU); ctx.stroke();
-        drawDuck(l.x, l.y, l.a, 9, l.c, 1, l.x);
+        l.dir = facing(l.dir || 1, Math.cos(l.a));
+        drawDuck(l.x, l.y, l.dir, 10, l.c, 1, l.x);
       });
       for(var i = kids; i >= 1; i--){
         var idx = kidIndex(i), p = hist[Math.max(0, idx)];
         var q = hist[Math.max(0, idx - 3)];
-        var moved = Math.hypot(p.x - q.x, p.y - q.y) > 0.5;
-        if(moved) kidDir[i] = Math.atan2(p.y - q.y, p.x - q.x);
-        else if(kidDir[i] === undefined) kidDir[i] = head.a;
-        drawDuck(p.x, p.y, kidDir[i], 8, kidColor[i - 1], 1, i);
+        kidDir[i] = facing(kidDir[i] || head.dir, p.x - q.x);
+        drawDuck(p.x, p.y, kidDir[i], 9, kidColor[i - 1], 1, i);
       }
-      drawDuck(head.x, head.y, head.a, 12, "#ffd23f", 1, 0);
+      head.dir = facing(head.dir, Math.cos(head.a));
+      drawDuck(head.x, head.y, head.dir, 15, "#ffd23f", 1, 0);
 
       pops.forEach(function(p){
         ctx.globalAlpha = 1 - p.t / 0.9;

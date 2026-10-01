@@ -1716,6 +1716,9 @@
     padding:calc(10px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) 0 calc(12px + env(safe-area-inset-left));pointer-events:none}
   .dg-pill{background:rgba(20,32,26,.62);color:#fff;border-radius:99px;padding:7px 14px;font-size:13px;display:flex;gap:10px;align-items:center;white-space:nowrap}
   .dg-pill span{opacity:.75}
+  .dg-banner{position:absolute;top:calc(66px + env(safe-area-inset-top));left:50%;transform:translateX(-50%);max-width:90vw;text-align:center;
+    background:rgba(20,32,26,.8);color:#fff;padding:10px 18px;border-radius:99px;font-size:14px;font-weight:700;opacity:0;transition:opacity .3s;pointer-events:none}
+  .dg-banner.show{opacity:1}
   .dg-today[hidden]{display:none}
   .dg-today{overflow:hidden;text-overflow:ellipsis;min-width:0}
   .dg-close{pointer-events:auto;margin-left:auto;flex:none;width:40px;height:40px;min-height:0;padding:0;border:0;border-radius:50%;

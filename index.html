@@ -1254,10 +1254,11 @@
 <dialog id="duckgame" aria-label="Laguinho dos patinhos">
   <canvas id="dg-canvas" role="img" aria-label="Lago com o pato e os patinhos perdidos"></canvas>
   <div class="dg-hud">
-    <div class="dg-pill"><b id="dg-score">Patinhos: 0</b><span id="dg-best"></span></div>
+    <div class="dg-pill"><b id="dg-score">Patinhos: 0</b><span id="dg-best"></span><span id="dg-level"></span></div>
     <span class="dg-pill dg-today" id="dg-today" hidden></span>
     <button type="button" class="dg-close" id="dg-close" aria-label="Sair do jogo" title="Sair (Esc)"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
   </div>
+  <div class="dg-banner" id="dg-banner" role="status" aria-live="polite"></div>
   <div class="dg-overlay" id="dg-overlay">
     <div class="dg-card">
       <h2 id="dg-title">Laguinho dos patinhos</h2>
