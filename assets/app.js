@@ -9219,6 +9219,43 @@
   renderEmbed();
   checkHabitReminder();
 
+  // Botão "instalar": no Chrome/Android o navegador entrega o prompt nativo
+  // (beforeinstallprompt); no iOS/Safari não existe esse evento, então o botão
+  // abre um passo a passo de "Adicionar à Tela de Início". Some se já instalado.
+  (function(){
+    var btn = $("btn-install");
+    var deferred = null;
+    var standalone = (window.matchMedia && matchMedia("(display-mode: standalone)").matches) || navigator.standalone === true;
+    var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    if(standalone) return;
+    if(isIOS) btn.hidden = false;
+    window.addEventListener("beforeinstallprompt", function(e){
+      e.preventDefault();
+      deferred = e;
+      btn.hidden = false;
+    });
+    window.addEventListener("appinstalled", function(){
+      deferred = null;
+      btn.hidden = true;
+      toast("Quack instalado! 🦆");
+    });
+    btn.onclick = function(){
+      if(deferred){
+        var p = deferred;
+        deferred = null;
+        p.prompt();
+        p.userChoice.then(function(c){
+          if(c.outcome !== "accepted"){ deferred = p; }
+        });
+        return;
+      }
+      askConfirm("Toque no botão de compartilhar do Safari e escolha “Adicionar à Tela de Início”. O Quack aparece como um app no seu celular.", {
+        title:"Instalar o Quack", confirmLabel:"Entendi", cancelLabel:"Fechar"
+      });
+    };
+  })();
+
   // PWA — só o "shell" fica em cache (ver sw.js); /api/* nunca passa pelo
   // service worker, pra não arriscar servir uma resposta velha de
   // login/sync. Perguntar antes de trocar de versão evita recarregar o
