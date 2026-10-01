@@ -1731,3 +1731,44 @@
     padding:calc(var(--sp)*3);max-width:340px;text-align:center;display:flex;flex-direction:column;gap:calc(var(--sp)*1.5);align-items:center}
   .dg-card h2{margin:0;font-size:20px}
   .dg-card p{margin:0;font-size:14px;line-height:1.5;color:var(--ink-2)}
+
+  /* ---------- calmaria visual: menos ruído, mais respiro ---------- */
+  :root{--soft-shadow:0 1px 2px rgba(30,24,18,.04),0 10px 28px rgba(30,24,18,.05)}
+  .glow{opacity:.26}
+  .panel,.top,.tabbar{box-shadow:var(--soft-shadow)}
+  /* rótulos em caixa-alta: espaçamento menor e tamanho legível */
+  .panel-title,.now-task .k,.tally .k,.ctl .k,.dlg-body .k,.app-footer,.list-foot button,.filters button,.seg button,.modes button{letter-spacing:.06em}
+  .tag{letter-spacing:.05em;font-size:10px}
+  .dlg-body .k{font-size:10.5px}
+  .seg.small button{font-size:10.5px}
+  /* ícones dos painéis: fundo colorido mais suave */
+  .panel-icon{background:color-mix(in srgb, var(--signal) 14%, transparent)}
+  .panel-icon.rest{background:color-mix(in srgb, var(--rest) 14%, transparent)}
+  .panel-icon.amber{background:color-mix(in srgb, var(--amber) 14%, transparent)}
+  .panel-icon.teal{background:color-mix(in srgb, var(--teal) 14%, transparent)}
+  .panel-icon.clover{background:color-mix(in srgb, var(--clover) 14%, transparent)}
+  .panel-icon.clay{background:color-mix(in srgb, var(--clay) 14%, transparent)}
+  /* cartão do timer: sem fileiras tracejadas, ações secundárias discretas */
+  .now-task{border-top:0;padding-top:0;margin-top:calc(var(--sp)*2.5)}
+  .now-task + .now-task{margin-top:6px}
+  .tally{margin-top:8px}
+  .foot-row{border-top:1px solid var(--line);justify-content:center;gap:4px}
+  .foot-row .btn-ghost{background:none;border-color:transparent;backdrop-filter:none;-webkit-backdrop-filter:none;color:var(--ink-3);font-weight:500;padding:8px 12px}
+  .foot-row .btn-ghost:hover{color:var(--ink);background:var(--grid-a)}
+  /* alternador Lista/Tópicos nunca quebra em duas linhas */
+  .seg.small{flex-wrap:nowrap;flex:none}
+  .seg.small button{white-space:nowrap}
+  .head-right{flex-wrap:wrap;justify-content:flex-end}
+  #tasks-open{white-space:nowrap}
+  @media (max-width:560px){
+    .controls .btn-main{padding:12px 20px}
+    .controls .btn-ghost{padding:9px 12px}
+    #task-input{flex:1 1 100%}
+    #task-tag{flex:1 1 0}
+    .task .title{min-width:150px}   /* setinha e × cabem na mesma linha do título */
+  }
+  /* em telas com mouse, os botões de cada tarefa ficam em segundo plano até o hover */
+  @media (hover:hover){
+    .task .task-toggle,.task .kill{opacity:.35;transition:opacity .12s}
+    .task:hover .task-toggle,.task:hover .kill,.task:focus-within .task-toggle,.task:focus-within .kill{opacity:1}
+  }

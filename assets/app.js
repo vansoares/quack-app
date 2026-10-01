@@ -1111,8 +1111,10 @@
     $("dial-label").textContent = modeLabel(S.timer.mode);
     var b = $("btn-start");
     $("btn-start-label").textContent = S.timer.running ? "Pausar" : "Iniciar";
-    $("icon-play").hidden = S.timer.running;
-    $("icon-pause").hidden = !S.timer.running;
+    // SVG não tem a propriedade .hidden (só HTMLElement tem) — por isso os dois
+    // ícones apareciam juntos; display direto funciona nos dois
+    $("icon-play").style.display = S.timer.running ? "none" : "";
+    $("icon-pause").style.display = S.timer.running ? "" : "none";
     b.classList.toggle("running", S.timer.running);
     var decorrido = duration("foco") - remaining();
     $("btn-partial").hidden = !(S.timer.mode === "foco" && decorrido >= 5000);
