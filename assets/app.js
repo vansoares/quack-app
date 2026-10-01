@@ -8496,6 +8496,7 @@
     var SP = 8;                          // amostras da trilha entre um patinho e outro (~24px)
     var W = 0, H = 0, cx = 0, cy = 0, rx = 0, ry = 0;
     var raf = 0, last = 0, clock = 0, rippleT = 0, mode = "intro";   // intro | play | paused | over
+    var gator = null, vortexes = [], vortT = 0, windX = 0, windY = 0;
     var logs = [], rocks = [], playTime = 0, level = 1, logT = 0, rockT = 0, bannerTimer = 0;
     var kidDir = [], kidColor = [], head, hist, kids, lost, decor, ripples, pops, scenery, score, best = 0, newRecord = false;
     var steerKey = null, pointer = { on:false, x:0, y:0 }, color = "#9C4A2B";
@@ -8529,7 +8530,7 @@
     function remapAll(o){
       function mv(p){ p.x = cx + (p.x - o.cx) * (rx / o.rx); p.y = cy + (p.y - o.cy) * (ry / o.ry); }
       if(!head) return;
-      mv(head); hist.forEach(mv); lost.forEach(mv); decor.forEach(mv); ripples.forEach(mv); pops.forEach(mv); logs.forEach(mv); rocks.forEach(mv);
+      mv(head); hist.forEach(mv); lost.forEach(mv); decor.forEach(mv); ripples.forEach(mv); pops.forEach(mv); logs.forEach(mv); rocks.forEach(mv); vortexes.forEach(mv); if(gator) mv(gator);
     }
 
     function spawnLost(){
@@ -8554,7 +8555,7 @@
       head = { x:cx - rx * 0.3, y:cy, a:0, dir:1 };
       kidDir = []; kidColor = [];
       hist = [{ x:head.x, y:head.y }];
-      lost = []; pops = []; ripples = []; logs = []; rocks = [];
+      lost = []; pops = []; ripples = []; logs = []; rocks = []; vortexes = []; gator = null; windX = 0; windY = 0; vortT = 4;
       playTime = 0; level = 1; logT = 2; rockT = 2;
       $("dg-banner").classList.remove("show");
       steerKey = null; pointer.on = false;
@@ -8669,6 +8670,11 @@
         showBanner(level === 2 ? "Nível 2 — troncos à deriva! 🪵" :
                    level === 3 ? "Nível 3 — pedras surgindo na água! 🪨" :
                    level === 4 ? "Nível 4 — os patinhos ficaram tímidos! 💨" :
+                   level === 5 ? "Nível 5 — correnteza! O lago empurra você 🌊" :
+                   level === 6 ? "Nível 6 — cuidado, um jacaré! 🐊" :
+                   level === 7 ? "Nível 7 — neblina no lago! 🌫️" :
+                   level === 8 ? "Nível 8 — redemoinhos! 🌀" :
+                   level === 9 ? "Nível 9 — tempestade! ⛈️" :
                    "Nível " + level + " — o lago está agitado!");
       }
       var i;
@@ -8682,7 +8688,7 @@
       }
       if(level >= 2){
         logT -= dt;
-        if(logs.length < Math.min(1 + Math.floor((level - 2) / 2), 4) && logT <= 0){ spawnLog(); logT = 5; }
+        if(logs.length < Math.min(1 + Math.floor((level - 2) / 2), 5) && logT <= 0){ spawnLog(); logT = 5; }
       }
       for(i = rocks.length - 1; i >= 0; i--){
         rocks[i].t += dt;
@@ -8690,7 +8696,45 @@
       }
       if(level >= 3){
         rockT -= dt;
-        if(rocks.length < Math.min(level - 1, 6) && rockT <= 0){ spawnRock(); rockT = 6; }
+        if(rocks.length < Math.min(level - 1, 8) && rockT <= 0){ spawnRock(); rockT = 6; }
+      }
+
+      // correnteza: o vento gira devagar e empurra o pato e os patinhos perdidos
+      if(level >= 5){
+        var wa = playTime * 0.18, ws = 22 + Math.min(level - 5, 5) * 3;
+        windX = Math.cos(wa) * ws; windY = Math.sin(wa) * ws;
+      }
+
+      // jacaré: aparece uma vez, faz fade e depois persegue o pato (virando devagar)
+      if(level >= 6){
+        if(!gator){
+          var ga = Math.atan2(head.y - cy, head.x - cx) + Math.PI;
+          gator = { x:cx + Math.cos(ga) * rx * 0.85, y:cy + Math.sin(ga) * ry * 0.85, a:ga + Math.PI, len:84, w:22, fade:0 };
+        }
+        gator.fade = Math.min(1, gator.fade + dt / 1.5);
+        if(gator.fade >= 1){
+          var gsp = Math.min(52 + (level - 6) * 5, 92) * (level >= 9 ? 1.1 : 1);
+          var gd = angDiff(Math.atan2(head.y - gator.y, head.x - gator.x), gator.a), gm = 1.4 * dt;
+          gator.a += Math.max(-gm, Math.min(gm, gd));
+          gator.x += Math.cos(gator.a) * gsp * dt; gator.y += Math.sin(gator.a) * gsp * dt;
+        }
+      }
+
+      // redemoinhos: avisam, depois puxam o pato pra perto e engolem quem chegar no centro
+      for(i = vortexes.length - 1; i >= 0; i--){
+        vortexes[i].t += dt;
+        if(vortexes[i].t > 22) vortexes.splice(i, 1);
+      }
+      if(level >= 8){
+        vortT -= dt;
+        if(vortexes.length < Math.min(level - 7, 3) && vortT <= 0){
+          for(var tries = 0; tries < 25; tries++){
+            var va = Math.random() * TAU, vr = Math.sqrt(Math.random()) * 0.7;
+            var vx = cx + Math.cos(va) * rx * vr, vy = cy + Math.sin(va) * ry * vr;
+            if(Math.hypot(vx - head.x, vy - head.y) > 200){ vortexes.push({ x:vx, y:vy, t:0 }); break; }
+          }
+          vortT = 8;
+        }
       }
     }
 
@@ -8705,6 +8749,7 @@
         }else{
           wander(l, 20, dt, 0.8);
         }
+        if(mode === "play" && level >= 5){ l.x += windX * 0.6 * dt; l.y += windY * 0.6 * dt; }
       });
       pops = pops.filter(function(p){ p.t += dt; return p.t < 0.9; });
       ripples = ripples.filter(function(r){ r.t += dt; return r.t < 1.2; });
@@ -8726,6 +8771,14 @@
       var sp = 135 + Math.min(score, 30) * 2 + Math.min(playTime, 120) * 0.3;
       head.x += Math.cos(head.a) * sp * dt;
       head.y += Math.sin(head.a) * sp * dt;
+      if(level >= 5){ head.x += windX * dt; head.y += windY * dt; }
+      vortexes.forEach(function(v){
+        var d = Math.hypot(v.x - head.x, v.y - head.y);
+        if(v.t >= 1.5 && d < 115 && d > 0){
+          var pull = (1 - d / 115) * 80 * dt;
+          head.x += (v.x - head.x) / d * pull; head.y += (v.y - head.y) / d * pull;
+        }
+      });
 
       var h = hist[hist.length - 1];
       if(Math.hypot(head.x - h.x, head.y - h.y) >= 3){
@@ -8744,6 +8797,10 @@
       for(k = 0; k < rocks.length; k++){
         var rk = rocks[k];
         if(rk.t >= 1.5 && Math.hypot(head.x - rk.x, head.y - rk.y) < rk.r + 10){ gameOver(); return; }
+      }
+      if(gator && gator.fade >= 1 && segDist(head.x, head.y, gator) < gator.w / 2 + 9){ gameOver(); return; }
+      for(k = 0; k < vortexes.length; k++){
+        if(vortexes[k].t >= 1.5 && Math.hypot(head.x - vortexes[k].x, head.y - vortexes[k].y) < 16){ gameOver(); return; }
       }
       for(var i = 3; i <= kids; i++){
         var idx = kidIndex(i);
@@ -8823,6 +8880,15 @@
         ctx.lineWidth = 1.5;
         ctx.beginPath(); ctx.arc(r.x, r.y, 6 + r.t * 26, 0, TAU); ctx.stroke();
       });
+      if(level >= 5 && mode === "play"){
+        var wl = Math.hypot(windX, windY) || 1, ux = windX / wl, uy = windY / wl;
+        ctx.strokeStyle = "rgba(255,255,255,.4)"; ctx.lineWidth = 2;
+        scenery.glints.forEach(function(gl){
+          var off = ((clock * 40 + gl.ph * 30) % 200) - 100;
+          var x = cx + Math.cos(gl.ang) * rx * gl.rad + ux * off, y = cy + Math.sin(gl.ang) * ry * gl.rad + uy * off;
+          ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x + ux * 16, y + uy * 16); ctx.stroke();
+        });
+      }
       scenery.pads.forEach(function(p){
         var x = cx + Math.cos(p.ang) * rx * p.rad, y = cy + Math.sin(p.ang) * ry * p.rad;
         ctx.fillStyle = "#5f9a4a";
@@ -8840,6 +8906,25 @@
         ctx.beginPath(); ctx.ellipse(x + sway, y - r.h - 3, 2.2, 5, 0, 0, TAU); ctx.fill();
       });
 
+      vortexes.forEach(function(v){
+        var warn = v.t < 1.5, alpha = v.t > 20 ? Math.max(0, (22 - v.t) / 2) : 1;
+        ctx.save();
+        ctx.globalAlpha = alpha * (warn ? 0.35 + 0.5 * v.t / 1.5 : 1);
+        ctx.lineCap = "round";
+        for(var arm = 0; arm < 3; arm++){
+          ctx.strokeStyle = "rgba(255,255,255,.5)"; ctx.lineWidth = 3;
+          ctx.beginPath();
+          for(var q = 0; q <= 24; q++){
+            var rr = 6 + q * 4, th = arm * TAU / 3 + clock * 3 - q * 0.22;
+            var px = v.x + Math.cos(th) * rr, py = v.y + Math.sin(th) * rr * 0.8;
+            if(q === 0) ctx.moveTo(px, py); else ctx.lineTo(px, py);
+          }
+          ctx.stroke();
+        }
+        ellipse(v.x, v.y, 14, 11, "#1f5f7a");
+        ellipse(v.x, v.y, 7, 5.5, "#123d50");
+        ctx.restore();
+      });
       rocks.forEach(function(r){
         var warn = r.t < 1.5, alpha = r.t > 24 ? Math.max(0, (26 - r.t) / 2) : 1;
         ctx.save();
@@ -8884,6 +8969,30 @@
         ctx.beginPath(); ctx.ellipse(L / 2 - Wd / 2, 0, Wd * 0.14, Wd * 0.22, 0, 0, TAU); ctx.stroke();
         ctx.restore();
       });
+      if(gator){
+        ctx.save();
+        ctx.globalAlpha = gator.fade;
+        ctx.translate(gator.x, gator.y); ctx.rotate(gator.a);
+        var GL = gator.len, GW = gator.w;
+        ctx.fillStyle = "rgba(20,50,70,.22)"; ctx.beginPath(); ctx.ellipse(2, 5, GL / 2, GW / 2, 0, 0, TAU); ctx.fill();
+        ctx.fillStyle = "#4f7f35";
+        ctx.beginPath(); ctx.moveTo(-GL / 2 + 6, -GW / 2 + 4); ctx.lineTo(-GL / 2 - 26, 0); ctx.lineTo(-GL / 2 + 6, GW / 2 - 4); ctx.closePath(); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(0, 0, GL / 2, GW / 2, 0, 0, TAU); ctx.fill();
+        ctx.beginPath(); ctx.ellipse(GL / 2 - 4, 0, 16, GW / 2 - 4, 0, 0, TAU); ctx.fill();
+        ctx.fillStyle = "#6e9f4a";
+        ctx.beginPath(); ctx.ellipse(0, 0, GL / 2 - 8, GW / 2 - 6, 0, 0, TAU); ctx.fill();
+        ctx.fillStyle = "#3f6a2b";
+        for(var gi = -3; gi <= 3; gi++){ ctx.beginPath(); ctx.arc(gi * 11, 0, 3, 0, TAU); ctx.fill(); }
+        ctx.fillStyle = "#f2e27a";
+        ctx.beginPath(); ctx.arc(GL / 2 - 14, -7, 3.5, 0, TAU); ctx.arc(GL / 2 - 14, 7, 3.5, 0, TAU); ctx.fill();
+        ctx.fillStyle = "#1c2a14";
+        ctx.beginPath(); ctx.arc(GL / 2 - 13, -7, 1.6, 0, TAU); ctx.arc(GL / 2 - 13, 7, 1.6, 0, TAU); ctx.fill();
+        ctx.fillStyle = "#fff";
+        for(var ti = 0; ti < 4; ti++){
+          ctx.beginPath(); ctx.moveTo(GL / 2 + 2 + ti * 3, -6 + ti * 0.5); ctx.lineTo(GL / 2 + 5 + ti * 3, -3); ctx.lineTo(GL / 2 + ti * 3, -3); ctx.fill();
+        }
+        ctx.restore();
+      }
       decor.forEach(function(d, i){ d.dir = facing(d.dir || 1, Math.cos(d.a)); drawDuck(d.x, d.y, d.dir, 8, color, 0.85, i); });
       lost.forEach(function(l){
         var pulse = 0.5 + 0.5 * Math.sin(clock * 4 + l.x);
@@ -8909,6 +9018,20 @@
         ctx.strokeText("+1", p.x, p.y - 16 - p.t * 30); ctx.fillText("+1", p.x, p.y - 16 - p.t * 30);
         ctx.globalAlpha = 1;
       });
+
+      if(level >= 9 && mode === "play"){      // chuva
+        ctx.strokeStyle = "rgba(255,255,255,.4)"; ctx.lineWidth = 1.5;
+        for(var rd = 0; rd < 60; rd++){
+          var rxp = ((rd * 173 - clock * 80) % W + W) % W, ryp = (rd * 71 + clock * 520) % H;
+          ctx.beginPath(); ctx.moveTo(rxp, ryp); ctx.lineTo(rxp - 4, ryp + 14); ctx.stroke();
+        }
+      }
+      if(level >= 7 && mode === "play"){      // neblina: só enxerga perto do pato
+        var inner = 190 + 25 * Math.sin(clock * 0.6);
+        var fg = ctx.createRadialGradient(head.x, head.y, inner, head.x, head.y, inner + 190);
+        fg.addColorStop(0, "rgba(232,238,240,0)"); fg.addColorStop(1, "rgba(232,238,240,.7)");
+        ctx.fillStyle = fg; ctx.fillRect(0, 0, W, H);
+      }
     }
 
     function frame(ts){
@@ -9000,10 +9123,24 @@
   ];
   var lastQuack = -1;
   var duckClicks = [];
+  // outro caminho pro jogo, pensado pro celular (5 toques rápidos são difíceis):
+  // segurar o dedo no pato por ~0,8s
+  var duckHoldTimer = 0, duckHeld = false;
+  function duckHoldCancel(){ clearTimeout(duckHoldTimer); }
+  $("mascot-duck").addEventListener("pointerdown", function(){
+    duckHeld = false;
+    clearTimeout(duckHoldTimer);
+    duckHoldTimer = setTimeout(function(){ duckHeld = true; DuckGame.open(); }, 800);
+  });
+  ["pointerup", "pointerleave", "pointercancel"].forEach(function(ev){
+    $("mascot-duck").addEventListener(ev, duckHoldCancel);
+  });
+  $("mascot-duck").addEventListener("contextmenu", function(e){ e.preventDefault(); });
   $("mascot-duck").onclick = function(){
-    // easter egg: 5 cliques em 2s abrem o jogo do laguinho
+    if(duckHeld){ duckHeld = false; return; }   // o toque longo já abriu o jogo
+    // easter egg: 5 cliques em 3s abrem o jogo do laguinho
     var agora = Date.now();
-    duckClicks = duckClicks.filter(function(t){ return agora - t < 2000; });
+    duckClicks = duckClicks.filter(function(t){ return agora - t < 3000; });
     duckClicks.push(agora);
     if(duckClicks.length >= 5){
       duckClicks = [];
