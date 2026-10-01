@@ -1703,3 +1703,28 @@
   .ins-hbar .val{color:var(--ink-3);font-variant-numeric:tabular-nums;font-size:12px}
   .ins-note{font-size:12.5px;color:var(--ink-3);margin-top:8px}
   .ins{grid-column:1/-1}
+
+  /* ---------- easter egg: Laguinho dos patinhos (5 cliques no pato) ---------- */
+  #duckgame{
+    width:100vw;height:100vh;height:100dvh;max-width:none;max-height:none;margin:0;
+    border:0;border-radius:0;background:#7da562;overflow:hidden;
+    backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none;
+  }
+  #duckgame[open]{display:block}
+  #dg-canvas{display:block;width:100%;height:100%;touch-action:none;cursor:crosshair}
+  .dg-hud{position:absolute;top:0;left:0;right:0;display:flex;align-items:center;gap:8px;
+    padding:calc(10px + env(safe-area-inset-top)) calc(12px + env(safe-area-inset-right)) 0 calc(12px + env(safe-area-inset-left));pointer-events:none}
+  .dg-pill{background:rgba(20,32,26,.62);color:#fff;border-radius:99px;padding:7px 14px;font-size:13px;display:flex;gap:10px;align-items:center;white-space:nowrap}
+  .dg-pill span{opacity:.75}
+  .dg-today[hidden]{display:none}
+  .dg-today{overflow:hidden;text-overflow:ellipsis;min-width:0}
+  .dg-close{pointer-events:auto;margin-left:auto;flex:none;width:40px;height:40px;min-height:0;padding:0;border:0;border-radius:50%;
+    background:rgba(20,32,26,.62);color:#fff;display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .dg-close:hover{background:rgba(20,32,26,.85)}
+  .dg-close:focus-visible,#dg-start:focus-visible{outline:3px solid #fff;outline-offset:2px}
+  .dg-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:24px;background:rgba(20,32,26,.38)}
+  .dg-overlay[hidden]{display:none}
+  .dg-card{background:var(--panel);color:var(--ink);border:1px solid var(--glass-border);border-radius:var(--r-lg);
+    padding:calc(var(--sp)*3);max-width:340px;text-align:center;display:flex;flex-direction:column;gap:calc(var(--sp)*1.5);align-items:center}
+  .dg-card h2{margin:0;font-size:20px}
+  .dg-card p{margin:0;font-size:14px;line-height:1.5;color:var(--ink-2)}
