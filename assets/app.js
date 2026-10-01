@@ -8496,9 +8496,11 @@
     var SP = 7;                          // amostras da trilha entre um patinho e outro (~21px)
     var W = 0, H = 0, cx = 0, cy = 0, rx = 0, ry = 0;
     var raf = 0, last = 0, clock = 0, rippleT = 0, mode = "intro";   // intro | play | paused | over
-    var kidDir = [], head, hist, kids, lost, decor, ripples, pops, scenery, score, best = 0, newRecord = false;
+    var kidDir = [], kidColor = [], head, hist, kids, lost, decor, ripples, pops, scenery, score, best = 0, newRecord = false;
     var steerKey = null, pointer = { on:false, x:0, y:0 }, color = "#9C4A2B";
 
+    // sem azul: some na água. O patinho guarda a cor de quando foi resgatado
+    var DUCKLING_COLORS = ["#f2c94c", "#f4a6c0", "#b69ae6", "#8fd18a", "#f6f1e6", "#f2994a", "#e8766d"];
     function angDiff(a, b){
       var d = a - b;
       while(d > Math.PI) d -= TAU;
@@ -8534,7 +8536,7 @@
         var ang = Math.random() * TAU, rad = Math.sqrt(Math.random()) * 0.8;
         var x = cx + Math.cos(ang) * rx * rad, y = cy + Math.sin(ang) * ry * rad;
         if(Math.hypot(x - head.x, y - head.y) > 140 || tries === 29){
-          lost.push({ x:x, y:y, a:Math.random() * TAU });
+          lost.push({ x:x, y:y, a:Math.random() * TAU, c:DUCKLING_COLORS[Math.floor(Math.random() * DUCKLING_COLORS.length)] });
           return;
         }
       }
@@ -8548,7 +8550,7 @@
     function reset(){
       score = 0; kids = 0; clock = 0; newRecord = false;
       head = { x:cx - rx * 0.3, y:cy, a:0, dir:1 };
-      kidDir = [];
+      kidDir = []; kidColor = [];
       hist = [{ x:head.x, y:head.y }];
       lost = []; pops = []; ripples = [];
       steerKey = null; pointer.on = false;
@@ -8656,6 +8658,7 @@
       for(i = lost.length - 1; i >= 0; i--){
         if(Math.hypot(head.x - lost[i].x, head.y - lost[i].y) < 26){
           pops.push({ x:lost[i].x, y:lost[i].y, t:0 });
+          kidColor.push(lost[i].c);
           lost.splice(i, 1);
           kids++; score++;
           updateHud();
@@ -8746,13 +8749,13 @@
         ctx.lineWidth = 2;
         ctx.beginPath(); ctx.arc(l.x, l.y, 20 + 4 * pulse, 0, TAU); ctx.stroke();
         l.dir = facing(l.dir || 1, Math.cos(l.a));
-        drawDuck(l.x, l.y, l.dir, 10, "#f2c94c", 1, l.x);
+        drawDuck(l.x, l.y, l.dir, 10, l.c, 1, l.x);
       });
       for(var i = kids; i >= 1; i--){
         var idx = kidIndex(i), p = hist[Math.max(0, idx)];
         var q = hist[Math.max(0, idx - 3)];
         kidDir[i] = facing(kidDir[i] || head.dir, p.x - q.x);
-        drawDuck(p.x, p.y, kidDir[i], 10, "#f2c94c", 1, i);
+        drawDuck(p.x, p.y, kidDir[i], 10, kidColor[i - 1], 1, i);
       }
       head.dir = facing(head.dir, Math.cos(head.a));
       drawDuck(head.x, head.y, head.dir, 15, color, 1, 0);
