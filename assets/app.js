@@ -60,7 +60,8 @@
     sound: { embed:null },
     theme: "auto",
     activeTab: "hoje",
-    lastHabitReminder: null
+    lastHabitReminder: null,
+    duckBest: 0          // recorde do easter egg do pato; sobe junto com a conta
   };
 
   /* ---------- estado ---------- */
@@ -149,6 +150,7 @@
     if(d.theme) s.theme = d.theme;
     if(typeof d.activeTab !== "undefined") s.activeTab = d.activeTab;
     if(typeof d.lastHabitReminder !== "undefined") s.lastHabitReminder = d.lastHabitReminder;
+    if(typeof d.duckBest === "number") s.duckBest = d.duckBest;
     if(d.rev) s.rev = d.rev;
     return s;
   }
@@ -203,6 +205,7 @@
     var novo = adopt(clone(DEFAULTS), remoteBlob);
     var tumbas = capTumbas(unionIds(localBlob.deletedIds, novo.deletedIds));
     novo.deletedIds = tumbas;
+    novo.duckBest = Math.max(novo.duckBest || 0, localBlob.duckBest || 0);   // recorde nunca diminui
     SYNCED_ARRAYS.forEach(function(k){ novo[k] = mergeById(novo[k], locais[k], tumbas); });
 
     // um cronômetro rodando aqui não pode ser apagado por um estado remoto
@@ -8485,15 +8488,15 @@
   // frente (tipo "snake" com curvas suaves); cada patinho perdido que ele
   // alcança entra na fila. Bater na margem ou na própria fila acaba o jogo.
   // Os pomodoros de hoje aparecem nadando no lago, de enfeite. O recorde fica
-  // numa chave à parte do localStorage: jogo não deve sujar o backup/sync.
+  // em S.duckBest, então acompanha a conta nos outros aparelhos.
   var DuckGame = (function(){
     var dlg = $("duckgame"), cv = $("dg-canvas"), ctx = cv.getContext("2d");
     var BEST_KEY = "quack-duck-best";
     var TAU = Math.PI * 2;
-    var SP = 6;                          // amostras da trilha entre um patinho e outro (~18px)
+    var SP = 7;                          // amostras da trilha entre um patinho e outro (~21px)
     var W = 0, H = 0, cx = 0, cy = 0, rx = 0, ry = 0;
     var raf = 0, last = 0, clock = 0, rippleT = 0, mode = "intro";   // intro | play | paused | over
-    var head, hist, kids, lost, decor, ripples, pops, scenery, score, best = 0, newRecord = false;
+    var kidDir = [], head, hist, kids, lost, decor, ripples, pops, scenery, score, best = 0, newRecord = false;
     var steerKey = null, pointer = { on:false, x:0, y:0 }, color = "#9C4A2B";
 
     function angDiff(a, b){
@@ -8544,7 +8547,8 @@
 
     function reset(){
       score = 0; kids = 0; clock = 0; newRecord = false;
-      head = { x:cx - rx * 0.3, y:cy, a:0 };
+      head = { x:cx - rx * 0.3, y:cy, a:0, dir:1 };
+      kidDir = [];
       hist = [{ x:head.x, y:head.y }];
       lost = []; pops = []; ripples = [];
       steerKey = null; pointer.on = false;
@@ -8595,7 +8599,8 @@
       mode = "over";
       if(score > best){
         best = score; newRecord = score > 0;
-        try{ localStorage.setItem(BEST_KEY, String(best)); }catch(e){}
+        S.duckBest = best;
+        save();
       }
       updateHud();
       showOverlay("over");
@@ -8642,14 +8647,14 @@
       rippleT -= dt;
       if(rippleT <= 0){ rippleT = 0.18; ripples.push({ x:head.x, y:head.y, t:0 }); }
 
-      if(!inPond(head.x, head.y, 14)){ gameOver(); return; }
+      if(!inPond(head.x, head.y, 18)){ gameOver(); return; }
       for(var i = 3; i <= kids; i++){
         var idx = kidIndex(i);
         if(idx < 0) break;
-        if(Math.hypot(head.x - hist[idx].x, head.y - hist[idx].y) < 11){ gameOver(); return; }
+        if(Math.hypot(head.x - hist[idx].x, head.y - hist[idx].y) < 12){ gameOver(); return; }
       }
       for(i = lost.length - 1; i >= 0; i--){
-        if(Math.hypot(head.x - lost[i].x, head.y - lost[i].y) < 22){
+        if(Math.hypot(head.x - lost[i].x, head.y - lost[i].y) < 26){
           pops.push({ x:lost[i].x, y:lost[i].y, t:0 });
           lost.splice(i, 1);
           kids++; score++;
@@ -8663,19 +8668,37 @@
       ctx.beginPath(); ctx.ellipse(x, y, a, b, 0, 0, TAU); ctx.fillStyle = fill; ctx.fill();
     }
 
-    function drawDuck(x, y, a, s, fill, alpha){
+    // pato de lado, igual ao mascote do cabeçalho; vira pra esquerda/direita
+    // conforme o rumo, em vez de girar (de cima, o pato girado parecia uma mancha)
+    function drawDuck(x, y, dir, s, fill, alpha, phase){
       ctx.save();
       ctx.globalAlpha = alpha;
-      ctx.translate(x, y); ctx.rotate(a);
+      ctx.translate(x, y + Math.sin(clock * 5 + phase) * s * 0.07);
+      ctx.scale(dir, 1);
+      // reflexo na água
+      ctx.fillStyle = "rgba(255,255,255,.3)";
+      ctx.beginPath(); ctx.ellipse(0, 0.85 * s, 1.7 * s, 0.32 * s, 0, 0, TAU); ctx.fill();
       ctx.fillStyle = fill;
-      ctx.beginPath(); ctx.ellipse(-0.25 * s, 0, 1.15 * s, 0.85 * s, 0, 0, TAU); ctx.fill();       // corpo
-      ctx.beginPath(); ctx.moveTo(-1.3 * s, 0); ctx.lineTo(-1.8 * s, -0.3 * s); ctx.lineTo(-1.8 * s, 0.3 * s); ctx.fill();   // rabinho
-      ctx.beginPath(); ctx.arc(0.85 * s, 0, 0.62 * s, 0, TAU); ctx.fill();                          // cabeça
+      ctx.beginPath(); ctx.ellipse(0, 0.1 * s, 1.25 * s, 0.82 * s, 0, 0, TAU); ctx.fill();            // corpo
+      ctx.beginPath(); ctx.moveTo(-1.05 * s, -0.25 * s); ctx.lineTo(-1.75 * s, -0.75 * s); ctx.lineTo(-1.25 * s, 0.3 * s); ctx.fill();   // rabinho
+      ctx.beginPath(); ctx.arc(0.8 * s, -0.78 * s, 0.68 * s, 0, TAU); ctx.fill();                      // cabeça
+      ctx.fillStyle = "rgba(0,0,0,.16)";
+      ctx.beginPath(); ctx.ellipse(-0.3 * s, 0.12 * s, 0.6 * s, 0.36 * s, -0.25, 0, TAU); ctx.fill();   // asa
       ctx.fillStyle = "#e08a2e";
-      ctx.beginPath(); ctx.moveTo(1.35 * s, -0.22 * s); ctx.lineTo(1.95 * s, 0); ctx.lineTo(1.35 * s, 0.22 * s); ctx.fill();  // bico
+      ctx.beginPath(); ctx.moveTo(1.35 * s, -0.95 * s); ctx.quadraticCurveTo(2.15 * s, -0.8 * s, 1.4 * s, -0.5 * s); ctx.closePath(); ctx.fill();   // bico
       ctx.fillStyle = "#2b2a28";
-      ctx.beginPath(); ctx.arc(1.0 * s, -0.3 * s, 0.11 * s, 0, TAU); ctx.arc(1.0 * s, 0.3 * s, 0.11 * s, 0, TAU); ctx.fill(); // olhos
+      ctx.beginPath(); ctx.arc(1.0 * s, -0.98 * s, 0.13 * s, 0, TAU); ctx.fill();                     // olho
+      ctx.fillStyle = "#fff";
+      ctx.beginPath(); ctx.arc(1.04 * s, -1.02 * s, 0.045 * s, 0, TAU); ctx.fill();
+      // linha d'água por cima do corpo: o pato "boia" em vez de flutuar sobre o lago
+      ctx.fillStyle = "rgba(255,255,255,.42)";
+      ctx.beginPath(); ctx.ellipse(0, 0.82 * s, 1.35 * s, 0.2 * s, 0, 0, TAU); ctx.fill();
       ctx.restore();
+    }
+
+    // rumo horizontal de um ponto da trilha, com histerese pra não ficar piscando
+    function facing(cur, dx){
+      return Math.abs(dx) < 0.4 ? cur : (dx > 0 ? 1 : -1);
     }
 
     function draw(){
@@ -8716,20 +8739,23 @@
         ctx.beginPath(); ctx.ellipse(x + sway, y - r.h - 3, 2.2, 5, 0, 0, TAU); ctx.fill();
       });
 
-      decor.forEach(function(d){ drawDuck(d.x, d.y, d.a, 6, color, 0.8); });
+      decor.forEach(function(d, i){ d.dir = facing(d.dir || 1, Math.cos(d.a)); drawDuck(d.x, d.y, d.dir, 8, color, 0.85, i); });
       lost.forEach(function(l){
         var pulse = 0.5 + 0.5 * Math.sin(clock * 4 + l.x);
         ctx.strokeStyle = "rgba(255,255,255," + (0.25 + 0.35 * pulse).toFixed(3) + ")";
         ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(l.x, l.y, 15 + 4 * pulse, 0, TAU); ctx.stroke();
-        drawDuck(l.x, l.y, l.a, 8, "#f2c94c", 1);
+        ctx.beginPath(); ctx.arc(l.x, l.y, 20 + 4 * pulse, 0, TAU); ctx.stroke();
+        l.dir = facing(l.dir || 1, Math.cos(l.a));
+        drawDuck(l.x, l.y, l.dir, 10, "#f2c94c", 1, l.x);
       });
       for(var i = kids; i >= 1; i--){
         var idx = kidIndex(i), p = hist[Math.max(0, idx)];
-        var q = hist[Math.max(0, idx - 1)];
-        drawDuck(p.x, p.y, Math.atan2(p.y - q.y, p.x - q.x) || head.a, 8, "#f2c94c", 1);
+        var q = hist[Math.max(0, idx - 3)];
+        kidDir[i] = facing(kidDir[i] || head.dir, p.x - q.x);
+        drawDuck(p.x, p.y, kidDir[i], 10, "#f2c94c", 1, i);
       }
-      drawDuck(head.x, head.y, head.a, 12, color, 1);
+      head.dir = facing(head.dir, Math.cos(head.a));
+      drawDuck(head.x, head.y, head.dir, 15, color, 1, 0);
 
       pops.forEach(function(p){
         ctx.globalAlpha = 1 - p.t / 0.9;
@@ -8798,7 +8824,12 @@
 
     function open(){
       if(dlg.open) return;
-      try{ best = parseInt(localStorage.getItem(BEST_KEY), 10) || 0; }catch(e){ best = 0; }
+      best = S.duckBest || 0;
+      // versão anterior guardava o recorde só neste navegador: aproveita e migra
+      try{
+        var antigo = parseInt(localStorage.getItem(BEST_KEY), 10) || 0;
+        if(antigo > best){ best = antigo; S.duckBest = best; save(); }
+      }catch(e){}
       color = getComputedStyle(document.documentElement).getPropertyValue("--signal").trim() || "#9C4A2B";
       dlg.showModal();
       resize();
