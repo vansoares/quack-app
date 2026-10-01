@@ -8499,8 +8499,8 @@
     var kidDir = [], kidColor = [], head, hist, kids, lost, decor, ripples, pops, scenery, score, best = 0, newRecord = false;
     var steerKey = null, pointer = { on:false, x:0, y:0 }, color = "#9C4A2B";
 
-    // sem azul: some na água. O patinho guarda a cor de quando foi resgatado
-    var DUCKLING_COLORS = ["#f2c94c", "#f4a6c0", "#b69ae6", "#8fd18a", "#f6f1e6", "#f2994a", "#e8766d"];
+    // sem azul (some na água) e sem amarelo (é a cor do pato principal). O patinho guarda a cor de quando foi resgatado
+    var DUCKLING_COLORS = ["#c98f5e", "#f4a6c0", "#b69ae6", "#8fd18a", "#f6f1e6", "#f2994a", "#e8766d"];
     function angDiff(a, b){
       var d = a - b;
       while(d > Math.PI) d -= TAU;
@@ -8549,7 +8549,7 @@
 
     function reset(){
       score = 0; kids = 0; clock = 0; newRecord = false;
-      head = { x:cx - rx * 0.3, y:cy, a:0, dir:1 };
+      head = { x:cx - rx * 0.3, y:cy, a:0 };
       kidDir = []; kidColor = [];
       hist = [{ x:head.x, y:head.y }];
       lost = []; pops = []; ripples = [];
@@ -8671,37 +8671,53 @@
       ctx.beginPath(); ctx.ellipse(x, y, a, b, 0, 0, TAU); ctx.fillStyle = fill; ctx.fill();
     }
 
-    // pato de lado, igual ao mascote do cabeçalho; vira pra esquerda/direita
-    // conforme o rumo, em vez de girar (de cima, o pato girado parecia uma mancha)
-    function drawDuck(x, y, dir, s, fill, alpha, phase){
+    // pato visto de cima, girando com o rumo: cabeça grande, bico achatado,
+    // olhinhos com brilho, bochechas rosadas, asas dobradas e rabinho que balança
+    function drawDuck(x, y, a, s, fill, alpha, phase){
+      var wag = Math.sin(clock * 6 + phase) * 0.05;
       ctx.save();
       ctx.globalAlpha = alpha;
-      ctx.translate(x, y + Math.sin(clock * 5 + phase) * s * 0.07);
-      ctx.scale(dir, 1);
-      // reflexo na água
-      ctx.fillStyle = "rgba(255,255,255,.3)";
-      ctx.beginPath(); ctx.ellipse(0, 0.85 * s, 1.7 * s, 0.32 * s, 0, 0, TAU); ctx.fill();
+      ctx.translate(x, y);
+      ctx.rotate(a + wag);
+      // marola em volta + sombra na água
+      ctx.strokeStyle = "rgba(255,255,255,.4)"; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.ellipse(-0.1 * s, 0, 2.0 * s, 1.4 * s, 0, 0, TAU); ctx.stroke();
+      ctx.fillStyle = "rgba(20,60,80,.18)";
+      ctx.beginPath(); ctx.ellipse(-0.2 * s, 0.2 * s, 1.7 * s, 1.15 * s, 0, 0, TAU); ctx.fill();
       ctx.fillStyle = fill;
-      ctx.beginPath(); ctx.ellipse(0, 0.1 * s, 1.25 * s, 0.82 * s, 0, 0, TAU); ctx.fill();            // corpo
-      ctx.beginPath(); ctx.moveTo(-1.05 * s, -0.25 * s); ctx.lineTo(-1.75 * s, -0.75 * s); ctx.lineTo(-1.25 * s, 0.3 * s); ctx.fill();   // rabinho
-      ctx.beginPath(); ctx.arc(0.8 * s, -0.78 * s, 0.68 * s, 0, TAU); ctx.fill();                      // cabeça
-      ctx.fillStyle = "rgba(0,0,0,.16)";
-      ctx.beginPath(); ctx.ellipse(-0.3 * s, 0.12 * s, 0.6 * s, 0.36 * s, -0.25, 0, TAU); ctx.fill();   // asa
-      ctx.fillStyle = "#e08a2e";
-      ctx.beginPath(); ctx.moveTo(1.35 * s, -0.95 * s); ctx.quadraticCurveTo(2.15 * s, -0.8 * s, 1.4 * s, -0.5 * s); ctx.closePath(); ctx.fill();   // bico
+      // rabinho
+      ctx.beginPath(); ctx.moveTo(-1.2 * s, -0.45 * s); ctx.quadraticCurveTo(-2.1 * s, -0.1 * s, -2.0 * s, 0.05 * s);
+      ctx.quadraticCurveTo(-2.1 * s, 0.3 * s, -1.2 * s, 0.45 * s); ctx.closePath(); ctx.fill();
+      // corpo gordinho
+      ctx.beginPath(); ctx.ellipse(-0.35 * s, 0, 1.45 * s, 1.1 * s, 0, 0, TAU); ctx.fill();
+      // asinhas
+      ctx.fillStyle = "rgba(0,0,0,.13)";
+      [-1, 1].forEach(function(side){
+        ctx.beginPath(); ctx.ellipse(-0.55 * s, side * 0.62 * s, 0.95 * s, 0.4 * s, side * -0.18, 0, TAU); ctx.fill();
+      });
+      ctx.strokeStyle = "rgba(255,255,255,.28)"; ctx.lineWidth = Math.max(1, s * 0.09); ctx.lineCap = "round";
+      [-1, 1].forEach(function(side){
+        ctx.beginPath(); ctx.moveTo(-1.1 * s, side * 0.55 * s); ctx.quadraticCurveTo(-0.6 * s, side * 0.38 * s, -0.05 * s, side * 0.5 * s); ctx.stroke();
+      });
+      // cabeça
+      ctx.fillStyle = fill;
+      ctx.beginPath(); ctx.arc(0.8 * s, 0, 0.85 * s, 0, TAU); ctx.fill();
+      ctx.fillStyle = "rgba(255,255,255,.22)";
+      ctx.beginPath(); ctx.ellipse(0.55 * s, -0.3 * s, 0.4 * s, 0.22 * s, -0.5, 0, TAU); ctx.fill();
+      // bico
+      ctx.fillStyle = "#f09a33";
+      ctx.beginPath(); ctx.ellipse(1.72 * s, 0, 0.5 * s, 0.38 * s, 0, 0, TAU); ctx.fill();
+      ctx.fillStyle = "rgba(0,0,0,.2)";
+      ctx.beginPath(); ctx.arc(1.78 * s, -0.14 * s, 0.05 * s, 0, TAU); ctx.arc(1.78 * s, 0.14 * s, 0.05 * s, 0, TAU); ctx.fill();
+      // bochechas
+      ctx.fillStyle = "rgba(255,110,130,.38)";
+      ctx.beginPath(); ctx.arc(1.05 * s, -0.66 * s, 0.17 * s, 0, TAU); ctx.arc(1.05 * s, 0.66 * s, 0.17 * s, 0, TAU); ctx.fill();
+      // olhos
       ctx.fillStyle = "#2b2a28";
-      ctx.beginPath(); ctx.arc(1.0 * s, -0.98 * s, 0.13 * s, 0, TAU); ctx.fill();                     // olho
+      ctx.beginPath(); ctx.arc(1.08 * s, -0.4 * s, 0.2 * s, 0, TAU); ctx.arc(1.08 * s, 0.4 * s, 0.2 * s, 0, TAU); ctx.fill();
       ctx.fillStyle = "#fff";
-      ctx.beginPath(); ctx.arc(1.04 * s, -1.02 * s, 0.045 * s, 0, TAU); ctx.fill();
-      // linha d'água por cima do corpo: o pato "boia" em vez de flutuar sobre o lago
-      ctx.fillStyle = "rgba(255,255,255,.42)";
-      ctx.beginPath(); ctx.ellipse(0, 0.82 * s, 1.35 * s, 0.2 * s, 0, 0, TAU); ctx.fill();
+      ctx.beginPath(); ctx.arc(1.15 * s, -0.46 * s, 0.07 * s, 0, TAU); ctx.arc(1.15 * s, 0.34 * s, 0.07 * s, 0, TAU); ctx.fill();
       ctx.restore();
-    }
-
-    // rumo horizontal de um ponto da trilha, com histerese pra não ficar piscando
-    function facing(cur, dx){
-      return Math.abs(dx) < 0.4 ? cur : (dx > 0 ? 1 : -1);
     }
 
     function draw(){
@@ -8742,23 +8758,23 @@
         ctx.beginPath(); ctx.ellipse(x + sway, y - r.h - 3, 2.2, 5, 0, 0, TAU); ctx.fill();
       });
 
-      decor.forEach(function(d, i){ d.dir = facing(d.dir || 1, Math.cos(d.a)); drawDuck(d.x, d.y, d.dir, 8, color, 0.85, i); });
+      decor.forEach(function(d, i){ drawDuck(d.x, d.y, d.a, 7, color, 0.85, i); });
       lost.forEach(function(l){
         var pulse = 0.5 + 0.5 * Math.sin(clock * 4 + l.x);
         ctx.strokeStyle = "rgba(255,255,255," + (0.25 + 0.35 * pulse).toFixed(3) + ")";
         ctx.lineWidth = 2;
         ctx.beginPath(); ctx.arc(l.x, l.y, 20 + 4 * pulse, 0, TAU); ctx.stroke();
-        l.dir = facing(l.dir || 1, Math.cos(l.a));
-        drawDuck(l.x, l.y, l.dir, 10, l.c, 1, l.x);
+        drawDuck(l.x, l.y, l.a, 9, l.c, 1, l.x);
       });
       for(var i = kids; i >= 1; i--){
         var idx = kidIndex(i), p = hist[Math.max(0, idx)];
         var q = hist[Math.max(0, idx - 3)];
-        kidDir[i] = facing(kidDir[i] || head.dir, p.x - q.x);
-        drawDuck(p.x, p.y, kidDir[i], 10, kidColor[i - 1], 1, i);
+        var moved = Math.hypot(p.x - q.x, p.y - q.y) > 0.5;
+        if(moved) kidDir[i] = Math.atan2(p.y - q.y, p.x - q.x);
+        else if(kidDir[i] === undefined) kidDir[i] = head.a;
+        drawDuck(p.x, p.y, kidDir[i], 8, kidColor[i - 1], 1, i);
       }
-      head.dir = facing(head.dir, Math.cos(head.a));
-      drawDuck(head.x, head.y, head.dir, 15, color, 1, 0);
+      drawDuck(head.x, head.y, head.a, 12, "#ffd23f", 1, 0);
 
       pops.forEach(function(p){
         ctx.globalAlpha = 1 - p.t / 0.9;
