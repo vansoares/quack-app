@@ -1,7 +1,7 @@
 // Cache só do "shell" estático — nunca de /api/*, pra não arriscar servir
 // uma resposta de login/sync antiga ou quebrar a sincronização entre abas.
-var CACHE_NAME = "quack-shell-v2";
-var SHELL = ["/", "/assets/app.css", "/assets/app.js", "/manifest.json", "/icons/icon-192.png", "/icons/icon-512.png"];
+var CACHE_NAME = "quack-shell-v3";
+var SHELL = ["/", "/assets/app.css", "/assets/app.js", "/manifest.json", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/favicon.svg"];
 
 self.addEventListener("install", function(event){
   event.waitUntil(

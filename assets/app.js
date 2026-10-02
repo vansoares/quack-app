@@ -3929,19 +3929,15 @@
 
   // SVG reaproveitado nos patinhos-marco e na comemoração
   function duckSvg(cls, cool){
-    var eyes = cool
-      ? '<path d="M17.6 9.6 q2.9 -2.1 5.8 0 q0.4 2.4 -2.9 2.4 q-3.3 0 -2.9 -2.4 Z" fill="#12181f"/>' +
-        '<circle cx="19.2" cy="10.9" r="1.65" fill="#12181f"/>' +
-        '<circle cx="22.7" cy="10.5" r="1.5" fill="#12181f"/>' +
-        '<circle cx="18.7" cy="10.3" r=".3" fill="#fff" opacity=".65"/>'
-      : '<circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>' +
-        '<circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>';
+    var shades = cool
+      ? '<g transform="translate(.9 1.3)">' +
+        '<path d="M17.6 8.8 q2.9 -2.1 5.8 0 q0.4 2.4 -2.9 2.4 q-3.3 0 -2.9 -2.4 Z" fill="#12181f"/>' +
+        '<circle cx="19.2" cy="10.1" r="1.65" fill="#12181f"/>' +
+        '<circle cx="22.7" cy="9.7" r="1.5" fill="#12181f"/>' +
+        '<circle cx="18.7" cy="9.5" r=".3" fill="#fff" opacity=".65"/></g>'
+      : '';
     return '<svg class="' + cls + '" viewBox="0 0 32 32" aria-hidden="true">' +
-      '<ellipse class="body" cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>' +
-      '<circle class="body" cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>' +
-      '<path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>' +
-      eyes +
-      '</svg>';
+      '<use href="#quack-duck" width="32" height="32"/>' + shades + '</svg>';
   }
 
 
@@ -7177,11 +7173,7 @@
     btn.className = "btn-ghost icon-only header-run-btn";
     btn.dataset.runKey = key;
     btn.innerHTML = '<svg viewBox="0 0 32 32" width="18" height="18" aria-hidden="true">' +
-      '<ellipse cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>' +
-      '<circle cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>' +
-      '<path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>' +
-      '<circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>' +
-      '<circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>' +
+      '<use href="#quack-duck" width="32" height="32"/>' +
       headerRunAccessory(key) +
       '</svg>';
     btn.onclick = function(){ goToRunningTimer(key); };
@@ -8273,11 +8265,7 @@
     devDuckKey = key;
     $("dev-duck-wrap").innerHTML =
       '<svg viewBox="0 0 32 32" aria-hidden="true">' +
-      '<ellipse class="body" cx="14" cy="21" rx="9.4" ry="5.8" fill="var(--signal)"/>' +
-      '<circle class="body" cx="20.5" cy="12.5" r="7" fill="var(--signal)"/>' +
-      '<path d="M26.6 12.2 L31 13.6 L26.6 15.2 Z" fill="var(--ink)"/>' +
-      '<circle cx="22.4" cy="10.8" r="1.7" fill="var(--paper)"/>' +
-      '<circle cx="23" cy="10.2" r=".6" fill="#fff" opacity=".85"/>' +
+      '<use href="#quack-duck" width="32" height="32"/>' +
       (DEV_DUCK_ACCESSORY[key] || DEV_DUCK_ACCESSORY.build) +
       '</svg>';
   }
