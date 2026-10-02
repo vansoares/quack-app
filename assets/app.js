@@ -8813,7 +8813,8 @@
       ctx.beginPath(); ctx.ellipse(x, y, a, b, 0, 0, TAU); ctx.fillStyle = fill; ctx.fill();
     }
 
-    // pato de borracha visto de lado, boiando: a barriga fica "dentro" da água
+    // pato de borracha visto de lado, boiando, no traço da marca: contorno grosso
+    // escuro, corpo chapado, asa e bico laranja. A barriga fica "dentro" da água
     // (recorte) e ele só vira pra esquerda/direita conforme o rumo — sem girar
     function drawDuck(x, y, dir, s, fill, alpha, phase){
       ctx.save();
@@ -8825,21 +8826,21 @@
       ctx.beginPath(); ctx.ellipse(0, 0.7 * s, 1.9 * s, 0.32 * s, 0, 0, TAU); ctx.stroke();
       ctx.save();
       ctx.beginPath(); ctx.rect(-3 * s, -3 * s, 6 * s, 3.7 * s); ctx.clip();
+      function body(){ ctx.beginPath(); ctx.ellipse(-0.1 * s, 0.1 * s, 1.4 * s, 0.95 * s, 0, 0, TAU); }
+      function tail(){ ctx.beginPath(); ctx.moveTo(-1.1 * s, -0.1 * s); ctx.quadraticCurveTo(-1.9 * s, -0.25 * s, -1.85 * s, -0.85 * s);
+        ctx.quadraticCurveTo(-1.3 * s, -0.55 * s, -0.8 * s, -0.5 * s); ctx.closePath(); }
+      function head(){ ctx.beginPath(); ctx.arc(0.8 * s, -0.8 * s, 0.75 * s, 0, TAU); }
+      function beak(){ ctx.beginPath(); ctx.ellipse(1.65 * s, -0.72 * s, 0.5 * s, 0.2 * s, 0.12, 0, TAU); }
+      // contorno: tudo desenhado grosso em tinta, depois o preenchimento por cima
+      ctx.lineJoin = "round"; ctx.lineWidth = 0.34 * s; ctx.strokeStyle = "#1d1a18";
+      [body, tail, head, beak].forEach(function(f){ f(); ctx.stroke(); });
       ctx.fillStyle = fill;
-      ctx.beginPath(); ctx.ellipse(-0.1 * s, 0.1 * s, 1.4 * s, 0.95 * s, 0, 0, TAU); ctx.fill();            // corpo
-      ctx.beginPath(); ctx.moveTo(-1.1 * s, -0.1 * s); ctx.quadraticCurveTo(-1.9 * s, -0.25 * s, -1.85 * s, -0.85 * s);
-      ctx.quadraticCurveTo(-1.3 * s, -0.55 * s, -0.8 * s, -0.5 * s); ctx.fill();                            // rabinho empinado
-      ctx.beginPath(); ctx.arc(0.8 * s, -0.8 * s, 0.75 * s, 0, TAU); ctx.fill();                            // cabeça
-      ctx.fillStyle = "rgba(0,0,0,.14)";
-      ctx.beginPath(); ctx.ellipse(-0.3 * s, 0.05 * s, 0.7 * s, 0.42 * s, -0.3, 0, TAU); ctx.fill();        // asa
-      ctx.fillStyle = "#f09a33";
-      ctx.beginPath(); ctx.ellipse(1.65 * s, -0.75 * s, 0.5 * s, 0.2 * s, 0, 0, TAU); ctx.fill();           // bico
-      ctx.fillStyle = "rgba(255,110,130,.4)";
-      ctx.beginPath(); ctx.arc(0.78 * s, -0.62 * s, 0.14 * s, 0, TAU); ctx.fill();                          // bochecha
-      ctx.fillStyle = "#2b2a28";
-      ctx.beginPath(); ctx.arc(0.98 * s, -0.98 * s, 0.13 * s, 0, TAU); ctx.fill();                          // olho
-      ctx.fillStyle = "#fff";
-      ctx.beginPath(); ctx.arc(1.02 * s, -1.02 * s, 0.045 * s, 0, TAU); ctx.fill();
+      [body, tail, head].forEach(function(f){ f(); ctx.fill(); });
+      ctx.fillStyle = fill === "#fbcf24" ? "#f7a324" : "rgba(0,0,0,.16)";
+      ctx.beginPath(); ctx.ellipse(-0.3 * s, 0.1 * s, 0.75 * s, 0.45 * s, -0.3, 0, TAU); ctx.fill();         // asa
+      ctx.fillStyle = "#f7a324"; beak(); ctx.fill();                                                          // bico
+      ctx.fillStyle = "#1d1a18";
+      ctx.beginPath(); ctx.ellipse(1.0 * s, -0.98 * s, 0.1 * s, 0.17 * s, 0, 0, TAU); ctx.fill();            // olho
       ctx.restore();
       ctx.restore();
     }
@@ -8850,10 +8851,10 @@
     }
 
     function draw(){
-      ctx.fillStyle = "#7da562"; ctx.fillRect(0, 0, W, H);
-      ellipse(cx, cy, rx + 12, ry + 12, "#dcc9a0");
+      ctx.fillStyle = "#fff4c4"; ctx.fillRect(0, 0, W, H);
+      ellipse(cx, cy, rx + 14, ry + 14, "#1d1a18");
       var g = ctx.createLinearGradient(0, cy - ry, 0, cy + ry);
-      g.addColorStop(0, "#8fd0dc"); g.addColorStop(1, "#4b9bb4");
+      g.addColorStop(0, "#9bd8e3"); g.addColorStop(1, "#6fb8cc");
       ellipse(cx, cy, rx, ry, g);
 
       ctx.save();
@@ -8983,7 +8984,7 @@
         }
         ctx.restore();
       }
-      decor.forEach(function(d, i){ d.dir = facing(d.dir || 1, Math.cos(d.a)); drawDuck(d.x, d.y, d.dir, 8, color, 0.85, i); });
+      decor.forEach(function(d, i){ d.dir = facing(d.dir || 1, Math.cos(d.a)); drawDuck(d.x, d.y, d.dir, 8, "#f6f1e6", 0.85, i); });
       lost.forEach(function(l){
         var pulse = 0.5 + 0.5 * Math.sin(clock * 4 + l.x);
         ctx.strokeStyle = "rgba(255,255,255," + (0.25 + 0.35 * pulse).toFixed(3) + ")";
@@ -8999,7 +9000,7 @@
         drawDuck(p.x, p.y, kidDir[i], 9, kidColor[i - 1], 1, i);
       }
       head.dir = facing(head.dir, Math.cos(head.a));
-      drawDuck(head.x, head.y, head.dir, 15, "#ffd23f", 1, 0);
+      drawDuck(head.x, head.y, head.dir, 15, "#fbcf24", 1, 0);
 
       pops.forEach(function(p){
         ctx.globalAlpha = 1 - p.t / 0.9;
