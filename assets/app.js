@@ -1072,9 +1072,9 @@
   // o pato que orbita o timer troca de olhar conforme o dia vai indo — não é
   // um estado novo, só uma leitura do que já existe em S.sessions/S.timer
   var ORBIT_EYES = {
-    normal: '<circle cx="16.7" cy="7.9" r="1.1" fill="var(--paper)"/><circle cx="17.1" cy="7.55" r=".4" fill="#fff" opacity=".9"/>',
-    cool: '<path d="M15.0 7.55 q1.7 -1.25 3.4 0 q0.25 1.45 -1.7 1.45 q-1.95 0 -1.7 -1.45 Z" fill="#12181f"/><circle cx="17.15" cy="7.45" r=".22" fill="#fff" opacity=".75"/>',
-    sleepy: '<path d="M15.9 8.0 q0.8 .55 1.7 0" fill="none" stroke="var(--ink)" stroke-width=".85" stroke-linecap="round" opacity=".75"/>'
+    normal: '',
+    cool: '<g transform="translate(.9 1.3)"><path d="M17.6 8.8 q2.9 -2.1 5.8 0 q0.4 2.4 -2.9 2.4 q-3.3 0 -2.9 -2.4 Z" fill="#12181f"/><circle cx="19.2" cy="10.1" r="1.65" fill="#12181f"/><circle cx="22.7" cy="9.7" r="1.5" fill="#12181f"/></g>',
+    sleepy: '<circle cx="21.5" cy="10.1" r="1.6" fill="#fbcf24"/><path d="M19.9 10.3 q1.6 1.2 3.2 0" fill="none" stroke="#1d1a18" stroke-width="1" stroke-linecap="round"/>'
   };
 
   function lastSessionEnd(){
@@ -7172,7 +7172,7 @@
     btn.type = "button";
     btn.className = "btn-ghost icon-only header-run-btn";
     btn.dataset.runKey = key;
-    btn.innerHTML = '<svg viewBox="0 0 32 32" width="18" height="18" aria-hidden="true">' +
+    btn.innerHTML = '<svg viewBox="0 0 32 32" width="22" height="22" aria-hidden="true">' +
       '<use href="#quack-duck" width="32" height="32"/>' +
       headerRunAccessory(key) +
       '</svg>';

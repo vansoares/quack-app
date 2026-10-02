@@ -237,12 +237,12 @@
     flex-wrap:wrap;row-gap:10px;
   }
   /* logo: o patinho faz o "Q" de "uack" — as proporções (0.65 / 0.08 / 0.02) vêm do arquivo da marca */
-  .brandwrap{--mk:44px;display:flex;align-items:flex-end;gap:calc(var(--mk) * .02);min-width:0}
+  .brandwrap{--mk:36px;display:flex;align-items:flex-end;gap:calc(var(--mk) * .02);min-width:0}
   .duck{width:auto;height:var(--mk);aspect-ratio:221.3 / 193.3;flex:none;display:block;overflow:visible}
   .brand{display:flex;flex-direction:column;justify-content:flex-end;min-width:0}
   .brand h1{margin:0;line-height:0;margin-bottom:calc(var(--mk) * .084)}
   .brand .word{display:block;height:calc(var(--mk) * .653);aspect-ratio:441.3 / 126.3;color:var(--ink)}
-  @media (max-width:520px){ .brandwrap{--mk:34px} }
+  @media (max-width:520px){ .brandwrap{--mk:30px} }
   .duck-btn{touch-action:manipulation;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none;background:none;border:0;padding:0;margin:0;min-height:0;cursor:pointer;flex:none;border-radius:var(--r-sm)}
   .duck-btn .duck{transition:transform .15s var(--ease)}
   .duck-btn:hover .duck{transform:translateY(-1px)}
@@ -431,8 +431,7 @@
     position:absolute;left:50%;top:6%;
     transform:translate(-50%,-50%) rotate(0deg);
   }
-  .duck-orbit-duck{display:block;color:var(--signal);filter:drop-shadow(0 2px 4px rgba(0,0,0,.18));transform-origin:50% 70%}
-  body.mode-pausa .duck-orbit-duck{color:var(--rest)}
+  .duck-orbit-duck{display:block;filter:drop-shadow(0 2px 4px rgba(0,0,0,.18));transform-origin:50% 70%}
   body.timer-running .duck-orbit-duck{animation:duck-paddle 1s ease-in-out infinite}
   @keyframes duck-paddle{
     0%,100%{transform:rotate(-4deg) translateY(0)}
